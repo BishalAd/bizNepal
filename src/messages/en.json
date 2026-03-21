@@ -1,0 +1,39 @@
+{
+  "Navigation": {
+    "home": "Home",
+    "products": "Products & Services",
+    "offers": "Deals & Offers",
+    "events": "Events",
+    "jobs": "Jobs",
+    "businesses": "Business Directory",
+    "login": "Login",
+    "register": "Register",
+    "dashboard": "Dashboard"
+  },
+  "Hero": {
+    "title": "Discover Nepal's Best Businesses",
+    "subtitle": "Find products, services, deals, jobs, and events from verified local businesses across Nepal.",
+    "searchPlaceholder": "Search products, services, businesses...",
+    "searchButton": "Search"
+  },
+  "Common": {
+    "viewAll": "View All",
+    "loading": "Loading...",
+    "noResults": "No results found.",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "checkout": "Checkout",
+    "grabDeal": "Grab This Deal",
+    "applyNow": "Apply Now"
+  },
+  "Forms": {
+    "fullName": "Full Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "address": "Address",
+    "district": "District"
+  }
+}
