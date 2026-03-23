@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { 
   Building2, MapPin, Globe, Phone, MessageCircle, Share2, 
-  MapIcon, Star, BadgeCheck, Clock, ExternalLink 
+  MapIcon, Star, BadgeCheck, Clock, ExternalLink, FileText
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { isBusinessOpen } from '@/lib/utils/hours'
@@ -13,17 +13,15 @@ import EventCard from '@/components/events/EventCard'
 import ProductCard from '@/components/products/ProductCard'
 import { formatDistanceToNow, format } from 'date-fns'
 
-const Map = dynamic(
-  () => import('react-leaflet').then((mod) => mod.MapContainer),
-  { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-xl inset-0 absolute" /> }
-)
-const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false })
-const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false })
+const SimpleMap = dynamic(() => import('@/components/ui/SimpleMap'), { 
+  ssr: false, 
+  loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-3xl" /> 
+})
 
 export default function BusinessProfileClient({ business, tabsData }: any) {
   const [activeTab, setActiveTab] = useState('products')
   
-  const isOpen = isBusinessOpen(business.hours)
+  const isOpen = isBusinessOpen(business.hours || {})
   
   const handleShare = async () => {
     if (navigator.share) {
@@ -63,7 +61,7 @@ export default function BusinessProfileClient({ business, tabsData }: any) {
       {/* Cover Image */}
       <div className="w-full h-[30vh] md:h-[40vh] bg-blue-900 relative">
         {business.cover_url ? (
-          <Image src={business.cover_url} alt={business.name} fill className="object-cover opacity-90" />
+          <Image src={business.cover_url} alt={business.name} fill sizes="100vw" className="object-cover opacity-90" />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-white/30 text-2xl font-bold bg-blue-900 border-b border-blue-800">
              <Building2 className="w-16 h-16 mb-4 opacity-50" />
@@ -265,8 +263,17 @@ export default function BusinessProfileClient({ business, tabsData }: any) {
            {/* Sidebar Info */}
            <div className="lg:col-span-1 space-y-6">
               
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Clock className="w-5 h-5 text-gray-400" /> Business Hours</h3>
+                {business.description && (
+                  <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-gray-400" /> About Business</h3>
+                    <div className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+                      {business.description}
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Clock className="w-5 h-5 text-gray-400" /> Business Hours</h3>
                 
                 <div className="flex items-center gap-2 mb-4">
                   {isOpen ? (
@@ -294,12 +301,12 @@ export default function BusinessProfileClient({ business, tabsData }: any) {
                 )}
               </div>
 
-              {business.latitude && business.longitude && (
-                <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 relative h-64">
-                   <Map center={[business.latitude, business.longitude]} zoom={15} style={{ height: '100%', width: '100%' }}>
-                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                     <Marker position={[business.latitude, business.longitude]} />
-                   </Map>
+               {business.latitude && business.longitude && (
+                <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 relative h-64 z-0">
+                   <SimpleMap 
+                     center={[business.latitude, business.longitude]} 
+                     markerPosition={[business.latitude, business.longitude]} 
+                   />
                 </div>
               )}
 

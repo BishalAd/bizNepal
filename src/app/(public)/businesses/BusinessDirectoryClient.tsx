@@ -36,7 +36,7 @@ export default function BusinessDirectoryClient({ categories, districts, initial
         latitude, longitude, is_verified, hours, whatsapp,
         category:categories(name_en),
         district_info:districts(name_en)
-      `).eq('status', 'active')
+      `).eq('is_active', true)
 
       if (filters.search) query = query.ilike('name', `%${filters.search}%`)
       if (filters.category) query = query.eq('category_id', filters.category)
@@ -44,11 +44,19 @@ export default function BusinessDirectoryClient({ categories, districts, initial
       if (filters.verifiedOnly) query = query.eq('is_verified', true)
       if (filters.rating > 0) query = query.gte('rating', filters.rating)
 
-      const { data, error } = await query.limit(100)
-      if (error) throw error
+      const { data, error } = await query.limit(500) // Increased limit for Map visibility
+      if (error) {
+        console.error('Directory Fetch Error Details:', {
+          message: error.message,
+          code: error.code,
+          hint: error.hint,
+          details: error.details
+        })
+        throw error
+      }
       setBusinesses(data || [])
-    } catch (err) {
-      console.error(err)
+    } catch (err: any) {
+      console.error('Directory Fetch Caught Error:', err)
     } finally {
       setLoading(false)
     }

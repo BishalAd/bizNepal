@@ -130,7 +130,7 @@ export default function JobDetailClient({ job, companyJobs, relatedJobs }: any) 
                 <div>
                    <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">{job.title}</h1>
                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-gray-600 font-medium mb-4">
-                     <Link href={`/b/${job.business?.slug}`} className="flex items-center text-blue-600 hover:text-blue-800"><Building2 className="w-4 h-4 mr-1.5"/> {job.business?.name}</Link>
+                     <Link href={`/businesses/${job.business?.slug}`} className="flex items-center text-blue-600 hover:text-blue-800"><Building2 className="w-4 h-4 mr-1.5"/> {job.business?.name}</Link>
                      <span className="flex items-center"><MapPin className="w-4 h-4 mr-1.5 text-gray-400"/> {job.business?.city || 'Nepal'}</span>
                      {job.business?.website && <a href={job.business.website} target="_blank" rel="noreferrer" className="flex items-center hover:text-gray-900"><Globe className="w-4 h-4 mr-1.5 text-gray-400"/> Website</a>}
                    </div>

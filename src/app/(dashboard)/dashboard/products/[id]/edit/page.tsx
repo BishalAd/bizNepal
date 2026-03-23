@@ -4,7 +4,8 @@ import ProductFormClient from '../../ProductFormClient'
 
 export const metadata = { title: 'Edit Product | Dashboard' }
 
-export default async function EditProductPage({ params }: { params: { id: string } }) {
+export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -18,7 +19,7 @@ export default async function EditProductPage({ params }: { params: { id: string
     { data: product }
   ] = await Promise.all([
     supabase.from('categories').select('id, name_en').eq('type', 'product').order('name_en'),
-    supabase.from('products').select('*').eq('id', params.id).eq('business_id', business.id).single()
+    supabase.from('products').select('*').eq('id', id).eq('business_id', business.id).single()
   ])
 
   if (!product) notFound()

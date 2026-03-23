@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation'
 import BusinessProfileClient from './BusinessProfileClient'
 import { Metadata } from 'next'
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
   const supabase = await createClient()
-  const { data } = await supabase.from('businesses').select('name, description').eq('slug', params.slug).single()
+  const { data } = await supabase.from('businesses').select('name, description, logo_url').eq('slug', slug).single()
   
   if (!data) return { title: 'Business Not Found | BizNepal' }
 
@@ -15,7 +16,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function BusinessProfilePage({ params }: { params: { slug: string } }) {
+export default async function BusinessProfilePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
 
   // 1. Fetch main business profile
@@ -26,11 +28,25 @@ export default async function BusinessProfilePage({ params }: { params: { slug: 
       category:categories(name_en),
       district_info:districts(name_en)
     `)
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (error || !business) {
     notFound()
+  }
+
+  // Track profile view (Soft-fail to prevent page crash)
+  try {
+    supabase.from('analytics_events').insert({
+      business_id: business.id,
+      entity_type: 'profile',
+      entity_id: business.id,
+      event_type: 'view',
+    }).then(({ error }) => {
+      if (error) console.warn('Analytics error:', error.message)
+    })
+  } catch (e) {
+    console.warn('Analytics tracking failed')
   }
 
   // 2. Parallel fetch for all related data tabs

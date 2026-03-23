@@ -8,12 +8,10 @@ import EventCard from '@/components/events/EventCard'
 import dynamic from 'next/dynamic'
 import { format, differenceInMinutes } from 'date-fns'
 
-const Map = dynamic(
-  () => import('react-leaflet').then((mod) => mod.MapContainer),
-  { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-xl" /> }
-)
-const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false })
-const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false })
+const SimpleMap = dynamic(() => import('@/components/ui/SimpleMap'), { 
+  ssr: false, 
+  loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-xl" /> 
+})
 
 export default function EventDetailClient({ event, similarEvents }: any) {
 
@@ -112,12 +110,10 @@ export default function EventDetailClient({ event, similarEvents }: any) {
                     
                     {event.latitude && event.longitude && (
                       <div className="h-64 rounded-xl overflow-hidden border border-gray-200 z-0 mt-4">
-                        {typeof window !== 'undefined' && (
-                           <Map center={[event.latitude, event.longitude]} zoom={15} style={{ height: '100%', width: '100%' }}>
-                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                             <Marker position={[event.latitude, event.longitude]} />
-                           </Map>
-                        )}
+                        <SimpleMap 
+                          center={[event.latitude, event.longitude]} 
+                          markerPosition={[event.latitude, event.longitude]} 
+                        />
                       </div>
                     )}
                  </div>

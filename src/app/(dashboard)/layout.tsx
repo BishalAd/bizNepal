@@ -164,7 +164,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="p-3 border-t border-gray-100 space-y-1 bg-gray-50/50">
         {business?.slug && (
           <a
-            href={`/b/${business.slug}`}
+            href={`/businesses/${business.slug}`}
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:text-gray-900 hover:bg-white transition-all border border-transparent hover:border-gray-200"

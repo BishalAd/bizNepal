@@ -16,8 +16,8 @@ export default function ProductCard({
 }) {
   const { user } = useAuth()
   
-  const discountPercent = product.compare_price && product.compare_price > product.price
-    ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+  const discountPercent = product.discount_price && product.discount_price > product.price
+    ? Math.round(((product.discount_price - product.price) / product.discount_price) * 100)
     : null
 
   const handleSaveClick = (e: React.MouseEvent) => {
@@ -31,7 +31,7 @@ export default function ProductCard({
     }
   }
 
-  const mainImage = product.images?.[0] || '/placeholder.png'
+  const mainImage = product.image_keys?.[0] || product.images?.[0] || 'https://placehold.co/600x400?text=BizNepal'
 
   return (
     <Link href={`/products/${product.slug}`} className="group block bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col h-full">
@@ -52,7 +52,7 @@ export default function ProductCard({
           </div>
         )}
         
-        {product.stock <= 0 && (
+        {product.stock_quantity <= 0 && (
           <div className="absolute top-2 left-2 bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded">
             Out of Stock
           </div>
@@ -98,15 +98,15 @@ export default function ProductCard({
         <div className="mt-3">
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-bold text-gray-900">₨ {product.price.toLocaleString()}</span>
-            {product.compare_price && (
-              <span className="text-sm text-gray-400 line-through">₨ {product.compare_price.toLocaleString()}</span>
+            {product.discount_price && (
+              <span className="text-sm text-gray-400 line-through">₨ {product.discount_price.toLocaleString()}</span>
             )}
           </div>
 
           <div className="flex items-center gap-2 mt-3 text-xs font-medium text-gray-500">
-            {product.allows_cod && <span className="px-1.5 py-0.5 bg-gray-100 rounded">COD</span>}
-            {product.allows_esewa && <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded">eSewa</span>}
-            {product.allows_khalti && <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded">Khalti</span>}
+            {product.cod_available && <span className="px-1.5 py-0.5 bg-gray-100 rounded">COD</span>}
+            {product.esewa_available && <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded">eSewa</span>}
+            {product.khalti_available && <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded">Khalti</span>}
           </div>
 
           <div className="flex gap-2 mt-3">

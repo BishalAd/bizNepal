@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation'
 import JobDetailClient from './JobDetailClient'
 import { Metadata } from 'next'
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
   const supabase = await createClient()
-  const { data } = await supabase.from('jobs').select('title, business:businesses(name)').eq('slug', params.slug).single()
+  const { data } = await supabase.from('jobs').select('title, business:businesses(name)').eq('slug', slug).single()
   
   if (!data) return { title: 'Job Not Found | BizNepal' }
 
@@ -17,7 +18,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function JobDetailPage({ params }: { params: { slug: string } }) {
+export default async function JobDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
 
   const { data: job, error } = await supabase
@@ -28,7 +30,7 @@ export default async function JobDetailPage({ params }: { params: { slug: string
       category:categories(id, name_en),
       district:districts(id, name_en)
     `)
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (error || !job) {

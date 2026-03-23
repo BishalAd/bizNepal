@@ -2,8 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import ProductsClientListing from './ProductsClientListing'
 import { Metadata } from 'next'
 
-export async function generateMetadata({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }): Promise<Metadata> {
-  const categoryId = typeof searchParams.category === 'string' ? searchParams.category : undefined
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }): Promise<Metadata> {
+  const resolvedParams = await searchParams
+  const categoryId = typeof resolvedParams.category === 'string' ? resolvedParams.category : undefined
   
   let title = "Products | BizNepal"
   
@@ -21,8 +22,9 @@ export async function generateMetadata({ searchParams }: { searchParams: { [key:
   }
 }
 
-export default async function ProductsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const supabase = await createClient()
+  const resolvedParams = await searchParams
   
   // Parallel fetch for filters
   const [
@@ -37,7 +39,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { [
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* We pass searchParams directly as initialFilters */}
       <ProductsClientListing 
-        initialFilters={searchParams} 
+        initialFilters={resolvedParams} 
         categories={categories} 
         districts={districts} 
       />

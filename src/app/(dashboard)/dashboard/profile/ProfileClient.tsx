@@ -13,6 +13,27 @@ const LocationPickerMap = dynamic(() => import('@/components/dashboard/LocationP
   loading: () => <div className="h-[300px] w-full bg-gray-100 animate-pulse rounded-2xl flex items-center justify-center text-gray-400">Loading Map...</div>
 })
 
+// --- Helper Components (Defined outside to prevent focal lose on re-render) ---
+const InputGroup = ({ label, children, description }: any) => (
+  <div className="mb-6">
+    <label className="block text-sm font-bold text-gray-900 mb-1.5">{label}</label>
+    {description && <p className="text-xs text-gray-500 mb-3">{description}</p>}
+    {children}
+  </div>
+)
+
+const NavItem = ({ id, label, icon: Icon, activeTab, setActiveTab }: any) => (
+  <button 
+    type="button" 
+    onClick={() => setActiveTab(id)} 
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition ${
+      activeTab === id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-transparent'
+    }`}
+  >
+    <Icon className="w-5 h-5" /> {label}
+  </button>
+)
+
 export default function ProfileClient({ business, categories, districts, userId }: any) {
   const supabase = createClient()
   const [isSaving, setIsSaving] = useState(false)
@@ -109,27 +130,6 @@ export default function ProfileClient({ business, categories, districts, userId 
      }))
   }
 
-  // --- UI Components ---
-  const InputGroup = ({ label, children, description }: any) => (
-    <div className="mb-6">
-      <label className="block text-sm font-bold text-gray-900 mb-1.5">{label}</label>
-      {description && <p className="text-xs text-gray-500 mb-3">{description}</p>}
-      {children}
-    </div>
-  )
-
-  const NavItem = ({ id, label, icon: Icon }: any) => (
-    <button 
-      type="button" 
-      onClick={() => setActiveTab(id)} 
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition ${
-        activeTab === id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-transparent'
-      }`}
-    >
-      <Icon className="w-5 h-5" /> {label}
-    </button>
-  )
-
   return (
     <>
       <Toaster position="top-right" />
@@ -152,12 +152,12 @@ export default function ProfileClient({ business, categories, districts, userId 
          <div className="grid lg:grid-cols-4 gap-8 items-start">
             
             <div className="lg:col-span-1 bg-white rounded-3xl p-4 shadow-sm border border-gray-100 space-y-1 sticky top-24">
-               <NavItem id="branding" label="Branding" icon={Store} />
-               <NavItem id="about" label="About & Details" icon={FileText} />
-               <NavItem id="contact" label="Contact Links" icon={Phone} />
-               <NavItem id="location" label="Location & Map" icon={MapPin} />
-               <NavItem id="hours" label="Business Hours" icon={Clock} />
-               <NavItem id="verification" label="Verification" icon={BadgeCheck} />
+               <NavItem id="branding" label="Branding" icon={Store} activeTab={activeTab} setActiveTab={setActiveTab} />
+               <NavItem id="about" label="About & Details" icon={FileText} activeTab={activeTab} setActiveTab={setActiveTab} />
+               <NavItem id="contact" label="Contact Links" icon={Phone} activeTab={activeTab} setActiveTab={setActiveTab} />
+               <NavItem id="location" label="Location & Map" icon={MapPin} activeTab={activeTab} setActiveTab={setActiveTab} />
+               <NavItem id="hours" label="Business Hours" icon={Clock} activeTab={activeTab} setActiveTab={setActiveTab} />
+               <NavItem id="verification" label="Verification" icon={BadgeCheck} activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
 
             <div className="lg:col-span-3">
@@ -172,7 +172,7 @@ export default function ProfileClient({ business, categories, districts, userId 
                            <ImageUpload 
                              label="Cover Image" 
                              aspectRatio="wide"
-                             bucket="business-covers" 
+                             bucket="banners" 
                              folder={userId}
                              currentImageUrl={formData.cover_url}
                              onUploadSuccess={url => setFormData({...formData, cover_url: url})} 
@@ -182,7 +182,7 @@ export default function ProfileClient({ business, categories, districts, userId 
                            <ImageUpload 
                              label="Brand Logo" 
                              aspectRatio="square"
-                             bucket="business-logos" 
+                             bucket="biznepal-images" 
                              folder={userId}
                              currentImageUrl={formData.logo_url}
                              onUploadSuccess={url => setFormData({...formData, logo_url: url})} 
@@ -395,11 +395,11 @@ export default function ProfileClient({ business, categories, districts, userId 
                            <div className="grid md:grid-cols-2 gap-6">
                              <div>
                                <p className="text-sm font-bold text-gray-700 mb-2">Company Registration Certificate</p>
-                               <ImageUpload bucket="verification-docs" folder={userId} onUploadSuccess={(url) => {toast.success("Certificate uploaded! We will review it soon.")}} />
+                               <ImageUpload bucket="documents" folder={userId} onUploadSuccess={(url) => {toast.success("Certificate uploaded! We will review it soon.")}} />
                              </div>
                              <div>
                                <p className="text-sm font-bold text-gray-700 mb-2">PAN/VAT Registration Document</p>
-                               <ImageUpload bucket="verification-docs" folder={userId} onUploadSuccess={(url) => {toast.success("PAN document uploaded! We will review it soon.")}} />
+                               <ImageUpload bucket="documents" folder={userId} onUploadSuccess={(url) => {toast.success("PAN document uploaded! We will review it soon.")}} />
                              </div>
                            </div>
                            

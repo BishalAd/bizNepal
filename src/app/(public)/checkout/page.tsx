@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useCartStore } from '@/store/cartStore'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import toast, { Toaster } from 'react-hot-toast'
 import { CreditCard, Truck, Store, MapPin, User, Phone, Mail, ShoppingBag, ArrowRight } from 'lucide-react'
@@ -26,16 +26,44 @@ export default function CheckoutPage() {
     name: '', email: '', phone: '', address: '', district: '', city: ''
   })
   
-  const [paymentMethod, setPaymentMethod] = useState<'esewa' | 'khalti' | 'cod' | 'reserve'>('esewa')
+  const searchParams = useSearchParams()
+  const [directItem, setDirectItem] = useState<any>(null)
+  
+  const [paymentMethod, setPaymentMethod] = useState<'esewa' | 'khalti' | 'cod' | 'reserve'>((searchParams.get('method') as any) || 'esewa')
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const deliveryFee = paymentMethod === 'reserve' ? 0 : 100 // Mock 100rs delivery fee normally
-  const grandTotal = totalAmount() + deliveryFee
+  // Fetch direct product if in URL
+  useEffect(() => {
+    const pId = searchParams.get('productId')
+    const qty = searchParams.get('quantity')
+    
+    if (pId) {
+      const fetchDirect = async () => {
+        const { data } = await supabase.from('products').select('id, name, price, image_keys, business_id').eq('id', pId).single()
+        if (data) {
+          setDirectItem({
+            id: data.id,
+            title: data.name,
+            price: data.price,
+            business_id: data.business_id,
+            quantity: parseInt(qty || '1'),
+            image_url: data.image_keys?.[0]
+          })
+        }
+      }
+      fetchDirect()
+    }
+  }, [searchParams, supabase])
+
+  const checkoutItems = directItem ? [directItem] : items
+  const subtotal = directItem ? (directItem.price * directItem.quantity) : totalAmount()
+  const deliveryFee = paymentMethod === 'reserve' ? 0 : 100
+  const grandTotal = subtotal + deliveryFee
 
   if (!mounted) return null
 
-  if (items.length === 0) {
+  if (checkoutItems.length === 0) {
     return (
       <div className="min-h-screen pt-32 pb-20 px-4 flex flex-col items-center justify-center text-center">
          <ShoppingBag className="w-20 h-20 text-gray-200 mb-6" />
@@ -50,7 +78,7 @@ export default function CheckoutPage() {
 
   // To combine items, we assume they all go to one business for now, or the backend logic supports multi-vendor.
   // For simplicity, we just assign to the first item's business_id. In a true multi-vendor cart, we'd split orders.
-  const businessId = items[0]?.business_id
+  const businessId = checkoutItems[0]?.business_id
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,7 +92,7 @@ export default function CheckoutPage() {
       const { data: newOrder, error } = await supabase.from('orders').insert({
          user_id: user?.id || null,
          business_id: businessId,
-         items: items.map(i => ({ id: i.id, title: i.title, price: i.price, quantity: i.quantity })),
+         items: checkoutItems.map(i => ({ id: i.id, title: i.title, price: i.price, quantity: i.quantity })),
          total: grandTotal,
          order_status: 'pending',
          payment_method: paymentMethod,
@@ -231,11 +259,11 @@ export default function CheckoutPage() {
                   <h3 className="text-lg font-black text-gray-900 mb-6">Order Summary</h3>
                   
                   <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar mb-6">
-                     {items.map((item, idx) => (
-                       <div key={idx} className="flex gap-4">
-                          <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
-                             {item.image_url ? <img src={item.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-6 h-6 text-gray-300"/></div>}
-                          </div>
+                     {checkoutItems.map((item, idx) => (
+                        <div key={idx} className="flex gap-4">
+                           <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
+                              {item.image_url ? <img src={item.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-300"><ShoppingBag className="w-6 h-6"/></div>}
+                           </div>
                           <div className="flex-1">
                              <h4 className="font-bold text-gray-900 text-sm line-clamp-2 leading-tight">{item.title}</h4>
                              <p className="text-xs font-bold text-gray-400 mt-1">Qty: {item.quantity}</p>
@@ -249,8 +277,8 @@ export default function CheckoutPage() {
 
                   <div className="space-y-4 pt-6 border-t border-gray-100 border-dashed">
                      <div className="flex justify-between items-center text-sm font-bold text-gray-500">
-                        <span>Subtotal ({totalItems()} items)</span>
-                        <span className="text-gray-900">₨ {totalAmount().toLocaleString()}</span>
+                        <span>Subtotal ({directItem ? directItem.quantity : totalItems()} items)</span>
+                        <span className="text-gray-900">₨ {subtotal.toLocaleString()}</span>
                      </div>
                      <div className="flex justify-between items-center text-sm font-bold text-gray-500">
                         <span>Delivery Fee</span>

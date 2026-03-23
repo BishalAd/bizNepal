@@ -9,6 +9,15 @@ import ImageUpload from '@/components/dashboard/ImageUpload'
 import { ArrowLeft, Tag, Calendar, Save, Eye, MousePointer2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
+// --- Helper Components (Defined outside to prevent focal lose on re-render) ---
+const InputGroup = ({ label, children, description }: any) => (
+  <div className="mb-5">
+    <label className="block text-sm font-bold text-gray-900 mb-1.5">{label}</label>
+    {description && <p className="text-xs text-gray-500 mb-3">{description}</p>}
+    {children}
+  </div>
+)
+
 export default function OfferFormClient({ products, business }: any) {
   const supabase = createClient()
   const router = useRouter()
@@ -110,14 +119,6 @@ export default function OfferFormClient({ products, business }: any) {
     }
   }
 
-  const InputGroup = ({ label, children, description }: any) => (
-    <div className="mb-5">
-      <label className="block text-sm font-bold text-gray-900 mb-1.5">{label}</label>
-      {description && <p className="text-xs text-gray-500 mb-3">{description}</p>}
-      {children}
-    </div>
-  )
-
   return (
     <>
       <Toaster position="top-right" />
@@ -210,7 +211,7 @@ export default function OfferFormClient({ products, business }: any) {
                 <InputGroup label="Banner Image (16:9) *" description="Make it eye-catching. This shows on the Deals page.">
                    <ImageUpload 
                      aspectRatio="wide"
-                     bucket="offers" 
+                     bucket="banners" 
                      folder={business.id}
                      currentImageUrl={formData.banner_url}
                      onUploadSuccess={url => setFormData({...formData, banner_url: url})} 
@@ -256,7 +257,7 @@ export default function OfferFormClient({ products, business }: any) {
                    <div className="p-4 text-gray-900">
                      <div className="flex items-center gap-2 mb-2">
                        <div className="w-6 h-6 rounded bg-gray-100 overflow-hidden flex-shrink-0">
-                         {business.logo_url && <img src={business.logo_url} className="w-full h-full object-cover"/>}
+                         {business.logo_url && <img src={supabase.storage.from('biznepal-images').getPublicUrl(business.logo_url).data.publicUrl} className="w-full h-full object-cover"/>}
                        </div>
                        <span className="text-xs font-bold text-gray-500 truncate">{business.name}</span>
                      </div>

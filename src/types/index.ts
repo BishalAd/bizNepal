@@ -41,14 +41,15 @@ export interface Product {
   slug: string
   description?: string
   price: number
-  compare_price?: number
-  images: string[]
+  discount_price?: number
+  image_keys?: string[]
+  images?: string[] // keeping for legacy
   category_id?: string
-  stock: number
-  allows_cod: boolean
-  allows_esewa: boolean
-  allows_khalti: boolean
-  allows_store_pickup: boolean
+  stock_quantity: number
+  cod_available: boolean
+  esewa_available: boolean
+  khalti_available: boolean
+  pickup_available: boolean
   status: 'active' | 'draft' | 'out_of_stock'
   view_count: number
   created_at: string

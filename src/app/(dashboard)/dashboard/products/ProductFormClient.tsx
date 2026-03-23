@@ -8,6 +8,22 @@ import RichTextEditor from '@/components/dashboard/RichTextEditor'
 import { Plus, X, UploadCloud, Save, ArrowLeft, Wand2, Image as ImageIcon, CheckCircle2 } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 
+// --- Helper Components (Defined outside to prevent focal lose on re-render) ---
+const InputGroup = ({ label, children, description }: any) => (
+  <div className="mb-6">
+    <label className="block text-sm font-bold text-gray-900 mb-1.5">{label}</label>
+    {description && <p className="text-xs text-gray-500 mb-3">{description}</p>}
+    {children}
+  </div>
+)
+
+const CheckOption = ({ label, checked, onChange }: any) => (
+  <label className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition">
+    <input type="checkbox" checked={checked} onChange={onChange} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300" />
+    <span className="font-bold text-gray-900 flex items-center gap-1.5">{label}</span>
+  </label>
+)
+
 export default function ProductFormClient({ initialData, categories, businessId }: any) {
   const isEditing = !!initialData
   const supabase = createClient()
@@ -184,22 +200,6 @@ export default function ProductFormClient({ initialData, categories, businessId 
     return Math.round(((p - d) / p) * 100)
   }
   const discountPercent = calculateDiscount()
-
-  // --- UI Components ---
-  const InputGroup = ({ label, children, description }: any) => (
-    <div className="mb-6">
-      <label className="block text-sm font-bold text-gray-900 mb-1.5">{label}</label>
-      {description && <p className="text-xs text-gray-500 mb-3">{description}</p>}
-      {children}
-    </div>
-  )
-
-  const CheckOption = ({ label, checked, onChange }: any) => (
-    <label className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition">
-      <input type="checkbox" checked={checked} onChange={onChange} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300" />
-      <span className="font-bold text-gray-900 flex items-center gap-1.5">{label}</span>
-    </label>
-  )
 
   return (
     <>

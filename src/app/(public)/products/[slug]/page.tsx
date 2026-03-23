@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import ProductDetailClient from './ProductDetailClient'
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
   const supabase = await createClient()
-  const { data } = await supabase.from('products').select('name, description').eq('slug', params.slug).single()
+  const { data } = await supabase.from('products').select('name, description').eq('slug', slug).single()
   
   if (!data) return { title: 'Product Not Found | BizNepal' }
 
@@ -15,7 +16,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
+export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
 
   // 1. Fetch Product & Business
@@ -25,7 +27,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
       *,
       business:businesses(*)
     `)
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (error || !product) {

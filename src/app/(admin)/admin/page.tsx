@@ -10,7 +10,7 @@ export default async function AdminPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    redirect('/admin/login')
   }
 
   // Basic role check
@@ -20,9 +20,9 @@ export default async function AdminPage() {
     .eq('id', user.id)
     .single()
   
-  // Strict admin check (uncomment if needed)
+  // Strict admin check - Redirect to login if not authorized
   if (profile?.role !== 'admin') {
-    redirect('/dashboard')
+    redirect('/admin/login')
   }
 
   // 1. Fetch Platform Stats (using actual counts)

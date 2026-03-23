@@ -22,7 +22,7 @@ export default async function BusinessDirectoryPage() {
       latitude, longitude, is_verified, hours, whatsapp,
       category:categories(name_en),
       district_info:districts(name_en)
-    `).eq('status', 'active').limit(50)
+    `).eq('is_active', true).limit(50)
   ])
 
   return (

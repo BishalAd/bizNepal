@@ -70,14 +70,13 @@ export default function ImageUpload({
         .upload(filePath, file, { cacheControl: '3600', upsert: false })
 
       if (uploadError) {
-         // Try creating bucket if missing
-         if (uploadError.message.includes("not found")) {
-           await supabase.storage.createBucket(bucket, { public: true })
-           const { error: retryErr } = await supabase.storage.from(bucket).upload(filePath, file)
-           if (retryErr) throw retryErr
-         } else {
-           throw uploadError
-         }
+        if (uploadError.message.includes("not found")) {
+          toast.error(`Storage bucket "${bucket}" not found. Please create it in your Supabase Dashboard.`)
+          console.error(`ERROR: Supabase Storage Bucket "${bucket}" is missing. Go to Supabase Dashboard > Storage and create a NEW PUBLIC BUCKET named "${bucket}".`)
+          throw new Error(`Bucket "${bucket}" not found`)
+        } else {
+          throw uploadError
+        }
       }
 
       setProgress(80)

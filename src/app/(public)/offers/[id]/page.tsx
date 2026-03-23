@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation'
 import OfferDetailClient from './OfferDetailClient'
 import { Metadata } from 'next'
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
   const supabase = await createClient()
-  const { data } = await supabase.from('offers').select('title, description').eq('id', params.id).single()
+  const { data } = await supabase.from('offers').select('title, description').eq('id', id).single()
   
   if (!data) return { title: 'Offer Not Found | BizNepal' }
 
@@ -15,7 +16,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default async function OfferDetailPage({ params }: { params: { id: string } }) {
+export default async function OfferDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data: offer, error } = await supabase
@@ -25,7 +27,7 @@ export default async function OfferDetailPage({ params }: { params: { id: string
       business:businesses(*),
       product:products(id, name, slug)
     `)
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error || !offer) {

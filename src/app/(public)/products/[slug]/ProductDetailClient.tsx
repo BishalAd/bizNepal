@@ -4,23 +4,57 @@ import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import ProductGrid from '@/components/products/ProductGrid'
-import { Heart, Star, Store, MapPin, Phone, MessageCircle, Minus, Plus, ShieldCheck } from 'lucide-react'
+import { Heart, Star, Store, MapPin, Phone, MessageCircle, Minus, Plus, ShieldCheck, ShoppingBag, Check } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
+import dynamic from 'next/dynamic'
+import { useCartStore } from '@/store/cartStore'
+
+const SimpleMap = dynamic(() => import('@/components/ui/SimpleMap'), { 
+  ssr: false, 
+  loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-2xl" /> 
+})
 
 export default function ProductDetailClient({ product, reviews, relatedProducts }: any) {
   const { user } = useAuth()
+  const addItem = useCartStore((state) => state.addItem)
   const supabase = createClient()
   
-  const [activeImage, setActiveImage] = useState(product.images?.[0] || '/placeholder.png')
+  const placeholder = 'https://placehold.co/600x400?text=BizNepal'
+  const [activeImage, setActiveImage] = useState((product.image_keys && product.image_keys[0]) || placeholder)
   const [quantity, setQuantity] = useState(1)
   const [isSaved, setIsSaved] = useState(product.isSaved || false) // Would need actual saved status logic on mount
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
 
-  const discountPercent = product.compare_price && product.compare_price > product.price
-    ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+  const discountPercent = product.discount_price && product.discount_price > product.price
+    ? Math.round(((product.discount_price - product.price) / product.discount_price) * 100)
     : null
+
+  const handleAddToCart = () => {
+    addItem({
+      id: product.id,
+      title: product.name,
+      price: product.price,
+      business_id: product.business_id,
+      image_url: product.image_keys?.[0] || placeholder
+    }, quantity)
+    toast.success(`${product.name} added to cart!`)
+  }
+
+  const handlePurchase = (method: string) => {
+    if (!user) {
+      toast.error("Please log in to purchase")
+      return
+    }
+    // Redirect to checkout with params
+    const params = new URLSearchParams({
+      productId: product.id,
+      quantity: quantity.toString(),
+      method: method
+    })
+    window.location.href = `/checkout?${params.toString()}`
+  }
 
   const handleToggleSave = async () => {
     if (!user) {
@@ -54,22 +88,22 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
             {/* IMAGE GALLERY */}
             <div className="p-4 lg:p-8">
               <div className="aspect-square relative rounded-xl overflow-hidden bg-gray-50 border border-gray-100 mb-4 touch-pinch-zoom">
-                <Image src={activeImage} alt={product.name} fill className="object-cover" />
+                <Image src={activeImage} alt={product.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                 {discountPercent && (
                   <div className="absolute top-4 left-4 bg-red-600 text-white text-sm font-bold px-3 py-1.5 rounded-lg z-10">
                     {discountPercent}% OFF
                   </div>
                 )}
               </div>
-              {product.images?.length > 1 && (
+              {product.image_keys?.length > 1 && (
                 <div className="flex gap-4 overflow-x-auto pb-2 snap-x hide-scrollbar">
-                  {product.images.map((img: string, idx: number) => (
+                  {product.image_keys.map((img: string, idx: number) => (
                     <button 
                       key={idx}
                       onClick={() => setActiveImage(img)}
                       className={`relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${activeImage === img ? 'border-red-600 ring-2 ring-red-100' : 'border-gray-200 hover:border-gray-300'}`}
                     >
-                      <Image src={img} alt={`${product.name} ${idx}`} fill className="object-cover" />
+                      <Image src={img} alt={`${product.name} ${idx}`} fill sizes="96px" className="object-cover" />
                     </button>
                   ))}
                 </div>
@@ -82,7 +116,7 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">{product.name}</h1>
                 
                 <div className="flex items-center gap-4 mb-6">
-                  <Link href={`/b/${product.business.slug}`} className="flex items-center text-sm font-medium text-red-600 hover:text-red-700">
+                  <Link href={`/businesses/${product.business.slug}`} className="flex items-center text-sm font-medium text-red-600 hover:text-red-700">
                     <Store className="w-4 h-4 mr-1.5" />
                     {product.business.name}
                   </Link>
@@ -97,16 +131,16 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
 
                 <div className="flex items-end gap-3 mb-6 bg-gray-50 p-4 rounded-xl">
                   <span className="text-4xl font-extrabold text-gray-900">₨ {product.price.toLocaleString()}</span>
-                  {product.compare_price && (
-                    <span className="text-lg text-gray-400 line-through mb-1">₨ {product.compare_price.toLocaleString()}</span>
+                  {product.discount_price && (
+                    <span className="text-lg text-gray-400 line-through mb-1">₨ {product.discount_price.toLocaleString()}</span>
                   )}
                 </div>
 
                 <div className="mb-6">
-                  {product.stock > 0 ? (
+                  {product.stock_quantity > 0 ? (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-50 text-green-700 border border-green-100">
                       <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                      In Stock ({product.stock} {product.stock <= product.low_stock_threshold ? 'left - hurry!' : 'available'})
+                      In Stock ({product.stock_quantity} {product.stock_quantity <= (product.low_stock_threshold || 5) ? 'left - hurry!' : 'available'})
                     </span>
                   ) : (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-50 text-red-700 border border-red-100">
@@ -135,7 +169,7 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
                   <div className="flex items-center border border-gray-300 rounded-lg h-12 w-32">
                     <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-full flex items-center justify-center text-gray-600 hover:bg-gray-50 rounded-l-lg transition"><Minus className="w-4 h-4" /></button>
                     <div className="flex-1 h-full flex items-center justify-center font-bold text-gray-900 border-x border-gray-300">{quantity}</div>
-                    <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="w-10 h-full flex items-center justify-center text-gray-600 hover:bg-gray-50 rounded-r-lg transition"><Plus className="w-4 h-4" /></button>
+                    <button onClick={() => setQuantity(Math.min(product.stock_quantity || 99, quantity + 1))} className="w-10 h-full flex items-center justify-center text-gray-600 hover:bg-gray-50 rounded-r-lg transition"><Plus className="w-4 h-4" /></button>
                   </div>
                   <button onClick={handleToggleSave} className={`h-12 px-4 border ${isSaved ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'} rounded-lg font-medium flex items-center gap-2 transition`}>
                     <Heart className={`w-5 h-5 ${isSaved && 'fill-red-500'}`} />
@@ -143,27 +177,25 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {product.allows_esewa && (
-                    <button className="h-12 bg-[#60BB46] hover:bg-[#509f39] text-white font-bold rounded-lg transition shadow-sm drop-shadow">
-                      Pay with eSewa
-                    </button>
-                  )}
-                  {product.allows_khalti && (
-                    <button className="h-12 bg-[#5C2D91] hover:bg-[#4a2475] text-white font-bold rounded-lg transition shadow-sm drop-shadow">
-                      Pay with Khalti
-                    </button>
-                  )}
-                  {product.allows_cod && (
-                    <button className="h-12 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-lg transition col-span-2">
-                      Cash on Delivery
-                    </button>
-                  )}
-                  {product.allows_store_pickup && (
-                    <button className="h-12 bg-white border border-gray-300 text-gray-900 border-dashed hover:border-gray-400 font-bold rounded-lg transition col-span-2">
-                      Reserve & Visit Store
-                    </button>
-                  )}
+                <div className="grid grid-cols-1 gap-3">
+                  <button 
+                    onClick={handleAddToCart}
+                    disabled={product.stock_quantity <= 0}
+                    className="h-14 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition shadow-lg shadow-red-600/20 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:bg-gray-400 disabled:shadow-none"
+                  >
+                    <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition" />
+                    Add to Cart
+                  </button>
+                  
+                  <div className="mt-4 grid grid-cols-2 gap-2 opacity-60">
+                     <p className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Other Options Available at Checkout</p>
+                     <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 text-[10px] font-bold text-gray-500 uppercase">
+                        <Check className="w-3 h-3 text-green-500" /> eSewa / Khalti
+                     </div>
+                     <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 text-[10px] font-bold text-gray-500 uppercase">
+                        <Check className="w-3 h-3 text-green-500" /> Cash on Delivery
+                     </div>
+                  </div>
                 </div>
               </div>
 
@@ -195,11 +227,11 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
               </a>
             )}
             {product.business.whatsapp && (
-              <a href={`https://wa.me/977${product.business.whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#1EBE55] rounded-lg font-semibold transition border border-[#25D366]/20">
+              <a href={`https://wa.me/977${product.business.whatsapp}`} target="_blank" rel="noreferrer" className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#1EBE55] rounded-xl font-semibold transition border border-[#25D366]/20">
                 <MessageCircle className="w-5 h-5" /> WhatsApp
               </a>
             )}
-            <Link href={`/b/${product.business.slug}`} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition">
+            <Link href={`/businesses/${product.business.slug}`} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition">
               Store
             </Link>
           </div>
@@ -271,7 +303,7 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
         {/* RELATED PRODUCTS */}
         {relatedProducts.length > 0 && (
           <div className="mt-16 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">More from this business & category</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Similar Products you may also like</h2>
             <ProductGrid products={relatedProducts} isLoading={false} />
           </div>
         )}
@@ -285,7 +317,7 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
             <div className="text-xs text-gray-500 font-medium">Total</div>
             <div className="font-bold text-gray-900 text-lg leading-none">₨ {(product.price * quantity).toLocaleString()}</div>
           </div>
-          <button className="flex-1 bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-sm text-center">
+          <button onClick={() => handlePurchase('buy_now')} className="flex-1 bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-sm text-center">
             Buy Now
           </button>
         </div>

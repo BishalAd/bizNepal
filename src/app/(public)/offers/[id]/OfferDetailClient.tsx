@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { MapPin, Phone, MessageCircle, Store, Check, Info, AlertTriangle, X } from 'lucide-react'
+import { MapPin, Phone, MessageCircle, Store, Check, Info, AlertTriangle, X, FileText, ShoppingBag } from 'lucide-react'
 import CountdownTimer from '@/components/offers/CountdownTimer'
 import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
@@ -11,12 +11,10 @@ import { useAuth } from '@/hooks/useAuth'
 import dynamic from 'next/dynamic'
 
 // Leaflet map needs to be dynamically imported to avoid SSR issues
-const Map = dynamic(
-  () => import('react-leaflet').then((mod) => mod.MapContainer),
-  { ssr: false, loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-xl" /> }
-)
-const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false })
-const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false })
+const SimpleMap = dynamic(() => import('@/components/ui/SimpleMap'), { 
+  ssr: false, 
+  loading: () => <div className="h-64 bg-gray-100 animate-pulse rounded-xl" /> 
+})
 
 export default function OfferDetailClient({ offer, similarOffers }: any) {
   const { user } = useAuth()
@@ -95,7 +93,7 @@ export default function OfferDetailClient({ offer, similarOffers }: any) {
                 <span className="bg-white/20 backdrop-blur text-white text-xs font-semibold px-3 py-1 rounded-full">Ends soon</span>
               </div>
               <h1 className="text-3xl md:text-5xl font-extrabold leading-tight mb-2 drop-shadow-md">{offer.title}</h1>
-              <Link href={`/b/${offer.business.slug}`} className="flex items-center text-gray-300 hover:text-white transition font-medium">
+              <Link href={`/businesses/${offer.business.slug}`} className="flex items-center text-gray-300 hover:text-white transition font-medium">
                 <Store className="w-4 h-4 mr-2" /> {offer.business.name}
               </Link>
             </div>
@@ -158,12 +156,10 @@ export default function OfferDetailClient({ offer, similarOffers }: any) {
 
                {offer.business.latitude && offer.business.longitude && (
                  <div className="h-64 rounded-xl overflow-hidden border border-gray-200 z-0">
-                   {typeof window !== 'undefined' && (
-                      <Map center={[offer.business.latitude, offer.business.longitude]} zoom={15} style={{ height: '100%', width: '100%' }}>
-                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                        <Marker position={[offer.business.latitude, offer.business.longitude]} />
-                      </Map>
-                   )}
+                    <SimpleMap 
+                      center={[offer.business.latitude, offer.business.longitude]} 
+                      markerPosition={[offer.business.latitude, offer.business.longitude]} 
+                    />
                  </div>
                )}
             </div>
@@ -217,7 +213,7 @@ export default function OfferDetailClient({ offer, similarOffers }: any) {
               {similarOffers.map((sim: any) => (
                 <Link href={`/offers/${sim.id}`} key={sim.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden group">
                   <div className="h-32 bg-gray-100 relative">
-                    {sim.banner_url && <Image src={sim.banner_url} alt={sim.title} fill className="object-cover" />}
+                    {sim.banner_url && <Image src={sim.banner_url} alt={sim.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition duration-500" />}
                     {sim.discount_percent && <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">{sim.discount_percent}% OFF</div>}
                   </div>
                   <div className="p-4">

@@ -13,6 +13,15 @@ const LocationPickerMap = dynamic(() => import('@/components/dashboard/LocationP
   ssr: false, loading: () => <div className="h-[250px] bg-gray-100 animate-pulse rounded-xl"></div>
 })
 
+// --- Helper Components (Defined outside to prevent focal lose on re-render) ---
+const InputGroup = ({ label, children, description }: any) => (
+  <div className="mb-5">
+    <label className="block text-sm font-bold text-gray-900 mb-1.5">{label}</label>
+    {description && <p className="text-xs text-gray-500 mb-3">{description}</p>}
+    {children}
+  </div>
+)
+
 export default function EventFormClient({ business, districts }: any) {
   const supabase = createClient()
   const router = useRouter()
@@ -99,14 +108,6 @@ export default function EventFormClient({ business, districts }: any) {
     }
   }
 
-  const InputGroup = ({ label, children, description }: any) => (
-    <div className="mb-5">
-      <label className="block text-sm font-bold text-gray-900 mb-1.5">{label}</label>
-      {description && <p className="text-xs text-gray-500 mb-3">{description}</p>}
-      {children}
-    </div>
-  )
-
   return (
     <>
       <Toaster position="top-right" />
@@ -152,7 +153,7 @@ export default function EventFormClient({ business, districts }: any) {
                </InputGroup>
                <InputGroup label="Banner Image (16:9)">
                  <ImageUpload 
-                   aspectRatio="wide" bucket="events" folder={business.id} currentImageUrl={formData.banner_url}
+                   aspectRatio="wide" bucket="banners" folder={business.id} currentImageUrl={formData.banner_url}
                    onUploadSuccess={url => setFormData({...formData, banner_url: url})} 
                  />
                </InputGroup>

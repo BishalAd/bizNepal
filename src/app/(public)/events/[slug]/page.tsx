@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation'
 import EventDetailClient from './EventDetailClient'
 import { Metadata } from 'next'
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
   const supabase = await createClient()
-  const { data } = await supabase.from('events').select('title, description').eq('slug', params.slug).single()
+  const { data } = await supabase.from('events').select('title, description').eq('slug', slug).single()
   
   if (!data) return { title: 'Event Not Found | BizNepal' }
 
@@ -15,7 +16,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function EventDetailPage({ params }: { params: { slug: string } }) {
+export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
 
   const { data: event, error } = await supabase
@@ -25,7 +27,7 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
       organizer:profiles!events_organizer_id_fkey(full_name, avatar_url),
       business:businesses(name, slug, logo_url)
     `)
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   if (error || !event) {

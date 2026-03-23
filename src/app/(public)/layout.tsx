@@ -142,11 +142,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                           Admin Panel
                         </Link>
                       )}
-                      <Link href="/account/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                      <Link href="/dashboard/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                         <Bell className="w-4 h-4" />
                         My Orders
                       </Link>
-                      <Link href="/account/settings" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                      <Link href="/dashboard/profile" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                         <Settings className="w-4 h-4" />
                         Settings
                       </Link>

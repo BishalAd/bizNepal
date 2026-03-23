@@ -7,6 +7,15 @@ import toast, { Toaster } from 'react-hot-toast'
 import RichTextEditor from '@/components/dashboard/RichTextEditor'
 import { ArrowLeft, Save, Briefcase, Globe, MapPin, EyeOff } from 'lucide-react'
 
+// --- Helper Components (Defined outside to prevent focal lose on re-render) ---
+const InputGroup = ({ label, children, description }: any) => (
+  <div className="mb-5">
+    <label className="block text-sm font-bold text-gray-900 mb-1.5">{label}</label>
+    {description && <p className="text-xs text-gray-500 mb-3">{description}</p>}
+    {children}
+  </div>
+)
+
 export default function JobFormClient({ categories, districts, businessId }: any) {
   const supabase = createClient()
   const router = useRouter()
@@ -68,14 +77,6 @@ export default function JobFormClient({ categories, districts, businessId }: any
       setIsSaving(false)
     }
   }
-
-  const InputGroup = ({ label, children, description }: any) => (
-    <div className="mb-5">
-      <label className="block text-sm font-bold text-gray-900 mb-1.5">{label}</label>
-      {description && <p className="text-xs text-gray-500 mb-3">{description}</p>}
-      {children}
-    </div>
-  )
 
   return (
     <>

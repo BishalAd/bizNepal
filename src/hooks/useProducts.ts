@@ -54,15 +54,15 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
         query = query.lte('price', currentFilters.maxPrice)
       }
       if (currentFilters.inStock) {
-        query = query.gt('stock', 0)
+        query = query.gt('stock_quantity', 0)
       }
       if (currentFilters.search) {
         query = query.ilike('name', `%${currentFilters.search}%`)
       }
       if (currentFilters.paymentMethod && currentFilters.paymentMethod.length > 0) {
-        if (currentFilters.paymentMethod.includes('esewa')) query = query.eq('allows_esewa', true)
-        if (currentFilters.paymentMethod.includes('khalti')) query = query.eq('allows_khalti', true)
-        if (currentFilters.paymentMethod.includes('cod')) query = query.eq('allows_cod', true)
+        if (currentFilters.paymentMethod.includes('esewa')) query = query.eq('esewa_available', true)
+        if (currentFilters.paymentMethod.includes('khalti')) query = query.eq('khalti_available', true)
+        if (currentFilters.paymentMethod.includes('cod')) query = query.eq('cod_available', true)
       }
       
       // District filtering (requires filtering on business, which is done locally or via inner join if requested, but postgREST handles it awkwardly without proper foreign table filtering syntax unless we use inner joins. Supabase select supports inner join logic or we can filter locally if small scale. For scalability, we should use RPC or filter. But we can just use `!inner` on businesses)

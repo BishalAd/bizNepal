@@ -66,6 +66,7 @@ export default function LocationPickerMap({ position, onChange }: LocationPicker
   return (
     <div className="h-[300px] w-full rounded-2xl overflow-hidden border border-gray-200 z-0 relative">
       <MapContainer 
+        key={`${center[0]}-${center[1]}`}
         center={center} 
         zoom={13} 
         scrollWheelZoom={true} 
