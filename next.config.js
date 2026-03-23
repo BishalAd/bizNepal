@@ -1,41 +1,35 @@
-/** @type {import('next').NextConfig} */
-const withPWA = require("@ducanh2912/next-pwa").default({
+const withPWA = require("next-pwa")({
   dest: "public",
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
-  swcMinify: true,
   disable: process.env.NODE_ENV === "development",
-  workboxOptions: {
-    disableDevLogs: true,
-    runtimeCaching: [
-      // Cache Supabase API GET requests
-      {
-        urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
-        handler: 'NetworkFirst',
-        options: {
-          cacheName: 'supabase-api-cache',
-          expiration: {
-            maxEntries: 100,
-            maxAgeSeconds: 60 * 60 * 24 // 24 hours
-          },
-          networkTimeoutSeconds: 10
-        }
-      },
-      // Cache Supabase Storage Images
-      {
-        urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/public\/.*/i,
-        handler: 'CacheFirst',
-        options: {
-          cacheName: 'supabase-image-cache',
-          expiration: {
-            maxEntries: 200,
-            maxAgeSeconds: 60 * 60 * 24 * 7, // 7 Days
-          }
+  register: true,
+  skipWaiting: true,
+  runtimeCaching: [
+    // Cache Supabase API GET requests
+    {
+      urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'supabase-api-cache',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 60 * 60 * 24 // 24 hours
+        },
+        networkTimeoutSeconds: 10
+      }
+    },
+    // Cache Supabase Storage Images
+    {
+      urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/public\/.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'supabase-image-cache',
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 60 * 60 * 24 * 7, // 7 Days
         }
       }
-    ]
-  }
+    }
+  ]
 });
 
 const nextConfig = {
