@@ -113,6 +113,18 @@ export default function AdminClient({
     }
   }
 
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Delete this category permanently?')) return
+    try {
+      const { error } = await supabase.from('categories').delete().eq('id', id)
+      if (error) throw error
+      setCategories((prev: any) => prev.filter((c: any) => c.id !== id))
+      toast.success('Category deleted.')
+    } catch {
+      toast.error('Failed to delete category.')
+    }
+  }
+
   // Filtering logic
   const filteredUsers = (users || []).filter((u:any) => 
     u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
