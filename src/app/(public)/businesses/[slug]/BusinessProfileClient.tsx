@@ -162,7 +162,7 @@ export default function BusinessProfileClient({ business, tabsData }: any) {
                         {tabsData.offers.map((sim: any) => (
                           <Link href={`/offers/${sim.id}`} key={sim.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden group">
                             <div className="h-40 bg-gray-100 relative">
-                              {sim.banner_url && <Image src={sim.banner_url} alt={sim.title} fill className="object-cover group-hover:scale-105 transition duration-500" />}
+                              {sim.banner_url && <Image src={sim.banner_url} alt={sim.title} fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover group-hover:scale-105 transition duration-500" />}
                               {sim.discount_percent && <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">{sim.discount_percent}% OFF</div>}
                             </div>
                             <div className="p-4">

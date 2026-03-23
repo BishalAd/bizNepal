@@ -79,7 +79,7 @@ export default function OfferDetailClient({ offer, similarOffers }: any) {
       {/* Hero Banner */}
       <div className="w-full h-[40vh] md:h-[50vh] bg-gray-900 relative">
         {offer.banner_url ? (
-          <Image src={offer.banner_url} alt={offer.title} fill className="object-cover opacity-80" />
+          <Image src={offer.banner_url} alt={offer.title} fill sizes="100vw" className="object-cover opacity-80" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-white/30 text-2xl font-bold">Offer Banner</div>
         )}

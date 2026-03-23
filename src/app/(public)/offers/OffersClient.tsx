@@ -120,7 +120,7 @@ export default function OffersClient({ initialOffers, categories, searchParams }
                   <div key={offer.id} className="bg-white rounded-2xl border border-red-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition">
                     <div className="h-48 bg-gray-100 relative overflow-hidden">
                       {offer.banner_url ? (
-                        <Image src={offer.banner_url} alt={offer.title} fill className="object-cover group-hover:scale-105 transition duration-500" />
+                        <Image src={offer.banner_url} alt={offer.title} fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover group-hover:scale-105 transition duration-500" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">Offer Banner</div>
                       )}

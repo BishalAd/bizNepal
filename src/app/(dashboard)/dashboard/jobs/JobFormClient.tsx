@@ -24,7 +24,7 @@ export default function JobFormClient({ categories, districts, businessId }: any
   const [formData, setFormData] = useState({
     title: '',
     category_id: '',
-    job_type: 'full_time',
+    job_type: 'full-time',
     location_type: 'on_site',
     district: '',
     salary_min: '',
@@ -133,8 +133,8 @@ export default function JobFormClient({ categories, districts, businessId }: any
              <div className="grid sm:grid-cols-2 gap-6 pb-6 border-b border-gray-100">
                <InputGroup label="Employment Type *">
                  <select value={formData.job_type} onChange={e=>setFormData({...formData, job_type: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-semibold text-gray-800 focus:ring-2 focus:ring-purple-500 outline-none">
-                   <option value="full_time">Full-time</option>
-                   <option value="part_time">Part-time</option>
+                   <option value="full-time">Full-time</option>
+                   <option value="part-time">Part-time</option>
                    <option value="contract">Contract</option>
                    <option value="freelance">Freelance</option>
                    <option value="internship">Internship</option>

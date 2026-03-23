@@ -38,7 +38,7 @@ export default function EventDetailClient({ event, similarEvents }: any) {
       {/* Hero Banner */}
       <div className="w-full h-[40vh] md:h-[50vh] bg-purple-900 relative">
         {event.banner_url ? (
-          <Image src={event.banner_url} alt={event.title} fill className="object-cover opacity-80" />
+          <Image src={event.banner_url} alt={event.title} fill sizes="100vw" className="object-cover opacity-80" />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-white/30 text-2xl font-bold bg-purple-900">
              <Calendar className="w-16 h-16 mb-4 opacity-50" />

@@ -16,7 +16,7 @@ export default function EventCard({ event }: { event: any }) {
       {/* Banner */}
       <div className="h-48 bg-gray-100 relative overflow-hidden">
         {event.banner_url ? (
-          <Image src={event.banner_url} alt={event.title} fill className="object-cover group-hover:scale-105 transition duration-500" />
+          <Image src={event.banner_url} alt={event.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition duration-500" />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50">
             <Calendar className="w-10 h-10 mb-2 opacity-50" />

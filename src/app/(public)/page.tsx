@@ -103,7 +103,7 @@ export default async function HomePage() {
             {featuredBusinesses?.map((biz) => (
               <div key={biz.id} className="min-w-[280px] sm:min-w-[320px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden snap-start group hover:shadow-md transition">
                 <div className="h-24 bg-red-800 relative">
-                  {biz.cover_url && <Image src={biz.cover_url} alt="Cover" fill className="object-cover opacity-80" />}
+                  {biz.cover_url && <Image src={biz.cover_url} alt="Cover" fill sizes="(max-width: 768px) 100vw, 320px" className="object-cover opacity-80" />}
                 </div>
                 <div className="p-5 pt-0 relative">
                   <div className="w-16 h-16 bg-white rounded-xl shadow-sm border border-gray-100 -mt-8 mb-3 overflow-hidden p-1 relative z-10">
@@ -152,7 +152,7 @@ export default async function HomePage() {
                 <Link href={`/offers/${offer.id}`} key={offer.id} className="flex bg-white rounded-xl border border-red-100 shadow-sm hover:shadow-md transition overflow-hidden">
                   <div className="w-32 bg-gray-100 flex-shrink-0 relative">
                     {offer.banner_url ? (
-                      <Image src={offer.banner_url} alt={offer.title} fill className="object-cover" />
+                      <Image src={offer.banner_url} alt={offer.title} fill sizes="128px" className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
                     )}
@@ -211,7 +211,7 @@ export default async function HomePage() {
               <Link href={`/events/${ev.slug}`} key={ev.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden group hover:shadow-md transition">
                 <div className="h-40 bg-gray-100 relative">
                   {ev.banner_url ? (
-                    <Image src={ev.banner_url} alt={ev.title} fill className="object-cover" />
+                    <Image src={ev.banner_url} alt={ev.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">Event Banner</div>
                   )}
