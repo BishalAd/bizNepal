@@ -1,0 +1,213 @@
+{
+  "name": "BizNepal: Activity Summary (Every 2 Hours)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "n2-schedule",
+      "name": "Every 2 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://biz-nepal.vercel.app/api/bot/get-subscribed-businesses",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "id": "n2-fetch-biz",
+      "name": "Fetch Businesses",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "BizNepal Webhook Secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "businesses",
+        "options": {}
+      },
+      "id": "n2-extract",
+      "name": "Extract Businesses Array",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        620,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "n2-split",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        840,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://biz-nepal.vercel.app/api/activity-summary",
+        "authentication": "headerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"businessId\": \"{{ $json.id }}\",\n  \"period\": \"2h\"\n}",
+        "options": {}
+      },
+      "id": "n2-fetch-summary",
+      "name": "Fetch Activity Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1060,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "BizNepal Webhook Secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "has-activity",
+              "leftValue": "={{ $json.orders > 0 || $json.applications > 0 || $json.bookings > 0 || $json.reviews > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "n2-if-activity",
+      "name": "Has Any Activity?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Split In Batches').item.json.telegram_chat_id }}",
+        "text": "=📊 *BizNepal Summary — Last 2 Hours*\n🏢 {{ $('Split In Batches').item.json.name }}\n\n💰 Orders: *{{ $json.orders || 0 }}* (₨ {{ $json.revenue || 0 }})\n👔 New Applications: *{{ $json.applications || 0 }}*\n🎟 Event Bookings: *{{ $json.bookings || 0 }}*\n⭐ New Reviews: *{{ $json.reviews || 0 }}*\n\n🔗 https://biz-nepal.vercel.app/dashboard",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n2-tg-summary",
+      "name": "Telegram: Send Summary",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1500,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 2 Hours": {
+      "main": [
+        [
+          {
+            "node": "Fetch Businesses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Businesses": {
+      "main": [
+        [
+          {
+            "node": "Extract Businesses Array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Businesses Array": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "Fetch Activity Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Activity Summary": {
+      "main": [
+        [
+          {
+            "node": "Has Any Activity?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Any Activity?": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Send Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  }
+}

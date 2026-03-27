@@ -32,7 +32,8 @@ export default function OfferFormClient({ products, business }: any) {
     offer_price: '',
     discount_percent: '',
     max_quantity: '',
-    start_date: new Date().toISOString().slice(0, 16),
+    start_date: '', // Keep for internal form handling if needed, or rename to matches
+    starts_at: new Date().toISOString().slice(0, 16),
     ends_at: '',
     banner_url: '',
     terms: ''
@@ -87,7 +88,7 @@ export default function OfferFormClient({ products, business }: any) {
         throw new Error("Please fill completely (Title, Offer Price, and End Date are required)")
       }
 
-      if (new Date(formData.ends_at) <= new Date(formData.start_date)) {
+      if (new Date(formData.ends_at) <= new Date(formData.starts_at)) {
         throw new Error("End date must be after start date")
       }
 
@@ -99,7 +100,7 @@ export default function OfferFormClient({ products, business }: any) {
         offer_price: Number(formData.offer_price),
         discount_percent: Number(formData.discount_percent) || null,
         max_quantity: formData.max_quantity ? Number(formData.max_quantity) : null,
-        start_date: new Date(formData.start_date).toISOString(),
+        starts_at: new Date(formData.starts_at).toISOString(),
         ends_at: new Date(formData.ends_at).toISOString(),
         banner_url: formData.banner_url,
         terms_html: formData.terms,
@@ -195,7 +196,7 @@ export default function OfferFormClient({ products, business }: any) {
 
                 <div className="grid sm:grid-cols-2 gap-6">
                    <InputGroup label="Start Date & Time *">
-                     <input required type="datetime-local" value={formData.start_date} onChange={e=>setFormData({...formData, start_date: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-semibold focus:ring-2 focus:ring-blue-500 outline-none" />
+                     <input required type="datetime-local" value={formData.starts_at} onChange={e=>setFormData({...formData, starts_at: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-semibold focus:ring-2 focus:ring-blue-500 outline-none" />
                    </InputGroup>
                    <InputGroup label="End Date & Time *">
                      <input required type="datetime-local" value={formData.ends_at} onChange={e=>setFormData({...formData, ends_at: e.target.value})} className="w-full bg-red-50/50 border border-red-200 rounded-xl px-4 py-3 font-bold text-red-800 focus:ring-2 focus:ring-red-500 outline-none" />

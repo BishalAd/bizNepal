@@ -9,6 +9,29 @@ Here are the complete JSON configurations for the 7 requested n8n workflows.
 4. Paste the JSON block for the corresponding workflow directly into the editor.
 5. Update your credentials (e.g., WhatsApp API, Email SMTP, Google Sheets OAuth) inside each node after importing.
 
+## Setup & API Troubleshooting
+
+The workflows below depend on internal API endpoints. If you encounter issues (e.g., 404 errors), please verify the following:
+
+### 1. Project Structure & API Paths
+All API routes are located in the `biznepal/src/app/api/` directory. When deploying to Vercel, ensure the `biznepal` folder is the root of your deployment for the URLs below to work.
+
+- **Businesses Route:** `/api/bot/get-subscribed-businesses`
+  - *Internal Path:* `src/app/api/bot/get-subscribed-businesses/route.ts`
+  - *Method:* `GET` (No query parameters required)
+- **Activity Summary:** `/api/activity-summary`
+  - *Internal Path:* `src/app/api/activity-summary/route.ts`
+  - *Method:* `POST` (Requires JSON body: `{ "businessId": "UUID", "period": "2h|6h|daily" }`)
+
+### 2. Required Parameters & Authentication
+- **Headers:** All requests to these endpoints require the `x-webhook-secret` header, which should match your `WEBHOOK_SECRET` environment variable.
+- **Business Fetching (Supabase Filters):** If you are manually fetching businesses, these are the core filters used in the system:
+  - `search`: String (partial name match)
+  - `category`: UUID
+  - `district`: UUID
+  - `verifiedOnly`: Boolean
+  - `rating`: Number (returns results ≥ this value)
+
 ---
 
 ### Workflow 1: New Order Notification
@@ -51,57 +74,43 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/AC_XXXXXXXXXXXXXXXX/Messages.json",
-        "authentication": "basicAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "Content-Type", "value": "application/x-www-form-urlencoded" }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$json.body.businessWhatsapp}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "🛍️ New COD Order!\nProduct: {{$json.body.items[0].title}}\nAmount: ₨ {{$json.body.total}}\nCustomer: {{$json.body.customerName}} {{$json.body.customerPhone}}\nDeliver to: {{$json.body.customerAddress.address}}" }
-          ]
-        },
-        "options": {}
+        "chatId": "={{$json.body.businessTelegramChatId}}",
+        "text": "=🛍️ *New COD Order!*\n*Product:* {{$json.body.items[0].title}}\n*Amount:* ₨ {{$json.body.total}}\n*Customer:* {{$json.body.customerName}} {{$json.body.customerPhone}}\n*Deliver to:* {{$json.body.customerAddress.address}}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "3a-whatsapp-cod",
-      "name": "WhatsApp (COD)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [700, 200]
+      "id": "3a-telegram-cod",
+      "name": "Telegram (COD)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [700, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/AC_XXXXXXXXXXXXXXXX/Messages.json",
-        "authentication": "basicAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "Content-Type", "value": "application/x-www-form-urlencoded" }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$json.body.businessWhatsapp}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "✅ New Paid Order!\nProduct: {{$json.body.items[0].title}}\nAmount: ₨ {{$json.body.total}} (paid via {{$json.body.paymentMethod}})\nCustomer: {{$json.body.customerName}} {{$json.body.customerPhone}}" }
-          ]
-        },
-        "options": {}
+        "chatId": "={{$json.body.businessTelegramChatId}}",
+        "text": "=✅ *New Paid Order!*\n*Product:* {{$json.body.items[0].title}}\n*Amount:* ₨ {{$json.body.total}} (paid via {{$json.body.paymentMethod}})\n*Customer:* {{$json.body.customerName}} {{$json.body.customerPhone}}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "3b-whatsapp-paid",
-      "name": "WhatsApp (Paid)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [700, 400]
+      "id": "3b-telegram-paid",
+      "name": "Telegram (Paid)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [700, 400],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     },
     {
       "parameters": {
@@ -165,21 +174,21 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
       "main": [
         [
           {
-            "node": "WhatsApp (COD)",
+            "node": "3a-telegram-cod",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "WhatsApp (Paid)",
+            "node": "3b-telegram-paid",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "WhatsApp (COD)": {
+    "3a-telegram-cod": {
       "main": [
         [
           {
@@ -190,7 +199,7 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
         ]
       ]
     },
-    "WhatsApp (Paid)": {
+    "3b-telegram-paid": {
       "main": [
         [
           {
@@ -241,48 +250,64 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "name": "Every 2 Hours",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
-      "position": [180, 240]
+      "position": [200, 300]
     },
     {
       "parameters": {
-        "url": "http://localhost:3000/api/mock/get-subscribed-businesses",
+        "url": "https://biz-nepal.vercel.app/api/bot/get-subscribed-businesses",
+        "authentication": "headerAuth",
         "options": {}
       },
       "id": "2-get-businesses",
       "name": "Fetch Businesses",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [400, 240]
+      "position": [420, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WEBHOOK_SECRET",
+          "name": "Header Auth"
+        }
+      }
     },
     {
-      "parameters": {},
-      "id": "3-loop",
-      "name": "Loop Over Businesses",
-      "type": "n8n-nodes-base.loop",
+      "parameters": {
+        "batchSize": 1
+      },
+      "id": "3-split-batches",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
-      "position": [620, 240]
+      "position": [640, 300]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/activity-summary",
+        "url": "https://biz-nepal.vercel.app/api/activity-summary",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"businessId\": \"{{$json.id}}\",\n  \"period\": \"2h\"\n}",
+        "jsonBody": "={\n  \"businessId\": \"{{ $json.id }}\",\n  \"period\": \"2h\"\n}",
         "options": {}
       },
       "id": "4-get-summary",
       "name": "Fetch Summary Data",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [840, 240]
+      "position": [860, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WEBHOOK_SECRET",
+          "name": "Header Auth"
+        }
+      }
     },
     {
       "parameters": {
         "conditions": {
           "boolean": [
             {
-              "value1": "={{$json.orders > 0 || $json.applications > 0}}",
+              "value1": "={{ $json.orders > 0 || $json.applications > 0 || $json.bookings > 0 || $json.reviews > 0 }}",
+              "operation": "equal",
               "value2": true
             }
           ]
@@ -292,34 +317,27 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "name": "Has Activity?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [1060, 240]
+      "position": [1080, 300]
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/AC_XXXXXXXXXXXXXXXX/Messages.json",
-        "authentication": "basicAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "Content-Type", "value": "application/x-www-form-urlencoded" }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$node[\"Loop Over Businesses\"].json.whatsapp_number}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "📊 BizNepal Summary (Last 2 hours)\n💰 Orders: {{$json.orders}} (₨ {{$json.revenue}})\n👔 New Applications: {{$json.applications}}\n🎟️ Event Bookings: {{$json.bookings}}\n⭐ New Reviews: {{$json.reviews}}" }
-          ]
-        },
-        "options": {}
+        "chatId": "={{ $node[\"Split In Batches\"].json[\"telegram_chat_id\"] }}",
+        "text": "=📊 *BizNepal Summary (Last 2 hours)*\n\n💰 *Orders:* {{ $json.orders || 0 }} (₨ {{ $json.revenue || 0 }})\n👔 *Applications:* {{ $json.applications || 0 }}\n🎟 *Bookings:* {{ $json.bookings || 0 }}\n⭐️ *Reviews:* {{ $json.reviews || 0 }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "6a-whatsapp-summary",
-      "name": "WhatsApp Summary",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [1300, 160]
+      "id": "6-telegram-summary",
+      "name": "Telegram Summary",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1300, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     }
   ],
   "connections": {
@@ -338,14 +356,14 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "main": [
         [
           {
-            "node": "Loop Over Businesses",
+            "node": "Split In Batches",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Loop Over Businesses": {
+    "Split In Batches": {
       "main": [
         [
           {
@@ -371,25 +389,25 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "main": [
         [
           {
-            "node": "WhatsApp Summary",
+            "node": "Telegram Summary",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Loop Over Businesses",
+            "node": "Split In Batches",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "WhatsApp Summary": {
+    "Telegram Summary": {
       "main": [
         [
           {
-            "node": "Loop Over Businesses",
+            "node": "Split In Batches",
             "type": "main",
             "index": 0
           }
@@ -422,23 +440,23 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/-/Messages.json",
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$json.body.businessWhatsapp}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "👔 New Job Application!\nPosition: {{$json.body.jobTitle}}\nApplicant: {{$json.body.applicantName}}\nPhone: {{$json.body.applicantPhone}}\nCV: {{$json.body.cvUrl}}" }
-          ]
-        },
-        "options": {}
+        "chatId": "={{$json.body.businessTelegramChatId}}",
+        "text": "=👔 *New Job Application!*\n*Position:* {{$json.body.jobTitle}}\n*Applicant:* {{$json.body.applicantName}}\n*Phone:* {{$json.body.applicantPhone}}\n*CV:* {{$json.body.cvUrl}}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "2-whatsapp-biz",
-      "name": "WA: Notify Business",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [440, 200]
+      "id": "2-telegram-biz",
+      "name": "Telegram: Notify Business",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [440, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     },
     {
       "parameters": {
@@ -456,23 +474,23 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/-/Messages.json",
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$json.body.applicantPhone}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "✅ Application Received!\nYou applied for: {{$json.body.jobTitle}} at {{$json.body.businessName}}. We'll review your application within 5-7 business days." }
-          ]
-        },
-        "options": {}
+        "chatId": "={{$json.body.applicantTelegramChatId}}",
+        "text": "=✅ *Application Received!*\nYou applied for: *{{$json.body.jobTitle}}* at *{{$json.body.businessName}}*. We'll review your application within 5-7 business days.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "4-whatsapp-applicant",
-      "name": "WA: Notify Applicant",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [880, 200]
+      "id": "4-telegram-applicant",
+      "name": "Telegram: Notify Applicant",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [880, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     }
   ],
   "connections": {
@@ -480,14 +498,14 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "main": [
         [
           {
-            "node": "WA: Notify Business",
+            "node": "Telegram: Notify Business",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "WA: Notify Business": {
+    "Telegram: Notify Business": {
       "main": [
         [
           {
@@ -502,7 +520,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "main": [
         [
           {
-            "node": "WA: Notify Applicant",
+            "node": "Telegram: Notify Applicant",
             "type": "main",
             "index": 0
           }
@@ -546,43 +564,43 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/-/Messages.json",
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$node[\"Webhook Trigger\"].json.body.attendeePhone}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "🎟️ Booking Confirmed!\nEvent: {{$node[\"Webhook Trigger\"].json.body.eventTitle}}\nSeats: {{$node[\"Webhook Trigger\"].json.body.seats}}\nTicket Code: {{$node[\"Webhook Trigger\"].json.body.ticketCode}}\nShow this code at entry." }
-          ]
-        },
-        "options": {}
+        "chatId": "={{$node[\"Webhook Trigger\"].json.body.attendeeTelegramChatId}}",
+        "text": "=🎟️ *Booking Confirmed!*\n*Event:* {{$node[\"Webhook Trigger\"].json.body.eventTitle}}\n*Seats:* {{$node[\"Webhook Trigger\"].json.body.seats}}\n*Ticket Code:* {{$node[\"Webhook Trigger\"].json.body.ticketCode}}\nShow this code at entry.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "3-whatsapp-attendee",
-      "name": "WA: Notify Attendee",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [640, 260]
+      "id": "3-telegram-attendee",
+      "name": "Telegram: Notify Attendee",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [640, 260],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/-/Messages.json",
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$node[\"Webhook Trigger\"].json.body.organizerWhatsapp}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "✅ New Booking for {{$node[\"Webhook Trigger\"].json.body.eventTitle}}\nAttendee: {{$node[\"Webhook Trigger\"].json.body.attendeeName}} ({{$node[\"Webhook Trigger\"].json.body.seats}} seats)" }
-          ]
-        },
-        "options": {}
+        "chatId": "={{$node[\"Webhook Trigger\"].json.body.organizerTelegramChatId}}",
+        "text": "=✅ *New Booking for {{$node[\"Webhook Trigger\"].json.body.eventTitle}}*\n*Attendee:* {{$node[\"Webhook Trigger\"].json.body.attendeeName}} ({{$node[\"Webhook Trigger\"].json.body.seats}} seats)",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "4-whatsapp-organizer",
-      "name": "WA: Notify Organizer",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [860, 260]
+      "id": "4-telegram-organizer",
+      "name": "Telegram: Notify Organizer",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [860, 260],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     }
   ],
   "connections": {
@@ -590,10 +608,10 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "main": [ [ { "node": "Generate QR Link", "type": "main", "index": 0 } ] ]
     },
     "Generate QR Link": {
-      "main": [ [ { "node": "WA: Notify Attendee", "type": "main", "index": 0 } ] ]
+      "main": [ [ { "node": "Telegram: Notify Attendee", "type": "main", "index": 0 } ] ]
     },
-    "WA: Notify Attendee": {
-      "main": [ [ { "node": "WA: Notify Organizer", "type": "main", "index": 0 } ] ]
+    "Telegram: Notify Attendee": {
+      "main": [ [ { "node": "Telegram: Notify Organizer", "type": "main", "index": 0 } ] ]
     }
   }
 }
@@ -621,7 +639,8 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     },
     {
       "parameters": {
-        "url": "http://localhost:3000/api/mock/supabase/offers-expiring",
+        "url": "https://biz-nepal.vercel.app/api/webhooks/offer-expiry",
+        "method": "POST",
         "options": {}
       },
       "id": "2-get-offers",
@@ -640,30 +659,30 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/-/Messages.json",
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$json.businessWhatsapp}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "⏰ Offer Expiring Soon!\nYour offer '{{$json.offerTitle}}' expires in exactly 2 hours.\n{{$json.grabbed}} customers have grabbed it.\nExtend it from your dashboard!" }
-          ]
-        },
-        "options": {}
+        "chatId": "={{$json.businessTelegramChatId}}",
+        "text": "=⏰ *Offer Expiring Soon!*\nYour offer '*{{$json.offerTitle}}*' expires in exactly 2 hours.\n*{{$json.grabbed}}* customers have grabbed it. Extend it from your dashboard!",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "4-whatsapp-biz",
-      "name": "WA: Notify Owner",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [860, 300]
+      "id": "4-telegram-biz",
+      "name": "Telegram: Notify Owner",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [860, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     }
   ],
   "connections": {
     "Every 30 mins": { "main": [ [ { "node": "Fetch Expiring Offers", "type": "main", "index": 0 } ] ] },
     "Fetch Expiring Offers": { "main": [ [ { "node": "Loop Over Offers", "type": "main", "index": 0 } ] ] },
-    "Loop Over Offers": { "main": [ [ { "node": "WA: Notify Owner", "type": "main", "index": 0 } ] ] },
-    "WA: Notify Owner": { "main": [ [ { "node": "Loop Over Offers", "type": "main", "index": 0 } ] ] }
+    "Loop Over Offers": { "main": [ [ { "node": "Telegram: Notify Owner", "type": "main", "index": 0 } ] ] },
+    "Telegram: Notify Owner": { "main": [ [ { "node": "Loop Over Offers", "type": "main", "index": 0 } ] ] }
   }
 }
 ```
@@ -708,51 +727,51 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/-/Messages.json",
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$node[\"Webhook Trigger\"].json.body.businessWhatsapp}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "⚠️ New Low-Rating Review!\n{{$node[\"Webhook Trigger\"].json.body.reviewerName}} gave you {{$node[\"Webhook Trigger\"].json.body.rating}}⭐\n'{{$node[\"Webhook Trigger\"].json.body.content}}'\nRespond promptly to handle customer resolution." }
-          ]
-        },
-        "options": {}
+        "chatId": "={{$node[\"Webhook Trigger\"].json.body.businessTelegramChatId}}",
+        "text": "=⚠️ *New Low-Rating Review!*\n{{$node[\"Webhook Trigger\"].json.body.reviewerName}} gave you *{{$node[\"Webhook Trigger\"].json.body.rating}}⭐*\n'{{$node[\"Webhook Trigger\"].json.body.content}}'\nRespond promptly to handle customer resolution.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "3a-whatsapp-bad",
-      "name": "WA: Urgent Alert",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [640, 200]
+      "id": "3a-telegram-bad",
+      "name": "Telegram: Urgent Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [640, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/-/Messages.json",
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$node[\"Webhook Trigger\"].json.body.businessWhatsapp}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "🌟 New Positive Review!\n{{$node[\"Webhook Trigger\"].json.body.reviewerName}} gave you {{$node[\"Webhook Trigger\"].json.body.rating}}⭐\n'{{$node[\"Webhook Trigger\"].json.body.content}}'" }
-          ]
-        },
-        "options": {}
+        "chatId": "={{$node[\"Webhook Trigger\"].json.body.businessTelegramChatId}}",
+        "text": "=🌟 *New Positive Review!*\n{{$node[\"Webhook Trigger\"].json.body.reviewerName}} gave you *{{$node[\"Webhook Trigger\"].json.body.rating}}⭐*\n'{{$node[\"Webhook Trigger\"].json.body.content}}'",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "3b-whatsapp-good",
-      "name": "WA: Positive Alert",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [640, 400]
+      "id": "3b-telegram-good",
+      "name": "Telegram: Positive Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [640, 400],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     }
   ],
   "connections": {
     "Webhook Trigger": { "main": [ [ { "node": "Is Critical? (≤2)", "type": "main", "index": 0 } ] ] },
     "Is Critical? (≤2)": {
       "main": [
-        [ { "node": "WA: Urgent Alert", "type": "main", "index": 0 } ],
-        [ { "node": "WA: Positive Alert", "type": "main", "index": 0 } ]
+        [ { "node": "Telegram: Urgent Alert", "type": "main", "index": 0 } ],
+        [ { "node": "Telegram: Positive Alert", "type": "main", "index": 0 } ]
       ]
     }
   }
@@ -809,29 +828,206 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     },
     {
       "parameters": {
-        "url": "https://api.twilio.com/2010-04-01/Accounts/-/Messages.json",
-        "sendBody": true,
-        "specifyBody": "keypair",
-        "bodyParameters": {
-          "parameters": [
-            { "name": "To", "value": "whatsapp:+{{$node[\"Webhook Trigger\"].json.body.userPhone}}" },
-            { "name": "From", "value": "whatsapp:+14155238886" },
-            { "name": "Body", "value": "👋 Welcome to BizNepal!\nStart by completing your business profile to attract customers to your dashboard.\nNeed help? WhatsApp us back on this number: +977-9876543210" }
-          ]
-        },
-        "options": {}
+        "chatId": "={{$node[\"Webhook Trigger\"].json.body.telegramChatId}}",
+        "text": "=👋 *Welcome to BizNepal!*\n\nStart by completing your business profile to attract customers to your dashboard. Need help? Message us right here!\n\n🔗 [Open Dashboard](https://biz-nepal.vercel.app/dashboard)",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "4-whatsapp-welcome",
-      "name": "WA: Send Welcome msg",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [880, 280]
+      "id": "4-telegram-welcome",
+      "name": "Telegram: Send Welcome msg",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [880, 280],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
     }
   ],
   "connections": {
     "Webhook Trigger": { "main": [ [ { "node": "Is Business Account?", "type": "main", "index": 0 } ] ] },
     "Is Business Account?": { "main": [ [ { "node": "Wait 10 Minutes", "type": "main", "index": 0 } ] ] },
-    "Wait 10 Minutes": { "main": [ [ { "node": "WA: Send Welcome msg", "type": "main", "index": 0 } ] ] }
+    "Wait 10 Minutes": { "main": [ [ { "node": "Telegram: Send Welcome msg", "type": "main", "index": 0 } ] ] }
   }
 }
 ```
+
+---
+
+### Workflow 8: Telegram /start Handler
+
+This workflow handles the `/start TOKEN` command from the bot. It extracts the token, calls the BizNepal API to link the chat ID, and sends a confirmation message.
+
+```json
+{
+  "name": "BizNepal: Telegram /start Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "1-webhook",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "BizNepal Bot",
+          "name": "Telegram API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.message.text}}",
+              "operation": "startsWith",
+              "value2": "/start"
+            }
+          ]
+        }
+      },
+      "id": "2-if-start",
+      "name": "Is /start?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "token",
+              "value": "={{$json.message.text.split(' ')[1]}}"
+            },
+            {
+              "name": "chatId",
+              "value": "={{$json.message.chat.id}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3-extract-data",
+      "name": "Extract Token & ChatId",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [640, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://biz-nepal.vercel.app/api/bot/link-telegram",
+        "authentication": "headerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"token\": \"{{$json.token}}\",\n  \"chatId\": {{$json.chatId}}\n}",
+        "options": {}
+      },
+      "id": "4-api-link",
+      "name": "Link Telegram API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [860, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "WEBHOOK_SECRET",
+          "name": "Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$node[\"Telegram Trigger\"].json.message.chat.id}}",
+        "text": "=✅ *Connection Successful!*\n\nYour Telegram account is now linked to *{{$json.businessName}}* on BizNepal. You will receive real-time notifications for orders, jobs, and reviews right here.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "5-success-msg",
+      "name": "Success Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1080, 200]
+    },
+    {
+      "parameters": {
+        "chatId": "={{$json.message.chat.id}}",
+        "text": "👋 *Welcome to BizNepal Notifications!*\n\nTo connect your business account, please visit your dashboard and click **'Connect Telegram'**.\n\n🔗 [Open Dashboard](https://biz-nepal.vercel.app/dashboard/notification-settings)",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "6-guide-msg",
+      "name": "Guide Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [640, 400]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is /start?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is /start?": {
+      "main": [
+        [
+          {
+            "node": "Extract Token & ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guide Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Token & ChatId": {
+      "main": [
+        [
+          {
+            "node": "Link Telegram API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link Telegram API": {
+      "main": [
+        [
+          {
+            "node": "Success Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
+```
+

@@ -4,6 +4,13 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(request: Request) {
   try {
     const { businessId, period } = await request.json()
+    
+    // 1. Verify Secret
+    const authHeader = request.headers.get('x-webhook-secret')
+    if (authHeader !== process.env.WEBHOOK_SECRET && process.env.NODE_ENV !== 'development') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = await createClient()
 
     // Calculate time offset based on period

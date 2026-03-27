@@ -1,0 +1,220 @@
+{
+  "name": "BizNepal: New Order Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-order",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "n1-webhook",
+      "name": "Webhook: New Order",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"received\": true}",
+        "options": {}
+      },
+      "id": "n1-respond",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        400,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "cod-check",
+              "leftValue": "={{ $json.body.paymentMethod }}",
+              "rightValue": "cod",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "n1-if-cod",
+      "name": "Is COD?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.body.businessTelegramChatId }}",
+        "text": "=🛍️ *New COD Order!*\n\n📦 *Product:* {{ $json.body.items[0].name }}\n💰 *Amount:* ₨ {{ $json.body.total }}\n👤 *Customer:* {{ $json.body.customerName }}\n📞 *Phone:* {{ $json.body.customerPhone }}\n📍 *Deliver to:* {{ $json.body.deliveryAddress }}\n\n⚠️ _Cash to be collected on delivery_\n\n🔗 https://biz-nepal.vercel.app/dashboard/orders",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n1-tg-cod",
+      "name": "Telegram: COD Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.body.businessTelegramChatId }}",
+        "text": "=✅ *New Paid Order!*\n\n📦 *Product:* {{ $json.body.items[0].name }}\n💰 *Amount:* ₨ {{ $json.body.total }}\n💳 *Payment:* {{ $json.body.paymentMethod }} _(Confirmed)_\n👤 *Customer:* {{ $json.body.customerName }}\n📞 *Phone:* {{ $json.body.customerPhone }}\n\n🔗 https://biz-nepal.vercel.app/dashboard/orders",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n1-tg-paid",
+      "name": "Telegram: Paid Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        400
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "has-email",
+              "leftValue": "={{ $('Webhook: New Order').item.json.body.customerEmail }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        }
+      },
+      "id": "n1-if-email",
+      "name": "Has Customer Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "orders@biznepal.com.np",
+        "toEmail": "={{ $('Webhook: New Order').item.json.body.customerEmail }}",
+        "subject": "✅ Order Confirmed — BizNepal",
+        "html": "<h2>Order Confirmed!</h2><p>Hello {{ $('Webhook: New Order').item.json.body.customerName }},</p><p>Your order has been placed successfully!</p><p><strong>Total: ₨ {{ $('Webhook: New Order').item.json.body.total }}</strong></p><p>Payment: {{ $('Webhook: New Order').item.json.body.paymentMethod }}</p><p>Thank you for shopping on BizNepal!</p>",
+        "options": {}
+      },
+      "id": "n1-email",
+      "name": "Email: Confirm to Customer",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: New Order": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is COD?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is COD?": {
+      "main": [
+        [
+          {
+            "node": "Telegram: COD Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram: Paid Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: COD Alert": {
+      "main": [
+        [
+          {
+            "node": "Has Customer Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: Paid Alert": {
+      "main": [
+        [
+          {
+            "node": "Has Customer Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Customer Email?": {
+      "main": [
+        [
+          {
+            "node": "Email: Confirm to Customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  }
+}

@@ -14,10 +14,10 @@ export default async function EventsDashboardPage() {
   if (!business) redirect('/setup-profile')
 
   const { data: events } = await supabase.from('events').select(`
-    id, title, date_time, end_time, is_online, location, 
+    id, title, starts_at, ends_at, is_online, venue_name, venue_address,
     is_free, price, total_seats, status, banner_url, created_at,
     event_bookings(id, total_amount)
-  `).eq('business_id', business.id).order('date_time', { ascending: true })
+  `).eq('business_id', business.id).order('starts_at', { ascending: true })
 
   return (
     <div className="animate-in fade-in duration-500">

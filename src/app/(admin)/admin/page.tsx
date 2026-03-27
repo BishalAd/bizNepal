@@ -33,31 +33,52 @@ export default async function AdminPage() {
     supabase.from('orders').select('*', { count: 'exact', head: true })
   ])
 
-  // 2. Fetch All Businesses (join districts to get name_en)
+  // 2. Fetch Moderation Queues
+  const [
+    { data: pendingProducts }, 
+    { data: pendingJobs }, 
+    { data: pendingOffers }
+  ] = await Promise.all([
+    supabase.from('products').select('*, businesses(name)').eq('is_verified', false).order('created_at', { ascending: false }),
+    supabase.from('jobs').select('*, businesses(name)').eq('is_verified', false).order('created_at', { ascending: false }),
+    supabase.from('offers').select('*, businesses(name)').eq('is_verified', false).order('created_at', { ascending: false })
+  ])
+
+  // 3. Fetch All Businesses (join districts to get name_en)
   const { data: allBusinesses } = await supabase
     .from('businesses')
-    .select('id, name, district_id, phone, is_verified, is_featured, created_at, districts(name_en)')
+    .select('*, districts(name_en)')
     .order('created_at', { ascending: false })
 
-  // 3. Fetch All Users (Profiles table now has email synced)
+  // 4. Fetch All Users
   const { data: allUsers } = await supabase
     .from('profiles')
-    .select('id, full_name, email, role, avatar_url, created_at, is_banned')
+    .select('*')
     .order('created_at', { ascending: false })
 
-  // 4. Fetch Categories (for management)
+  // 5. Fetch Categories
   const { data: categories } = await supabase
     .from('categories')
     .select('*')
     .order('name_en', { ascending: true })
 
-  // 5. Fetch Flagged Reviews
+  // 6. Fetch Flagged Reviews
   const { data: flaggedReviews } = await supabase
     .from('reviews')
     .select('id, rating, comment, created_at, business:businesses(name)')
     .lte('rating', 2)
     .order('created_at', { ascending: false })
     .limit(10)
+
+  // 7. Mock Growth Data (In a real app, you'd aggregate this from Supabase)
+  const chartData = [
+    { name: 'Oct', users: Math.floor((cUsers || 0) * 0.4), business: Math.floor((cBiz || 0) * 0.3) },
+    { name: 'Nov', users: Math.floor((cUsers || 0) * 0.5), business: Math.floor((cBiz || 0) * 0.5) },
+    { name: 'Dec', users: Math.floor((cUsers || 0) * 0.7), business: Math.floor((cBiz || 0) * 0.6) },
+    { name: 'Jan', users: Math.floor((cUsers || 0) * 0.8), business: Math.floor((cBiz || 0) * 0.7) },
+    { name: 'Feb', users: Math.floor((cUsers || 0) * 0.9), business: Math.floor((cBiz || 0) * 0.8) },
+    { name: 'Mar', users: cUsers || 0, business: cBiz || 0 },
+  ]
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -66,12 +87,18 @@ export default async function AdminPage() {
            businesses: cBiz || 0,
            users: cUsers || 0,
            products: cProds || 0,
-           orders: cOrders || 0
+           orders: cOrders || 0,
+           chartData
          }}
          allBusinesses={allBusinesses || []}
          allUsers={allUsers || []}
          categories={categories || []}
          flaggedReviews={flaggedReviews || []}
+         moderation={{
+           products: pendingProducts || [],
+           jobs: pendingJobs || [],
+           offers: pendingOffers || []
+         }}
        />
     </div>
   )

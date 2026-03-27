@@ -8,6 +8,8 @@ import RichTextEditor from '@/components/dashboard/RichTextEditor'
 import ImageUpload from '@/components/dashboard/ImageUpload'
 import { ArrowLeft, Save, Plus, X, MapPin, Globe } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { useAuth } from '@/hooks/useAuth'
+import { useEffect } from 'react'
 
 const LocationPickerMap = dynamic(() => import('@/components/dashboard/LocationPickerMap'), {
   ssr: false, loading: () => <div className="h-[250px] bg-gray-100 animate-pulse rounded-xl"></div>
@@ -23,6 +25,7 @@ const InputGroup = ({ label, children, description }: any) => (
 )
 
 export default function EventFormClient({ business, districts }: any) {
+  const { user } = useAuth()
   const supabase = createClient()
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
@@ -44,8 +47,17 @@ export default function EventFormClient({ business, districts }: any) {
     is_free: true,
     price: '',
     total_seats: '', // empty = unlimited
-    banner_url: ''
+    banner_url: '',
+    slug: ''
   })
+
+  // Auto generate slug
+  useEffect(() => {
+    if (formData.title) {
+      const gSlug = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+      setFormData(prev => ({ ...prev, slug: gSlug }))
+    }
+  }, [formData.title])
 
   // Speakers
   const [speakers, setSpeakers] = useState<{name: string, role: string}[]>([])
@@ -76,16 +88,19 @@ export default function EventFormClient({ business, districts }: any) {
 
       const payload = {
         business_id: business.id,
+        organizer_id: user.id,
         title: formData.title,
+        slug: formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''),
         description: formData.description,
         is_online: formData.is_online,
-        location: formData.is_online ? 'Online' : `${formData.venue_name}, ${formData.address}`,
+        venue_name: formData.is_online ? 'Online' : formData.venue_name,
+        venue_address: formData.is_online ? null : formData.address,
         online_link: formData.is_online ? formData.online_link : null,
         district: formData.is_online ? null : formData.district,
         latitude: formData.is_online ? null : formData.latitude,
         longitude: formData.is_online ? null : formData.longitude,
-        date_time: new Date(formData.date_time).toISOString(),
-        end_time: new Date(formData.end_time).toISOString(),
+        starts_at: new Date(formData.date_time).toISOString(),
+        ends_at: new Date(formData.end_time).toISOString(),
         registration_deadline: formData.registration_deadline ? new Date(formData.registration_deadline).toISOString() : null,
         is_free: formData.is_free,
         price: formData.is_free ? 0 : Number(formData.price),

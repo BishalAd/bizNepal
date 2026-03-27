@@ -1,0 +1,141 @@
+{
+  "name": "BizNepal: New Review Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-review",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "n6-webhook",
+      "name": "Webhook: New Review",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"received\": true}",
+        "options": {}
+      },
+      "id": "n6-respond",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        400,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "low-rating",
+              "leftValue": "={{ $json.body.rating }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ]
+        }
+      },
+      "id": "n6-if-low",
+      "name": "Is Low Rating? (1-2 stars)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook: New Review').item.json.body.businessTelegramChatId }}",
+        "text": "=⚠️ *Urgent: Low Rating Review!*\n\n👤 *From:* {{ $('Webhook: New Review').item.json.body.reviewerName }}\n⭐ *Rating:* {{ $('Webhook: New Review').item.json.body.rating }}/5\n💬 _\"{{ $('Webhook: New Review').item.json.body.content }}\"_\n\nPlease respond quickly to protect your reputation.\n\n🔗 https://biz-nepal.vercel.app/dashboard/reviews",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n6-tg-urgent",
+      "name": "Telegram: Urgent Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook: New Review').item.json.body.businessTelegramChatId }}",
+        "text": "=🌟 *New Positive Review!*\n\n👤 *From:* {{ $('Webhook: New Review').item.json.body.reviewerName }}\n⭐ *Rating:* {{ $('Webhook: New Review').item.json.body.rating }}/5\n💬 _\"{{ $('Webhook: New Review').item.json.body.content }}\"_\n\nConsider replying to thank them!\n\n🔗 https://biz-nepal.vercel.app/dashboard/reviews",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n6-tg-positive",
+      "name": "Telegram: Positive Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        420
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook: New Review": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Low Rating? (1-2 stars)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Low Rating? (1-2 stars)": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Urgent Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram: Positive Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,36 +1,62 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(request: Request) {
   try {
-    const payload = await request.json()
-    const { businessId, businessWhatsapp, reviewerName, rating, content } = payload
+    // 1. Verify Secret
+    const authHeader = request.headers.get('x-webhook-secret')
+    if (authHeader !== process.env.WEBHOOK_SECRET && process.env.NODE_ENV !== 'development') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-    const supabase = await createClient()
-    
-    // Urgent logic if rating is 2 or less
+    const payload = await request.json()
+    const { businessId, reviewerName, rating, content } = payload
+
+    // 2. Fetch Business Telegram Chat ID
+    const { data: business } = await supabaseAdmin
+      .from('businesses')
+      .select('telegram_chat_id')
+      .eq('id', businessId)
+      .single()
+
+    // 3. Build exact n8n payload
+    const n8nPayload = {
+      businessId,
+      businessTelegramChatId: business?.telegram_chat_id ?? null,
+      reviewerName,
+      rating,
+      content,
+    }
+
+    // 4. Insert In-App Notification
     const isUrgent = rating <= 2
     const prefix = isUrgent ? '⚠️ Urgent: ' : ''
-
-    await supabase.from('notifications').insert({
+    await supabaseAdmin.from('notifications').insert({
       user_id: businessId,
       title: `${prefix}New ${rating}-Star Review`,
       message: `${reviewerName} left a review: "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}"`,
       type: 'review',
-      link: `/dashboard/reviews`
+      link: `/dashboard/reviews`,
     })
 
+    // 5. Forward to n8n Webhook
     const n8nBaseUrl = process.env.N8N_WEBHOOK_BASE_URL
     if (n8nBaseUrl) {
-       await fetch(`${n8nBaseUrl}/webhook/new-review`, {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify(payload)
-       }).catch(() => {})
+      await fetch(`${n8nBaseUrl}/webhook/new-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(n8nPayload),
+      }).catch(() => {})
     }
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

@@ -1,0 +1,337 @@
+{
+  "name": "BizNepal: Telegram /start Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "n8-tg-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        180,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "is-start",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "/start",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ]
+        }
+      },
+      "id": "n8-if-start",
+      "name": "Is /start Command?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "token",
+              "name": "token",
+              "value": "={{ $json.message.text.split(' ')[1] || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "chatId",
+              "name": "chatId",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "number"
+            },
+            {
+              "id": "firstName",
+              "name": "firstName",
+              "value": "={{ $json.message.chat.first_name || 'there' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n8-extract",
+      "name": "Extract Token and ChatId",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        620,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "has-token",
+              "leftValue": "={{ $json.token }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        }
+      },
+      "id": "n8-if-token",
+      "name": "Has Linking Token?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        840,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://biz-nepal.vercel.app/api/bot/link-telegram",
+        "authentication": "headerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"token\": \"{{ $json.token }}\",\n  \"chatId\": {{ $json.chatId }}\n}",
+        "options": {}
+      },
+      "id": "n8-link-api",
+      "name": "Call Link Telegram API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1060,
+        120
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "BizNepal Webhook Secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "api-success",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "n8-if-success",
+      "name": "Link Successful?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Token and ChatId').item.json.chatId }}",
+        "text": "=✅ *Telegram Connected Successfully!*\n\nHello {{ $('Extract Token and ChatId').item.json.firstName }}! 🙏\n\nYour BizNepal business account *{{ $json.businessName }}* is now linked to this Telegram.\n\nYou will now receive instant notifications for:\n🛍️ New orders\n👔 Job applications\n🎟 Event bookings\n⭐ Customer reviews\n📊 Business summaries\n\nType /menu to manage your business via chat!\n🔗 https://biz-nepal.vercel.app/dashboard",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n8-success-msg",
+      "name": "Telegram: Success Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1500,
+        60
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Token and ChatId').item.json.chatId }}",
+        "text": "=❌ *Link Expired or Invalid*\n\nThis connection link has expired or already been used.\n\nPlease go back to your BizNepal dashboard and click *Connect Telegram* again to get a new link.\n\n🔗 https://biz-nepal.vercel.app/dashboard/notification-settings",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n8-expired-msg",
+      "name": "Telegram: Link Expired Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1500,
+        220
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Token and ChatId').item.json.chatId }}",
+        "text": "=👋 *Namaste! Welcome to BizNepal Bot!*\n\nI send real-time notifications for your business:\n🛍️ New orders\n👔 Job applications\n🎟 Event bookings\n⭐ Customer reviews\n\nTo connect your account:\n1️⃣ Go to your BizNepal dashboard\n2️⃣ Click *Notification Settings*\n3️⃣ Click *Connect Telegram*\n4️⃣ Press the link that appears\n\n🔗 https://biz-nepal.vercel.app/dashboard/notification-settings",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n8-no-token-msg",
+      "name": "Telegram: No Token Guide",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1060,
+        320
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=ℹ️ I only respond to the */start* command.\n\nTo connect your BizNepal account, visit:\nhttps://biz-nepal.vercel.app/dashboard/notification-settings",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n8-other-msg",
+      "name": "Telegram: Unknown Command",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        620,
+        420
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is /start Command?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is /start Command?": {
+      "main": [
+        [
+          {
+            "node": "Extract Token and ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram: Unknown Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Token and ChatId": {
+      "main": [
+        [
+          {
+            "node": "Has Linking Token?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Linking Token?": {
+      "main": [
+        [
+          {
+            "node": "Call Link Telegram API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram: No Token Guide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Link Telegram API": {
+      "main": [
+        [
+          {
+            "node": "Link Successful?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link Successful?": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Success Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram: Link Expired Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

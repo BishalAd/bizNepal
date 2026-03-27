@@ -25,8 +25,8 @@ export default function EventsClient({ initialEvents }: any) {
       })
     })
 
-    const upcoming = events.filter((e:any) => !isPast(new Date(e.date_time)))
-    const past = events.filter((e:any) => isPast(new Date(e.date_time)))
+    const upcoming = events.filter((e:any) => !isPast(new Date(e.starts_at)))
+    const past = events.filter((e:any) => isPast(new Date(e.starts_at)))
 
     return { totalAttendees, totalRevenue, upcoming, past }
   }, [events])
@@ -106,8 +106,8 @@ export default function EventsClient({ initialEvents }: any) {
                         <div className="sm:w-48 h-48 sm:h-auto bg-gray-100 relative shrink-0">
                           {e.banner_url ? <img src={e.banner_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-orange-50"><Calendar className="w-10 h-10 text-orange-200"/></div>}
                           <div className="absolute top-2 left-2 bg-white/90 backdrop-blur rounded-lg px-2.5 py-1 text-center shadow-sm">
-                             <div className="text-xs font-bold text-red-600 uppercase">{format(new Date(e.date_time), 'MMM')}</div>
-                             <div className="text-lg font-black text-gray-900 leading-none">{format(new Date(e.date_time), 'd')}</div>
+                             <div className="text-xs font-bold text-red-600 uppercase">{format(new Date(e.starts_at), 'MMM')}</div>
+                             <div className="text-lg font-black text-gray-900 leading-none">{format(new Date(e.starts_at), 'd')}</div>
                           </div>
                         </div>
 
@@ -120,10 +120,10 @@ export default function EventsClient({ initialEvents }: any) {
                            </div>
                            
                            <p className="text-sm font-bold text-gray-500 flex items-center gap-1.5 mb-1 text-orange-600">
-                             <Calendar className="w-4 h-4"/> {format(new Date(e.date_time), 'h:mm a')} — {format(new Date(e.end_time), 'h:mm a')}
+                             <Calendar className="w-4 h-4"/> {format(new Date(e.starts_at), 'h:mm a')} — {format(new Date(e.ends_at), 'h:mm a')}
                            </p>
                            <p className="text-sm font-bold text-gray-500 flex items-center gap-1.5 mb-4 truncate text-blue-600">
-                             {e.is_online ? <><Globe className="w-4 h-4"/> Online Event</> : <><MapPin className="w-4 h-4"/> {e.location}</>}
+                             {e.is_online ? <><Globe className="w-4 h-4"/> Online Event</> : <><MapPin className="w-4 h-4"/> {e.venue_name}</>}
                            </p>
                            
                            <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">

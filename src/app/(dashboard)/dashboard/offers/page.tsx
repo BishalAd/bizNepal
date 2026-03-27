@@ -18,7 +18,7 @@ export default async function OffersDashboardPage() {
 
   // Fetch Offers
   const { data: offers } = await supabase.from('offers').select(`
-    id, title, original_price, offer_price, discount_percent, start_date, ends_at, 
+    id, title, original_price, offer_price, discount_percent, starts_at, ends_at, 
     max_quantity, grabbed_count, status, banner_url, created_at
   `).eq('business_id', business.id).order('created_at', { ascending: false })
 

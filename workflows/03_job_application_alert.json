@@ -1,0 +1,174 @@
+{
+  "name": "BizNepal: Job Application Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "job-application",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "n3-webhook",
+      "name": "Webhook: Job Application",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"received\": true}",
+        "options": {}
+      },
+      "id": "n3-respond",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        400,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.body.businessTelegramChatId }}",
+        "text": "=👔 *New Job Application!*\n\n💼 *Position:* {{ $json.body.jobTitle }}\n👤 *Applicant:* {{ $json.body.applicantName }}\n📞 *Phone:* {{ $json.body.applicantPhone }}\n📧 *Email:* {{ $json.body.applicantEmail }}\n📄 *CV:* [Download CV]({{ $json.body.cvUrl }})\n\n🔗 https://biz-nepal.vercel.app/dashboard/applications",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n3-tg-biz",
+      "name": "Telegram: Alert Business Owner",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "jobs@biznepal.com.np",
+        "toEmail": "={{ $('Webhook: Job Application').item.json.body.businessEmail }}",
+        "subject": "New Application: {{ $('Webhook: Job Application').item.json.body.applicantName }} for {{ $('Webhook: Job Application').item.json.body.jobTitle }}",
+        "html": "<h2>New Job Application</h2><p>Applicant: <strong>{{ $('Webhook: Job Application').item.json.body.applicantName }}</strong></p><p>Phone: {{ $('Webhook: Job Application').item.json.body.applicantPhone }}</p><p><a href='{{ $('Webhook: Job Application').item.json.body.cvUrl }}'>Download CV</a></p><p><a href='https://biz-nepal.vercel.app/dashboard/applications'>View All Applications</a></p>",
+        "options": {}
+      },
+      "id": "n3-email-biz",
+      "name": "Email: CV to Business",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        640,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "has-applicant-tg",
+              "leftValue": "={{ $('Webhook: Job Application').item.json.body.applicantTelegramChatId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        }
+      },
+      "id": "n3-if-applicant-tg",
+      "name": "Applicant Has Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook: Job Application').item.json.body.applicantTelegramChatId }}",
+        "text": "=✅ *Application Submitted!*\n\n💼 *Position:* {{ $('Webhook: Job Application').item.json.body.jobTitle }}\n🏢 *Company:* {{ $('Webhook: Job Application').item.json.body.businessName }}\n\nWe have received your application. The employer will review it and contact you within *5–7 business days*.\n\nGood luck! 🍀",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "n3-tg-applicant",
+      "name": "Telegram: Confirm to Applicant",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "BizNepal Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook: Job Application": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram: Alert Business Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: Alert Business Owner": {
+      "main": [
+        [
+          {
+            "node": "Email: CV to Business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email: CV to Business": {
+      "main": [
+        [
+          {
+            "node": "Applicant Has Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Applicant Has Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Confirm to Applicant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  }
+}

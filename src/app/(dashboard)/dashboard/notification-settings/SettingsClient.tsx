@@ -3,13 +3,96 @@
 import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
-import { Bell, Smartphone, Mail, Settings2, Save, Send, AlertTriangle } from 'lucide-react'
+import { Bell, Smartphone, Mail, Settings2, Save, Send, AlertTriangle, MessageSquare, ExternalLink, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function SettingsClient({ business }: any) {
   const supabase = createClient()
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
+  
+  // Telegram State
+  const [telegramChatId, setTelegramChatId] = useState(business.telegram_chat_id)
+  const [isLinking, setIsLinking] = useState(false)
+  const [botUrl, setBotUrl] = useState<string | null>(null)
+  const [timeLeft, setTimeLeft] = useState(0)
+  const [isPolling, setIsPolling] = useState(false)
+
+  // Polling Logic
+  React.useEffect(() => {
+    let interval: any
+    if (isPolling && !telegramChatId) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/bot/check-connection?businessId=${business.id}`)
+          const data = await res.json()
+          if (data.connected) {
+            setTelegramChatId(data.telegram_chat_id)
+            setIsPolling(false)
+            setBotUrl(null)
+            toast.success('Telegram Connected Successfully!')
+          }
+        } catch (e) {
+          console.error('Polling error:', e)
+        }
+      }, 5000)
+    }
+    return () => clearInterval(interval)
+  }, [isPolling, telegramChatId, business.id])
+
+  // Timer Logic
+  React.useEffect(() => {
+    let timer: any
+    if (timeLeft > 0) {
+      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000)
+    } else if (timeLeft === 0 && botUrl) {
+      setBotUrl(null)
+      setIsPolling(false)
+    }
+    return () => clearInterval(timer)
+  }, [timeLeft, botUrl])
+
+  const handleConnectTelegram = async () => {
+    setIsLinking(true)
+    try {
+      const res = await fetch('/api/bot/generate-link-token', { method: 'POST' })
+      const data = await res.json()
+      if (data.token) {
+        setBotUrl(data.botUrl)
+        setTimeLeft(15 * 60) // 15 minutes
+        setIsPolling(true)
+        toast('Link generated! Please open Telegram.', { icon: '🤖' })
+      } else {
+        toast.error(data.error || 'Failed to generate link')
+      }
+    } catch (e) {
+      toast.error('Connection error')
+    } finally {
+      setIsLinking(false)
+    }
+  }
+
+  const handleDisconnectTelegram = async () => {
+    if (!confirm('Are you sure you want to disconnect Telegram? You will stop receiving instant notifications.')) return
+    
+    const toastId = toast.loading('Disconnecting...')
+    try {
+      const { error } = await supabase.from('businesses').update({ telegram_chat_id: null }).eq('id', business.id)
+      if (error) throw error
+      
+      setTelegramChatId(null)
+      toast.success('Telegram disconnected', { id: toastId })
+    } catch (e) {
+      toast.error('Failed to disconnect', { id: toastId })
+    }
+  }
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m}:${s.toString().padStart(2, '0')}`
+  }
+
 
   // Default Mock Fallback if Database Column doesn't exist
   const [settings, setSettings] = useState({
@@ -119,6 +202,108 @@ export default function SettingsClient({ business }: any) {
           </div>
         </div>
 
+        {/* Telegram Connection Section */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-top duration-500">
+           <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                 <div className={`p-2 rounded-xl ${telegramChatId ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                    <Send className="w-5 h-5" />
+                 </div>
+                 <div>
+                    <h3 className="font-extrabold text-gray-900">Telegram Notifications</h3>
+                    <p className="text-xs text-gray-500 font-medium">Receive instant alerts for orders, jobs, and bookings.</p>
+                 </div>
+              </div>
+              {telegramChatId ? (
+                <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase tracking-wider">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Connected
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[10px] font-black uppercase tracking-wider">
+                  Not Connected
+                </span>
+              )}
+           </div>
+
+           <div className="p-6">
+              {!telegramChatId ? (
+                <div className="space-y-4">
+                  {!botUrl ? (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <p className="text-sm text-gray-600 max-w-md">Connect your personal or business Telegram account to get notified the second anything happens on BizNepal.</p>
+                      <button 
+                        onClick={handleConnectTelegram}
+                        disabled={isLinking}
+                        className="bg-[#0088cc] hover:bg-[#0077b5] text-white px-6 py-2.5 rounded-xl font-bold transition flex items-center shadow-sm disabled:opacity-50"
+                      >
+                        {isLinking ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                        Connect Telegram
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 space-y-4 animate-in fade-in zoom-in duration-300">
+                       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                          <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-blue-100">
+                                <span className="text-xl">🤖</span>
+                             </div>
+                             <div>
+                                <h4 className="font-bold text-blue-900">Link Your Account</h4>
+                                <p className="text-xs text-blue-700 font-medium">Click the button below and press START in Telegram.</p>
+                             </div>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest">Expires In</p>
+                             <p className="text-xl font-mono font-bold text-blue-600">{formatTime(timeLeft)}</p>
+                          </div>
+                       </div>
+                       
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <a 
+                            href={botUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="bg-[#0088cc] hover:bg-[#0077b5] text-white px-6 py-3 rounded-xl font-bold transition flex items-center justify-center shadow-lg hover:scale-[1.02] active:scale-95"
+                          >
+                            Open @BizNepalNotifyBot <ExternalLink className="w-4 h-4 ml-2" />
+                          </a>
+                          <button 
+                            onClick={() => { setBotUrl(null); setIsPolling(false); }}
+                            className="bg-white border border-blue-200 text-blue-600 px-6 py-3 rounded-xl font-bold transition hover:bg-blue-50"
+                          >
+                            Cancel
+                          </button>
+                       </div>
+
+                       <div className="flex items-center gap-2 justify-center py-2">
+                          <Loader2 className="w-3 h-3 text-blue-400 animate-spin" />
+                          <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Waiting for you to press START...</p>
+                       </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                   <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center text-green-600">
+                         <MessageSquare className="w-5 h-5" />
+                      </div>
+                      <div>
+                         <p className="text-sm font-bold text-gray-900">Notifications Active</p>
+                         <p className="text-xs text-gray-500">Messages are being sent to Chat ID: <code className="bg-gray-100 px-1 rounded">{telegramChatId}</code></p>
+                      </div>
+                   </div>
+                   <button 
+                     onClick={handleDisconnectTelegram}
+                     className="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg transition border border-red-100"
+                   >
+                     Disconnect Telegram
+                   </button>
+                </div>
+              )}
+           </div>
+        </div>
+
         {/* Missing Info Warning */}
         {(!business.whatsapp_number || !business.email_address) && (
           <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex gap-4 animate-in fade-in">
@@ -182,12 +367,15 @@ export default function SettingsClient({ business }: any) {
 
                   <div>
                     <label className="block text-sm font-bold text-gray-900 mb-2">Delivery Channel</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                        <button onClick={()=>setSettings((p:any)=>({...p, summary: {...p.summary, channel: 'Email'}}))} className={`py-3 rounded-xl border text-sm font-bold transition flex items-center justify-center gap-2 ${settings.summary.channel === 'Email' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-white'}`}>
                           <Mail className="w-4 h-4"/> Email Digest
                        </button>
                        <button disabled={!business.whatsapp_number} onClick={()=>setSettings((p:any)=>({...p, summary: {...p.summary, channel: 'WhatsApp'}}))} className={`py-3 rounded-xl border text-sm font-bold transition flex items-center justify-center gap-2 disabled:opacity-50 ${settings.summary.channel === 'WhatsApp' ? 'bg-[#25D366]/10 border-[#25D366]/30 text-[#128C7E]' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-white'}`}>
                           <Smartphone className="w-4 h-4"/> WhatsApp Bot
+                       </button>
+                       <button disabled={!telegramChatId} onClick={()=>setSettings((p:any)=>({...p, summary: {...p.summary, channel: 'Telegram'}}))} className={`py-3 rounded-xl border text-sm font-bold transition flex items-center justify-center gap-2 disabled:opacity-50 ${settings.summary.channel === 'Telegram' ? 'bg-[#0088cc]/10 border-[#0088cc]/30 text-[#0077b5]' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-white'}`}>
+                          <Send className="w-4 h-4"/> Telegram Bot
                        </button>
                     </div>
                   </div>
