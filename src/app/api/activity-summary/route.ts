@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: Request) {
   try {
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     const { businessId, period } = await request.json()
     
     // 1. Verify Secret
@@ -10,8 +15,6 @@ export async function POST(request: Request) {
     if (authHeader !== process.env.WEBHOOK_SECRET && process.env.NODE_ENV !== 'development') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const supabase = await createClient()
 
     // Calculate time offset based on period
     let hoursOffset = 2
@@ -23,10 +26,10 @@ export async function POST(request: Request) {
 
     // Query aggregates (For real production, perform optimized count queries)
     const [ordersRes, applicationsRes, bookingsRes, reviewsRes] = await Promise.all([
-      supabase.from('orders').select('total_amount').eq('business_id', businessId).gte('created_at', timeFilter),
-      supabase.from('job_applications').select('id', { count: 'exact' }).eq('business_id', businessId).gte('created_at', timeFilter),
-      supabase.from('event_bookings').select('id', { count: 'exact' }).eq('business_id', businessId).gte('created_at', timeFilter),
-      supabase.from('reviews').select('rating').eq('business_id', businessId).gte('created_at', timeFilter)
+      supabaseAdmin.from('orders').select('total_amount').eq('business_id', businessId).gte('created_at', timeFilter),
+      supabaseAdmin.from('job_applications').select('id', { count: 'exact' }).eq('business_id', businessId).eq('status', 'new').gte('created_at', timeFilter),
+      supabaseAdmin.from('event_bookings').select('id', { count: 'exact' }).eq('business_id', businessId).gte('created_at', timeFilter),
+      supabaseAdmin.from('reviews').select('rating').eq('business_id', businessId).gte('created_at', timeFilter)
     ])
 
     const ordersData = ordersRes.data || []

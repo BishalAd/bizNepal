@@ -34,20 +34,6 @@ export async function POST() {
       .eq('used', false)
 
     // 5. Insert new token (expires in 15 mins)
-    const { error: insertError } = await supabase
-      .from('telegram_links')
-      .insert({
-        token,
-        business_id: business.id,
-        expires_at: new RegExp('NOW()').test('NOW()') ? undefined : undefined // This logic is handled by DB default or interval
-      })
-      // Note: We'll let the SQL schema handle the 15 min interval as defined in the plan
-      // but if we want to be explicit:
-      // expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString()
-    
-    // Actually, SQL plan says: expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '15 minutes'
-    // So we don't strictly need to pass it, but let's be safe.
-    
     const { error: finalInsertError } = await supabase
       .from('telegram_links')
       .insert({

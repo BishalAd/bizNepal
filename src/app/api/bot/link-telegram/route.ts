@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 // Use SERVICE ROLE KEY for administrative updates from n8n
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function POST(request: Request) {
   try {
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     // 1. Verify Secret
     const authHeader = request.headers.get('x-webhook-secret')
     if (authHeader !== process.env.WEBHOOK_SECRET && process.env.NODE_ENV !== 'development') {
