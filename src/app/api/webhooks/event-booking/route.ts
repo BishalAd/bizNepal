@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     // 6. Forward to n8n Webhook
     const n8nBaseUrl = process.env.N8N_WEBHOOK_BASE_URL
     if (n8nBaseUrl) {
-      await fetch(`${n8nBaseUrl}/webhook/event-booking`, {
+      await fetch(`${n8nBaseUrl}/event-booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(n8nPayload),

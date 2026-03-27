@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
     const n8nBaseUrl = process.env.N8N_WEBHOOK_BASE_URL
     if (n8nBaseUrl) {
-       await fetch(`${n8nBaseUrl}/webhook/offer-expiry`, {
+       await fetch(`${n8nBaseUrl}/offer-expiry`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify(updatedPayload)
