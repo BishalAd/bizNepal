@@ -1,0 +1,293 @@
+Update our BizNepal Next.js webhook routes and bot API endpoints 
+to work correctly with our new n8n workflows.
+
+Here is the complete list of every change needed:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 1 — src/app/api/webhooks/new-order/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The n8n workflow now expects this exact payload shape.
+Update the route to send ALL these fields to n8n:
+
+{
+  orderId: string,
+  businessId: string,
+  businessTelegramChatId: number | null,   // ← FETCH from businesses.telegram_chat_id WHERE id = order.business_id
+  customerName: string,
+  customerPhone: string,
+  customerEmail: string | null,
+  deliveryAddress: string,                  // ← CHANGED: was customerAddress.address, now flat string
+  items: [{ name: string, quantity: number, price: number }],  // ← CHANGED: was items[0].title, now items[0].name
+  total: number,
+  paymentMethod: string
+}
+
+Fetch businessTelegramChatId from Supabase:
+SELECT telegram_chat_id FROM businesses WHERE id = order.business_id
+Use SUPABASE_SERVICE_ROLE_KEY.
+If telegram_chat_id is null, still include it as null — do not skip.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 2 — src/app/api/webhooks/job-application/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Update to send this exact payload to n8n:
+
+{
+  jobId: string,
+  jobTitle: string,
+  businessId: string,
+  businessName: string,
+  businessEmail: string,
+  businessTelegramChatId: number | null,   // ← fetch from businesses.telegram_chat_id
+  applicantName: string,
+  applicantPhone: string,
+  applicantEmail: string,
+  applicantTelegramChatId: number | null,  // ← fetch from profiles.telegram_chat_id WHERE id = applicant user_id (can be null)
+  cvUrl: string
+}
+
+Fetch both telegram IDs from Supabase using SUPABASE_SERVICE_ROLE_KEY.
+Both can be null — always include them even if null.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 3 — src/app/api/webhooks/event-booking/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Update to send this exact payload to n8n:
+
+{
+  eventId: string,
+  eventTitle: string,
+  eventDate: string,                        // ← NEW: format as "Monday, 28 March 2026, 6:00 PM"
+  venueName: string,                        // ← NEW: was missing before
+  organizerTelegramChatId: number | null,   // ← fetch from businesses.telegram_chat_id
+  attendeeName: string,
+  attendeePhone: string,
+  attendeeTelegramChatId: number | null,    // ← fetch from profiles.telegram_chat_id if user is logged in (can be null)
+  seats: number,
+  totalAmount: number,
+  ticketCode: string
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 4 — src/app/api/webhooks/new-review/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Update to send this exact payload to n8n:
+
+{
+  businessId: string,
+  businessTelegramChatId: number | null,   // ← fetch from businesses.telegram_chat_id
+  reviewerName: string,
+  rating: number,
+  content: string
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 5 — src/app/api/webhooks/new-signup/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Update to send this exact payload to n8n:
+
+{
+  userId: string,
+  accountType: string,           // "business" or "user"
+  businessName: string,          // ← NEW: was missing, needed for welcome email subject
+  userName: string,              // ← NEW: user's full name for email greeting
+  userEmail: string,             // ← RENAMED: was userPhone, now userEmail for welcome email
+  userPhone: string
+}
+
+Note: telegramChatId is removed from this payload entirely.
+The new Workflow 7 sends a welcome EMAIL only (not Telegram).
+Telegram welcome is handled later by Workflow 8 when user connects.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 6 — CREATE NEW: src/app/api/bot/expiring-offers/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This endpoint does NOT exist yet. Create it now.
+
+Method: GET
+Auth: Check header x-webhook-secret === process.env.WEBHOOK_SECRET
+      Return 401 if wrong.
+
+Logic:
+1. Calculate time window: NOW to NOW + 2 hours
+2. Query Supabase:
+   SELECT 
+     offers.id,
+     offers.title,
+     offers.grabbed_count,
+     offers.ends_at,
+     businesses.telegram_chat_id,
+     businesses.name as business_name
+   FROM offers
+   JOIN businesses ON offers.business_id = businesses.id
+   WHERE offers.status = 'active'
+   AND offers.ends_at >= NOW()
+   AND offers.ends_at <= NOW() + INTERVAL '2 hours'
+   AND businesses.telegram_chat_id IS NOT NULL
+
+3. Return: { offers: [...results] }
+
+Use SUPABASE_SERVICE_ROLE_KEY.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 7 — CREATE NEW: src/app/api/bot/get-subscribed-businesses/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This endpoint does NOT exist yet. Create it now.
+
+Method: GET
+Auth: Check header x-webhook-secret === process.env.WEBHOOK_SECRET
+      Return 401 if wrong.
+
+Logic:
+1. Query Supabase:
+   SELECT id, name, telegram_chat_id
+   FROM businesses
+   WHERE is_active = true
+   AND telegram_chat_id IS NOT NULL
+
+2. Return: { businesses: [...results] }
+
+Use SUPABASE_SERVICE_ROLE_KEY.
+Called by n8n every 2 hours to get businesses with Telegram connected.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 8 — CREATE NEW: src/app/api/bot/link-telegram/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This endpoint does NOT exist yet. Create it now.
+
+Method: POST
+Auth: Check header x-webhook-secret === process.env.WEBHOOK_SECRET
+      Return 401 if wrong.
+
+Request body: { token: string, chatId: number }
+
+Logic:
+1. Verify secret header — return 401 if wrong
+2. Query telegram_links WHERE token = body.token 
+   AND used = false 
+   AND expires_at > NOW()
+3. If not found: return { success: false, error: "Invalid or expired token" }
+4. If found:
+   a. UPDATE businesses SET telegram_chat_id = body.chatId 
+      WHERE id = telegram_links.business_id
+      Also SELECT name and owner_id from businesses
+   b. UPDATE profiles SET telegram_chat_id = body.chatId 
+      WHERE id = business.owner_id
+   c. UPDATE telegram_links SET used = true 
+      WHERE token = body.token
+   d. Return { success: true, businessName: business.name }
+
+Use SUPABASE_SERVICE_ROLE_KEY for all queries.
+Wrap everything in try/catch, return 500 on error.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 9 — CREATE NEW: src/app/api/bot/generate-link-token/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This endpoint does NOT exist yet. Create it now.
+
+Method: POST
+Auth: Requires logged-in Supabase session (not webhook secret)
+
+Logic:
+1. Get current user from Supabase session — return 401 if not logged in
+2. Query businesses WHERE owner_id = user.id — return 404 if not found
+3. Generate random 8-char uppercase token:
+   crypto.randomBytes(4).toString('hex').toUpperCase()
+4. Delete any existing unused tokens for this business_id from telegram_links
+5. Insert into telegram_links:
+   { token, business_id, expires_at: NOW() + 15 minutes }
+6. Return: { 
+     token, 
+     botUrl: "https://t.me/BizNepalNotifyBot?start=" + token 
+   }
+
+Use SUPABASE_SERVICE_ROLE_KEY.
+Wrap in try/catch.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 10 — CREATE NEW: src/app/api/bot/check-connection/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This endpoint does NOT exist yet. Create it now.
+
+Method: GET
+Auth: None (public polling endpoint)
+Query param: ?businessId=UUID
+
+Logic:
+1. Get businessId from URL search params
+2. If missing: return 400 { error: "Missing businessId" }
+3. Query: SELECT telegram_chat_id FROM businesses WHERE id = businessId
+4. Return: { 
+     connected: telegram_chat_id !== null, 
+     telegram_chat_id: telegram_chat_id 
+   }
+
+Use SUPABASE_SERVICE_ROLE_KEY.
+This is polled every 5 seconds by the dashboard UI.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGE 11 — src/app/api/activity-summary/route.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This route already exists but needs to be verified.
+Check that it:
+1. Accepts POST with body: { businessId: string, period: "2h" | "6h" | "daily" }
+2. Checks x-webhook-secret header — return 401 if wrong
+3. Queries Supabase for the given businessId in the given time period:
+   - orders: COUNT(*) and SUM(total) as revenue
+   - job_applications: COUNT(*) where status = 'new'
+   - event_bookings: COUNT(*)
+   - reviews: COUNT(*)
+4. Returns:
+   {
+     orders: number,
+     revenue: number,
+     applications: number,
+     bookings: number,
+     reviews: number
+   }
+
+If the route exists and already does this correctly, do not change it.
+If it is missing any of these fields, update it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUPABASE SQL — Run this in Supabase SQL Editor first
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before making any code changes, confirm these SQL 
+statements have been run in Supabase. If not, 
+show them to me so I can run them manually:
+
+ALTER TABLE businesses 
+  ADD COLUMN IF NOT EXISTS telegram_chat_id BIGINT;
+
+ALTER TABLE profiles 
+  ADD COLUMN IF NOT EXISTS telegram_chat_id BIGINT;
+
+CREATE TABLE IF NOT EXISTS telegram_links (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  token VARCHAR(20) UNIQUE NOT NULL,
+  business_id UUID REFERENCES businesses(id) NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '15 minutes'
+);
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FINAL STEP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After making all changes above:
+1. Run: npm run build
+2. Fix every TypeScript error until build passes with zero errors
+3. Show me a summary of every file that was created or modified
