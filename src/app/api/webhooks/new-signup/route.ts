@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
   try {
-    // 1. Verify Secret
+    // 1. Verify User Session
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    // Allow either valid webhook secret OR a valid authenticated user
     const authHeader = request.headers.get('x-webhook-secret')
-    if (authHeader !== process.env.WEBHOOK_SECRET && process.env.NODE_ENV !== 'development') {
+    const isValidSecret = authHeader === process.env.WEBHOOK_SECRET
+    
+    if (!isValidSecret && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

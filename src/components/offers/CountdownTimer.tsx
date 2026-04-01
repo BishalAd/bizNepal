@@ -56,9 +56,9 @@ export default function CountdownTimer({ endsAt }: { endsAt: string | Date }) {
   const isUnderOneHour = timeLeft.days === 0 && timeLeft.hours === 0
 
   const Box = ({ label, value }: { label: string, value: number }) => (
-    <div className={`flex flex-col items-center justify-center bg-white border rounded-lg p-2 w-14 sm:w-16 shadow-sm ${isUnderOneHour ? 'border-red-300 text-red-600' : 'border-gray-200 text-gray-900'}`}>
-      <span className="text-xl sm:text-2xl font-bold font-mono leading-none">{value.toString().padStart(2, '0')}</span>
-      <span className="text-[10px] uppercase font-bold text-gray-400 mt-1 tracking-wider">{label}</span>
+    <div className={`flex flex-col items-center justify-center bg-white border rounded-lg p-2 min-w-[3.5rem] sm:min-w-[4rem] shadow-sm ${isUnderOneHour ? 'border-red-300 text-red-600' : 'border-gray-200 text-gray-900'}`}>
+      <span className="text-xl sm:text-2xl font-bold font-mono leading-none tracking-tighter">{value.toString().padStart(2, '0')}</span>
+      <span className="text-[9px] sm:text-[10px] uppercase font-bold text-gray-400 mt-1 tracking-wider">{label}</span>
     </div>
   )
 

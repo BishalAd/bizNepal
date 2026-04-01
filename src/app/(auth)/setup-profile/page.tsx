@@ -142,6 +142,22 @@ export default function SetupProfilePage() {
 
       if (bizError) throw bizError
 
+      // Trigger n8n webhook in background
+      fetch('/api/webhooks/new-signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          accountType: 'business',
+          businessName: bizName,
+          userName: fullName,
+          userEmail: user.email,
+          userPhone: bizPhone
+        })
+      }).catch(err => console.error('Failed to trigger n8n onboarding webhook:', err))
+
       // Redirect to the actual dashboard overview
       router.push('/dashboard/dashboard')
     } catch (err: any) {

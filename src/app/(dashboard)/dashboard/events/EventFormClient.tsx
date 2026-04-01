@@ -70,7 +70,7 @@ export default function EventFormClient({ business, districts }: any) {
     setSpeakers(updated)
   }
 
-  const handleSubmit = async (e: React.FormEvent, status: string = 'published') => {
+  const handleSubmit = async (e: React.FormEvent, status: 'active' | 'pending' = 'active') => {
     e.preventDefault()
     setIsSaving(true)
 
@@ -139,10 +139,10 @@ export default function EventFormClient({ business, districts }: any) {
           </div>
           
           <div className="flex items-center gap-3 w-full sm:w-auto">
-             <button onClick={e => handleSubmit(e, 'draft')} disabled={isSaving} className="flex-1 sm:flex-none px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">
+             <button onClick={e => handleSubmit(e, 'pending')} disabled={isSaving} className="flex-1 sm:flex-none px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">
                Save Draft
              </button>
-             <button onClick={e => handleSubmit(e, 'published')} disabled={isSaving} className="flex-1 sm:flex-none px-6 py-2.5 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition flex items-center justify-center min-w-[140px] shadow-sm">
+             <button onClick={e => handleSubmit(e, 'active')} disabled={isSaving} className="flex-1 sm:flex-none px-6 py-2.5 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition flex items-center justify-center min-w-[140px] shadow-sm">
                {isSaving ? <span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"/> : <><Save className="w-4 h-4 mr-2"/> Publish Event</>}
              </button>
           </div>

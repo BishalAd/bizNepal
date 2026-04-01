@@ -183,7 +183,7 @@ export default function ApplicationsClient({ initialJobs }: any) {
                      <div>
                        <h2 className="text-xl font-extrabold text-gray-900 leading-tight">{selectedJob.title}</h2>
                        <p className="text-sm font-bold text-gray-500 mt-1 flex items-center gap-2">
-                         <span className={selectedJob.status === 'open' ? 'text-green-600' : 'text-orange-500'}>{selectedJob.status.toUpperCase()}</span>
+                         <span className={selectedJob.status === 'active' ? 'text-green-600' : 'text-orange-500'}>{selectedJob.status.toUpperCase()}</span>
                          • <span className="text-gray-400">Total Applicants: {selectedJob.job_applications.length}</span>
                        </p>
                      </div>

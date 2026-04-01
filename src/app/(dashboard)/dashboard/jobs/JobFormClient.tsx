@@ -25,7 +25,7 @@ export default function JobFormClient({ categories, districts, businessId }: any
     title: '',
     category_id: '',
     job_type: 'full-time',
-    location_type: 'on_site',
+    location_type: 'on-site',
     district: '',
     salary_min: '',
     salary_max: '',
@@ -35,10 +35,10 @@ export default function JobFormClient({ categories, districts, businessId }: any
     description: '',
     requirements: '',
     responsibilities: '',
-    status: 'open'
+    status: 'active'
   })
 
-  const handleSubmit = async (e: React.FormEvent, status: string = 'open') => {
+  const handleSubmit = async (e: React.FormEvent, status: string = 'active') => {
     e.preventDefault()
     setIsSaving(true)
 
@@ -94,10 +94,10 @@ export default function JobFormClient({ categories, districts, businessId }: any
           </div>
           
           <div className="flex items-center gap-3 w-full sm:w-auto">
-             <button onClick={e => handleSubmit(e, 'draft')} disabled={isSaving} className="flex-1 sm:flex-none px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">
+             <button onClick={e => handleSubmit(e, 'pending')} disabled={isSaving} className="flex-1 sm:flex-none px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">
                Save Draft
              </button>
-             <button onClick={e => handleSubmit(e, 'open')} disabled={isSaving} className="flex-1 sm:flex-none px-6 py-2.5 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition flex items-center justify-center min-w-[140px] shadow-sm">
+             <button onClick={e => handleSubmit(e, 'active')} disabled={isSaving} className="flex-1 sm:flex-none px-6 py-2.5 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition flex items-center justify-center min-w-[140px] shadow-sm">
                {isSaving ? <span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"/> : <><Briefcase className="w-4 h-4 mr-2"/> Post Job</>}
              </button>
           </div>
@@ -149,7 +149,7 @@ export default function JobFormClient({ categories, districts, businessId }: any
              <div className="pt-6">
                 <h3 className="text-sm font-bold text-gray-900 mb-4">Work Location</h3>
                 <div className="flex bg-gray-100 p-1 rounded-xl mb-6 w-max border border-gray-200">
-                  <button type="button" onClick={()=>setFormData({...formData, location_type: 'on_site'})} className={`px-5 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${formData.location_type === 'on_site' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
+                  <button type="button" onClick={()=>setFormData({...formData, location_type: 'on-site'})} className={`px-5 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${formData.location_type === 'on-site' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
                     <MapPin className="w-4 h-4"/> On-site
                   </button>
                   <button type="button" onClick={()=>setFormData({...formData, location_type: 'hybrid'})} className={`px-5 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${formData.location_type === 'hybrid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>

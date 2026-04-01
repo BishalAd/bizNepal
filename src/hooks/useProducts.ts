@@ -35,7 +35,7 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
 
     try {
       let query = supabase
-        .from('products')
+        .from('products_round_robin')
         .select(`
           *,
           business:businesses(*)
@@ -86,7 +86,7 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
           break
         case 'newest':
         default:
-          query = query.order('created_at', { ascending: false })
+          query = query.order('bn_rank', { ascending: true }).order('created_at', { ascending: false })
           break
       }
 
@@ -130,8 +130,13 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
       else setPage(1)
 
     } catch (err: any) {
-      console.error(err)
-      setError(err.message)
+      console.error('Error fetching products:', {
+        message: err.message,
+        details: err.details,
+        hint: err.hint,
+        code: err.code
+      })
+      setError(err.message || 'An unexpected error occurred while fetching products.')
     } finally {
       setLoading(false)
     }
@@ -163,9 +168,9 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
       } else {
         await supabase.from('saved_items').insert({ user_id: user.id, product_id: id })
       }
-    } catch (err) {
+    } catch (err: any) {
       // Revert on error
-      console.error(err)
+      console.error('Error toggling save status:', err)
       setProducts(prev => prev.map(p => p.id === id ? { ...p, isSaved: currentlySaved } : p))
     }
   }

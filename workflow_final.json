@@ -1,0 +1,274 @@
+{
+  "name": "BizNepal Telegram Signup (Dispatcher Architecture)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message", "callback_query"],
+        "additionalFields": {}
+      },
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [0, 300],
+      "id": "trigger",
+      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── DISPATCHER: Single source of truth for all routing ───\nconst staticData = $getWorkflowStaticData('global');\nstaticData.sessions = staticData.sessions || {};\n\n// ── 1. Extract userId and user input reliably ──\nlet userId, text, firstName;\nif ($json.callback_query) {\n  userId = String($json.callback_query.from.id);\n  text = $json.callback_query.data || '';\n  firstName = $json.callback_query.from.first_name || 'there';\n} else if ($json.message) {\n  userId = String($json.message.from.id);\n  text = $json.message.text || '';\n  firstName = $json.message.from.first_name || 'there';\n} else {\n  return { json: { action: 'noop' } };\n}\n\nif (!userId) return { json: { action: 'noop' } };\n\n// ── 2. Session init / reset ──\nconst isReset = (text === '/start' || text === '/restart' || !staticData.sessions[userId]);\nif (isReset) {\n  staticData.sessions[userId] = { step: 'start', data: {} };\n}\n\nconst session = staticData.sessions[userId];\nconst step = session.step;\nconst data = session.data;\n\n// ── Helper: build inline keyboard ──\nfunction kbd(rows) {\n  return { inline_keyboard: rows };\n}\n\n// ─────────────────────────────────────────────\n// STEP MACHINE\n// ─────────────────────────────────────────────\n\n// /link command: link manually-registered account to Telegram\nif (text.startsWith('/link')) {\n  const parts = text.trim().split(/\\s+/);\n  if (parts.length < 3) {\n    return { json: {\n      action: 'send',\n      userId,\n      msg: '🔗 To link your account type:\\n/link your@email.com YourPassword'\n    }};\n  }\n  const linkEmail = parts[1];\n  const linkPass = parts[2];\n  return { json: {\n    action: 'link_account',\n    userId,\n    linkEmail,\n    linkPass,\n    msg: '🔄 Checking your account...'\n  }};\n}\n\n// START step\nif (step === 'start') {\n  session.step = 'ask_manual_or_chat';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: `👋 Welcome to BizNepal, ${firstName}! 🚀\\nHow would you like to sign up?`,\n    buttons: kbd([[{ text: '📋 Manual Signup', callback_data: 'manual' }, { text: '💬 Chat Signup', callback_data: 'chat' }]])\n  }};\n}\n\n// CHOICE: manual or chat\nif (step === 'ask_manual_or_chat') {\n  if (text === 'manual') {\n    session.step = 'ask_link_or_done';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: '🌐 Register at: https://biz-nepal.vercel.app/register\\n\\nOnce done, type:\\n/link your@email.com YourPassword\\n\\nThis will connect your account to this Telegram.',\n    }};\n  }\n  if (text === 'chat') {\n    session.step = 'ask_name';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: '✍️ Please enter your *Full Name*:',\n      parseMode: 'Markdown'\n    }};\n  }\n  // Any other input while waiting for choice\n  return { json: {\n    action: 'send',\n    userId,\n    msg: 'Please tap a button above 👆',\n    buttons: kbd([[{ text: '📋 Manual Signup', callback_data: 'manual' }, { text: '💬 Chat Signup', callback_data: 'chat' }]])\n  }};\n}\n\n// ASK NAME\nif (step === 'ask_name') {\n  if (text.length < 2 || text.startsWith('/')) {\n    return { json: { action: 'send', userId, msg: '❌ Please enter a valid full name (at least 2 characters).' }};\n  }\n  data.fullname = text;\n  session.step = 'ask_phone';\n  return { json: { action: 'send', userId, msg: '📱 Please enter your *Phone Number*:', parseMode: 'Markdown' }};\n}\n\n// ASK PHONE\nif (step === 'ask_phone') {\n  if (text.length < 7) {\n    return { json: { action: 'send', userId, msg: '❌ Please enter a valid phone number.' }};\n  }\n  data.phone = text;\n  session.step = 'ask_email';\n  return { json: { action: 'send', userId, msg: '📧 Please enter your *Email Address*:', parseMode: 'Markdown' }};\n}\n\n// ASK EMAIL\nif (step === 'ask_email') {\n  const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n  if (!emailRegex.test(text)) {\n    return { json: { action: 'send', userId, msg: '❌ That doesn\\'t look like a valid email. Please try again:' }};\n  }\n  data.email = text;\n  session.step = 'ask_password';\n  return { json: { action: 'send', userId, msg: '🔒 Please enter your *Password* (min 6 characters):', parseMode: 'Markdown' }};\n}\n\n// ASK PASSWORD\nif (step === 'ask_password') {\n  if (text.length < 6) {\n    return { json: { action: 'send', userId, msg: '❌ Password must be at least 6 characters. Try again:' }};\n  }\n  data.password = text;\n  session.step = 'ask_terms';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: '📜 Do you accept our *Terms of Service*?\\nhttps://biz-nepal.vercel.app/terms',\n    parseMode: 'Markdown',\n    buttons: kbd([[{ text: '✅ Yes, I Accept', callback_data: 'Yes' }, { text: '❌ No', callback_data: 'No' }]])\n  }};\n}\n\n// ASK TERMS\nif (step === 'ask_terms') {\n  if (text === 'No') {\n    delete staticData.sessions[userId];\n    return { json: { action: 'send', userId, msg: '👋 No problem! Type /start anytime to try again.' }};\n  }\n  if (text !== 'Yes') {\n    return { json: {\n      action: 'send',\n      userId,\n      msg: 'Please use the buttons below to accept or decline:',\n      buttons: kbd([[{ text: '✅ Yes, I Accept', callback_data: 'Yes' }, { text: '❌ No', callback_data: 'No' }]])\n    }};\n  }\n  session.step = 'ask_role';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: '👤 Are you signing up as a *User* or a *Business Owner*?',\n    parseMode: 'Markdown',\n    buttons: kbd([[{ text: '🙋 User', callback_data: 'user' }, { text: '🏢 Business Owner', callback_data: 'business' }]])\n  }};\n}\n\n// ASK ROLE\nif (step === 'ask_role') {\n  if (text !== 'user' && text !== 'business') {\n    return { json: {\n      action: 'send',\n      userId,\n      msg: 'Please tap a button to choose your role:',\n      buttons: kbd([[{ text: '🙋 User', callback_data: 'user' }, { text: '🏢 Business Owner', callback_data: 'business' }]])\n    }};\n  }\n  data.role = text;\n  if (text === 'business') {\n    session.step = 'ask_biz_name';\n    return { json: { action: 'send', userId, msg: '🏪 Please enter your *Business Name*:', parseMode: 'Markdown' }};\n  } else {\n    session.step = 'preview';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: `📋 *Review your details:*\\n\\n👤 Name: ${data.fullname}\\n📧 Email: ${data.email}\\n📱 Phone: ${data.phone}\\n🎭 Role: User\\n\\nLooks good?`,\n      parseMode: 'Markdown',\n      buttons: kbd([[{ text: '✅ Submit', callback_data: 'submit' }, { text: '✏️ Start Over', callback_data: '/start' }]])\n    }};\n  }\n}\n\n// ASK BIZ NAME\nif (step === 'ask_biz_name') {\n  if (text.length < 2) {\n    return { json: { action: 'send', userId, msg: '❌ Please enter a valid business name.' }};\n  }\n  data.bizName = text;\n  session.step = 'preview';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: `📋 *Review your details:*\\n\\n👤 Name: ${data.fullname}\\n📧 Email: ${data.email}\\n📱 Phone: ${data.phone}\\n🎭 Role: Business Owner\\n🏪 Business: ${data.bizName}\\n\\nLooks good?`,\n    parseMode: 'Markdown',\n    buttons: kbd([[{ text: '✅ Submit', callback_data: 'submit' }, { text: '✏️ Start Over', callback_data: '/start' }]])\n  }};\n}\n\n// PREVIEW / SUBMIT\nif (step === 'preview') {\n  if (text !== 'submit') {\n    const isBiz = data.role === 'business';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: `📋 *Review your details:*\\n\\n👤 Name: ${data.fullname}\\n📧 Email: ${data.email}\\n📱 Phone: ${data.phone}\\n🎭 Role: ${isBiz ? 'Business Owner' : 'User'}${isBiz ? `\\n🏪 Business: ${data.bizName}` : ''}\\n\\nLooks good?`,\n      parseMode: 'Markdown',\n      buttons: kbd([[{ text: '✅ Submit', callback_data: 'submit' }, { text: '✏️ Start Over', callback_data: '/start' }]])\n    }};\n  }\n  // Submit! Hand off to Supabase nodes\n  session.step = 'submitting';\n  return { json: {\n    action: 'signup',\n    userId,\n    signupData: { ...data, telegramChatId: userId }\n  }};\n}\n\n// FALLBACK\nreturn { json: {\n  action: 'send',\n  userId,\n  msg: 'Type /start to begin or /link email password to connect an existing account.'\n}};"
+      },
+      "name": "Dispatcher",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "id": "dispatcher"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.action }}",
+        "rules": {
+          "rules": [
+            { "value2": "send", "output": 0 },
+            { "value2": "signup", "output": 1 },
+            { "value2": "link_account", "output": 2 }
+          ]
+        },
+        "fallbackOutput": 3
+      },
+      "name": "Action Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "id": "action-router"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.userId }}",
+        "text": "={{ $json.msg }}",
+        "replyMarkup": "={{ $json.buttons ? 'inlineKeyboard' : 'none' }}",
+        "inlineKeyboard": "={{ $json.buttons }}",
+        "additionalFields": {
+          "parse_mode": "={{ $json.parseMode || '' }}"
+        }
+      },
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [700, 150],
+      "id": "tg-send",
+      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/auth/v1/signup",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"email\": \"{{ $json.signupData.email }}\",\n  \"password\": \"{{ $json.signupData.password }}\",\n  \"data\": {\n    \"full_name\": \"{{ $json.signupData.fullname }}\",\n    \"phone\": \"{{ $json.signupData.phone }}\"\n  }\n}",
+        "options": {}
+      },
+      "name": "Supabase Auth Signup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 350],
+      "id": "supabase-auth"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/users",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"id\": \"{{ $node[\"Supabase Auth Signup\"].json.user.id }}\",\n  \"email\": \"{{ $node[\"Dispatcher\"].json.signupData.email }}\",\n  \"full_name\": \"{{ $node[\"Dispatcher\"].json.signupData.fullname }}\",\n  \"role\": \"{{ $node[\"Dispatcher\"].json.signupData.role === 'business' ? 'business_owner' : 'user' }}\",\n  \"phone\": \"{{ $node[\"Dispatcher\"].json.signupData.phone }}\",\n  \"telegram_chat_id\": {{ $node[\"Dispatcher\"].json.signupData.telegramChatId }}\n}",
+        "options": {}
+      },
+      "name": "Insert User to DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [950, 350],
+      "id": "insert-user"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $node[\"Dispatcher\"].json.signupData.role }}",
+              "value2": "business"
+            }
+          ]
+        }
+      },
+      "name": "Is Business Role?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1200, 350],
+      "id": "is-business"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/businesses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $node[\"Dispatcher\"].json.signupData.bizName }}\",\n  \"slug\": \"{{ $node[\"Dispatcher\"].json.signupData.bizName.toLowerCase().replace(/[^a-z0-9]+/g, '-') }}-{{ Math.floor(Math.random()*9000)+1000 }}\",\n  \"owner_id\": \"{{ $node[\"Supabase Auth Signup\"].json.user.id }}\",\n  \"address\": \"Pending - Please Update\",\n  \"city\": \"Unknown\"\n}",
+        "options": {}
+      },
+      "name": "Insert Business to DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1450, 300],
+      "id": "insert-biz"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Dispatcher\"].json.signupData.telegramChatId }}",
+        "text": "=🎉 *Account Created Successfully!*\n\nWelcome to BizNepal, {{ $node[\"Dispatcher\"].json.signupData.fullname }}!\n\n✅ Email: {{ $node[\"Dispatcher\"].json.signupData.email }}\n✅ Role: {{ $node[\"Dispatcher\"].json.signupData.role === 'business' ? 'Business Owner' : 'User' }}\n\n👉 [Login to your dashboard](https://biz-nepal.vercel.app/login)\n\n_Your Telegram is now linked to your BizNepal account!_",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "name": "Send Signup Success",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1700, 350],
+      "id": "signup-success",
+      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Clear session after successful signup\nconst staticData = $getWorkflowStaticData('global');\nconst userId = $node['Dispatcher'].json.signupData.telegramChatId;\nif (staticData.sessions && staticData.sessions[userId]) {\n  delete staticData.sessions[userId];\n}\nreturn $input.all();"
+      },
+      "name": "Clear Session After Signup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1950, 350],
+      "id": "clear-session"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/auth/v1/token?grant_type=password",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"email\": \"{{ $json.linkEmail }}\",\n  \"password\": \"{{ $json.linkPass }}\"\n}",
+        "options": {}
+      },
+      "name": "Supabase Login (Link)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 500],
+      "id": "supabase-login"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/users?id=eq.{{ $json.user.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $json.access_token }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"telegram_chat_id\": {{ $node['Dispatcher'].json.userId }}\n}",
+        "options": {}
+      },
+      "name": "Link Telegram to Account",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [950, 500],
+      "id": "link-telegram"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node['Dispatcher'].json.userId }}",
+        "text": "=✅ *Account Linked!*\n\nWelcome back, {{ $node['Supabase Login (Link)'].json.user.user_metadata.full_name || $node['Supabase Login (Link)'].json.user.email }}!\n\nYour Telegram is now connected to your BizNepal account.\n\n👉 [Go to Dashboard](https://biz-nepal.vercel.app/dashboard)\n\nType /start anytime to manage your account.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "name": "Send Link Success",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1200, 500],
+      "id": "link-success",
+      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{ "node": "Dispatcher", "type": "main", "index": 0 }]]
+    },
+    "Dispatcher": {
+      "main": [[{ "node": "Action Router", "type": "main", "index": 0 }]]
+    },
+    "Action Router": {
+      "main": [
+        [{ "node": "Send Telegram Message", "type": "main", "index": 0 }],
+        [{ "node": "Supabase Auth Signup", "type": "main", "index": 0 }],
+        [{ "node": "Supabase Login (Link)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Supabase Auth Signup": {
+      "main": [[{ "node": "Insert User to DB", "type": "main", "index": 0 }]]
+    },
+    "Insert User to DB": {
+      "main": [[{ "node": "Is Business Role?", "type": "main", "index": 0 }]]
+    },
+    "Is Business Role?": {
+      "main": [
+        [{ "node": "Insert Business to DB", "type": "main", "index": 0 }],
+        [{ "node": "Send Signup Success", "type": "main", "index": 0 }]
+      ]
+    },
+    "Insert Business to DB": {
+      "main": [[{ "node": "Send Signup Success", "type": "main", "index": 0 }]]
+    },
+    "Send Signup Success": {
+      "main": [[{ "node": "Clear Session After Signup", "type": "main", "index": 0 }]]
+    },
+    "Supabase Login (Link)": {
+      "main": [[{ "node": "Link Telegram to Account", "type": "main", "index": 0 }]]
+    },
+    "Link Telegram to Account": {
+      "main": [[{ "node": "Send Link Success", "type": "main", "index": 0 }]]
+    }
+  }
+}

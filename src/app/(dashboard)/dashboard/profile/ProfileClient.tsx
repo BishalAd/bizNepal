@@ -87,12 +87,12 @@ export default function ProfileClient({ business, categories, districts, userId 
         name: formData.name,
         slug: newSlug,
         description: formData.description,
-        category_id: formData.category_id,
+        category_id: formData.category_id || null, // Ensure categorization is not empty string
         phone: formData.phone,
         whatsapp: formData.whatsapp,
         email: formData.email,
         website: formData.website,
-        district_id: formData.district_id,
+        district_id: formData.district_id || null, // Fix: integer syntax error for ""
         city: formData.city,
         address: formData.address,
         latitude: formData.latitude,
@@ -100,11 +100,6 @@ export default function ProfileClient({ business, categories, districts, userId 
         cover_url: formData.cover_url,
         logo_url: formData.logo_url,
         hours: formData.hours,
-        // Optional columns (might need migration if they don't exist):
-        // tagline: formData.tagline,
-        // business_type: formData.business_type,
-        // facebook_url: formData.facebook_url,
-        // instagram_url: formData.instagram_url
       }
 
       const { error } = await supabase.from('businesses').update(payload).eq('id', business.id)
@@ -128,6 +123,27 @@ export default function ProfileClient({ business, categories, districts, userId 
          monday: p, tuesday: p, wednesday: p, thursday: p, friday: p, saturday: p, sunday: p
        }
      }))
+  }
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser")
+      return
+    }
+
+    toast.loading("Fetching your location...")
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        setFormData(prev => ({ ...prev, latitude, longitude }))
+        toast.dismiss()
+        toast.success("Location updated!")
+      },
+      (error) => {
+        toast.dismiss()
+        toast.error("Failed to get location: " + error.message)
+      }
+    )
   }
 
   return (
@@ -315,7 +331,17 @@ export default function ProfileClient({ business, categories, districts, userId 
                          </InputGroup>
                        </div>
 
-                       <InputGroup label="Map Coordinates" description="Drag the marker to your exact location to help customers navigate to your store.">
+                       <InputGroup label="Map Coordinates" description="Drag the marker to your exact location or use the auto-detect button.">
+                         <div className="flex justify-between items-center mb-4">
+                           <button 
+                             type="button" 
+                             onClick={handleGetCurrentLocation}
+                             className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition shadow-sm border border-blue-100"
+                           >
+                             <MapPin className="w-4 h-4" /> Use My Current Location
+                           </button>
+                         </div>
+
                          <LocationPickerMap 
                            position={[formData.latitude, formData.longitude]} 
                            onChange={(lat, lng) => setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }))}

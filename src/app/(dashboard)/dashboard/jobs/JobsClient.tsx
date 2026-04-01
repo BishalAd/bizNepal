@@ -12,7 +12,7 @@ export default function JobsClient({ initialJobs }: any) {
   const supabase = createClient()
   const [jobs, setJobs] = useState(initialJobs)
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'open' | 'closed'>('open')
+  const [activeTab, setActiveTab] = useState<'active' | 'closed'>('active')
 
   const stats = useMemo(() => {
     let unreadApps = 0
@@ -25,13 +25,13 @@ export default function JobsClient({ initialJobs }: any) {
       })
     })
 
-    const open = jobs.filter((j:any) => j.status === 'open' && !isPast(new Date(j.deadline)))
-    const closed = jobs.filter((j:any) => j.status !== 'open' || isPast(new Date(j.deadline)))
+    const active = jobs.filter((j:any) => j.status === 'active' && !isPast(new Date(j.deadline)))
+    const closed = jobs.filter((j:any) => j.status !== 'active' || isPast(new Date(j.deadline)))
 
-    return { totalApps, unreadApps, open, closed }
+    return { totalApps, unreadApps, open: active, closed }
   }, [jobs])
 
-  const displayJobs = activeTab === 'open' ? stats.open : stats.closed
+  const displayJobs = activeTab === 'active' ? stats.open : stats.closed
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this job circular permanently? Candidate data will be retained in your inbox but unlinked from the posting.")) return
@@ -91,8 +91,8 @@ export default function JobsClient({ initialJobs }: any) {
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px]">
           
           <div className="px-6 pt-6 border-b border-gray-100 flex gap-6">
-             <button onClick={()=>setActiveTab('open')} className={`pb-4 font-bold text-sm tracking-wide transition border-b-2 ${activeTab === 'open' ? 'border-purple-600 text-purple-700' : 'border-transparent text-gray-500 hover:text-gray-900'}`}>
-               Active Openings <span className={`ml-1.5 px-2 py-0.5 rounded-full text-xs ${activeTab === 'open' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-600'}`}>{stats.open.length}</span>
+             <button onClick={()=>setActiveTab('active')} className={`pb-4 font-bold text-sm tracking-wide transition border-b-2 ${activeTab === 'active' ? 'border-purple-600 text-purple-700' : 'border-transparent text-gray-500 hover:text-gray-900'}`}>
+                Active Openings <span className={`ml-1.5 px-2 py-0.5 rounded-full text-xs ${activeTab === 'active' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-600'}`}>{stats.open.length}</span>
              </button>
              <button onClick={()=>setActiveTab('closed')} className={`pb-4 font-bold text-sm tracking-wide transition border-b-2 ${activeTab === 'closed' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900'}`}>
                Closed / Expired <span className={`ml-1.5 px-2 py-0.5 rounded-full text-xs ${activeTab === 'closed' ? 'bg-gray-200 text-gray-900' : 'bg-gray-100 text-gray-600'}`}>{stats.closed.length}</span>
@@ -157,7 +157,7 @@ export default function JobsClient({ initialJobs }: any) {
                            
                            {/* Quick Actions */}
                            <div className="flex items-center gap-1.5">
-                              {activeTab === 'open' && (
+                              {activeTab === 'active' && (
                                 <button onClick={() => handleCloseJob(j.id)} disabled={loadingAction===j.id} className="p-2 text-gray-500 hover:text-orange-600 bg-white border border-gray-200 hover:bg-orange-50 rounded-lg transition" title="Close Applications"><XCircle className="w-4 h-4"/></button>
                               )}
                               <Link href={`/dashboard/jobs/${j.id}/edit`} className="p-2 text-gray-500 hover:text-blue-600 bg-white border border-gray-200 hover:bg-blue-50 rounded-lg transition" title="Edit Job"><Edit className="w-4 h-4"/></Link>

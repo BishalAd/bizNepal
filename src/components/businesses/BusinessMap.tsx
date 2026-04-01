@@ -42,6 +42,11 @@ export default function BusinessMap({ businesses, onBoundsChange }: any) {
 
   return (
     <div className="w-full h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] z-0 absolute top-0 left-0 right-0">
+      {/* Visibility counter */}
+      <div className="absolute top-20 right-4 z-[1000] bg-white/90 backdrop-blur px-3 py-1.5 rounded-xl shadow-sm border border-gray-200 text-xs font-bold text-gray-600">
+        Showing {businesses.filter((b:any)=>b.latitude && b.longitude).length} of {businesses.length} pins
+      </div>
+
       <MapContainer 
         center={defaultCenter} 
         zoom={7} 

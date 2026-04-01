@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import 'leaflet/dist/leaflet.css'
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet'
 import L from 'leaflet'
 
 const customIcon = new L.Icon({
@@ -17,6 +17,14 @@ const customIcon = new L.Icon({
 interface LocationPickerProps {
   position: [number, number]
   onChange: (lat: number, lng: number) => void
+}
+
+function ChangeView({ center }: { center: [number, number] }) {
+  const map = useMap()
+  useEffect(() => {
+    map.setView(center)
+  }, [center, map])
+  return null
 }
 
 function LocationMarker({ position, onChange }: LocationPickerProps) {
@@ -55,23 +63,15 @@ function LocationMarker({ position, onChange }: LocationPickerProps) {
 }
 
 export default function LocationPickerMap({ position, onChange }: LocationPickerProps) {
-  const [center, setCenter] = useState<[number, number]>(position)
-
-  useEffect(() => {
-    // Attempt to get user's current location if generic default is passed (e.g. Kathmandu center)
-    // But for this, we just use the provided position.
-    setCenter(position)
-  }, [position])
-
   return (
     <div className="h-[300px] w-full rounded-2xl overflow-hidden border border-gray-200 z-0 relative">
       <MapContainer 
-        key={`${center[0]}-${center[1]}`}
-        center={center} 
+        center={position} 
         zoom={13} 
         scrollWheelZoom={true} 
         style={{ height: '100%', width: '100%' }}
       >
+        <ChangeView center={position} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

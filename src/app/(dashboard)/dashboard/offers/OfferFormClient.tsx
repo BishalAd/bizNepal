@@ -258,7 +258,7 @@ export default function OfferFormClient({ products, business }: any) {
                    <div className="p-4 text-gray-900">
                      <div className="flex items-center gap-2 mb-2">
                        <div className="w-6 h-6 rounded bg-gray-100 overflow-hidden flex-shrink-0">
-                         {business.logo_url && <img src={supabase.storage.from('biznepal-images').getPublicUrl(business.logo_url).data.publicUrl} className="w-full h-full object-cover"/>}
+                         {business.logo_url && <img src={business.logo_url} className="w-full h-full object-cover"/>}
                        </div>
                        <span className="text-xs font-bold text-gray-500 truncate">{business.name}</span>
                      </div>
