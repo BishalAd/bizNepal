@@ -21,12 +21,22 @@ export function useJobs(initialFilters?: JobFilters) {
   const [page, setPage] = useState(0)
   const pageSize = 10
 
-  const fetchJobs = useCallback(async ({ reset = false, activeFilters = initialFilters }: { reset?: boolean, activeFilters?: JobFilters } = {}) => {
+  const fetchJobs = useCallback(async ({ reset = false, activeFilters }: { reset?: boolean, activeFilters?: JobFilters } = {}) => {
     try {
       setLoading(true)
-      const currentPage = reset ? 0 : page
-      const from = currentPage * pageSize
-      const to = from + pageSize - 1
+      
+      // Calculate start index based on current state or reset
+      let from = 0
+      let to = pageSize - 1
+      
+      if (!reset) {
+        // We need the latest page value without making it a dependency
+        setPage(oldPage => {
+          from = oldPage * pageSize
+          to = from + pageSize - 1
+          return oldPage
+        })
+      }
 
       let query = supabase
         .from('jobs')
@@ -55,10 +65,10 @@ export function useJobs(initialFilters?: JobFilters) {
         query = query.in('experience_level', activeFilters.experience)
       }
       if (activeFilters?.minSalary) {
-        query = query.gte('salary_max', activeFilters.minSalary) // If job's max is at least min requested
+        query = query.gte('salary_max', activeFilters.minSalary)
       }
       if (activeFilters?.maxSalary) {
-        query = query.lte('salary_min', activeFilters.maxSalary) // If job's min is at most max requested
+        query = query.lte('salary_min', activeFilters.maxSalary)
       }
 
       // Sorting
@@ -78,20 +88,20 @@ export function useJobs(initialFilters?: JobFilters) {
 
       if (reset) {
         setJobs(data || [])
+        setPage(1)
       } else {
         setJobs(prev => [...prev, ...(data || [])])
+        setPage(p => p + 1)
       }
 
       setHasMore(count !== null && count > to + 1)
-      if (reset) setPage(1)
-      else setPage(currentPage + 1)
 
     } catch (err) {
       console.error('Error fetching jobs:', err)
     } finally {
       setLoading(false)
     }
-  }, [page, initialFilters, supabase])
+  }, [supabase])
 
   const loadMore = () => {
     if (!loading && hasMore) {

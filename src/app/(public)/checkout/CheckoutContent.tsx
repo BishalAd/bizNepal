@@ -6,7 +6,7 @@ import { useCartStore } from '@/store/cartStore'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import toast, { Toaster } from 'react-hot-toast'
-import { CreditCard, Truck, Store, MapPin, User, Phone, Mail, ShoppingBag, ArrowRight } from 'lucide-react'
+import { CreditCard, Truck, Store, MapPin, User, Phone, Mail, ShoppingBag, ArrowRight, Plus, Minus, Trash2, X } from 'lucide-react'
 import EsewaButton from '@/components/payments/EsewaButton'
 import CODCheckout from '@/components/payments/CODCheckout'
 import ReserveCheckout from '@/components/payments/ReserveCheckout'
@@ -16,7 +16,7 @@ export default function CheckoutContent() {
   const { user } = useAuth()
   const supabase = createClient()
   
-  const { items, totalAmount, totalItems, clearCart } = useCartStore()
+  const { items, totalAmount, totalItems, clearCart, updateQuantity, removeItem } = useCartStore()
   
   // Is client mounted
   const [mounted, setMounted] = useState(false)
@@ -58,7 +58,10 @@ export default function CheckoutContent() {
 
   const checkoutItems = directItem ? [directItem] : items
   const subtotal = directItem ? (directItem.price * directItem.quantity) : totalAmount()
-  const deliveryFee = paymentMethod === 'reserve' ? 0 : 100
+  
+  // Calculate delivery fee: 100 Rs per unique business
+  const uniqueBusinesses = new Set(checkoutItems.map(i => i.business_id))
+  const deliveryFee = paymentMethod === 'reserve' ? 0 : uniqueBusinesses.size * 100
   const grandTotal = subtotal + deliveryFee
 
   if (!mounted) return null
@@ -88,19 +91,24 @@ export default function CheckoutContent() {
     const toastId = toast.loading('Generating secure order...')
 
     try {
+      // Map 'reserve' UI mode to valid DB payment_method
+      const dbPaymentMethod = paymentMethod === 'reserve' ? 'store_pickup' : paymentMethod
+
       // 1. Create a master Order in Supabase
       const { data: newOrder, error } = await supabase.from('orders').insert({
-         user_id: user?.id || null,
+         customer_id: user?.id || null,
          business_id: businessId,
          items: checkoutItems.map(i => ({ id: i.id, title: i.title, price: i.price, quantity: i.quantity })),
+         subtotal: subtotal,
+         delivery_fee: deliveryFee,
          total: grandTotal,
          order_status: 'pending',
-         payment_method: paymentMethod,
+         payment_method: dbPaymentMethod,
          payment_status: 'pending',
          customer_name: formData.name,
          customer_email: formData.email,
          customer_phone: formData.phone,
-         customer_address: { district: formData.district, city: formData.city, address: formData.address }
+         delivery_address: `${formData.address}, ${formData.city}, ${formData.district}`
       }).select('id').single()
 
       if (error) throw error
@@ -258,18 +266,56 @@ export default function CheckoutContent() {
                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                   <h3 className="text-lg font-black text-gray-900 mb-6">Order Summary</h3>
                   
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar mb-6">
+                   <div className="space-y-6 max-h-[450px] overflow-y-auto pr-2 no-scrollbar mb-6">
                      {checkoutItems.map((item, idx) => (
-                        <div key={idx} className="flex gap-4">
-                           <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
+                        <div key={idx} className="flex gap-4 group/item">
+                           <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200 relative">
                               {item.image_url ? <img src={item.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-300"><ShoppingBag className="w-6 h-6"/></div>}
+                              {!directItem && (
+                                <button 
+                                  onClick={() => removeItem(item.id)}
+                                  className="absolute -top-1 -right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity shadow-sm"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
                            </div>
                           <div className="flex-1">
-                             <h4 className="font-bold text-gray-900 text-sm line-clamp-2 leading-tight">{item.title}</h4>
-                             <p className="text-xs font-bold text-gray-400 mt-1">Qty: {item.quantity}</p>
+                             <h4 className="font-bold text-gray-900 text-sm line-clamp-1 leading-tight">{item.title}</h4>
+                             <p className="text-xs font-extrabold text-blue-600 mt-0.5">₨ {item.price.toLocaleString()}</p>
+                             
+                             {/* Quantity Controls */}
+                             <div className="flex items-center gap-3 mt-2">
+                                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                   <button 
+                                     onClick={() => {
+                                       if (directItem) setDirectItem({...directItem, quantity: Math.max(1, directItem.quantity - 1)})
+                                       else updateQuantity(item.id, Math.max(1, item.quantity - 1))
+                                     }}
+                                     className="p-1 px-2 hover:bg-gray-100 text-gray-500 transition border-r border-gray-200"
+                                   >
+                                     <Minus className="w-3 h-3" />
+                                   </button>
+                                   <span className="px-2.5 text-xs font-black text-gray-900">{item.quantity}</span>
+                                   <button 
+                                     onClick={() => {
+                                       if (directItem) setDirectItem({...directItem, quantity: directItem.quantity + 1})
+                                       else updateQuantity(item.id, item.quantity + 1)
+                                     }}
+                                     className="p-1 px-2 hover:bg-gray-100 text-gray-500 transition border-l border-gray-200"
+                                   >
+                                     <Plus className="w-3 h-3" />
+                                   </button>
+                                </div>
+                                {!directItem && (
+                                  <button onClick={() => removeItem(item.id)} className="text-gray-300 hover:text-red-500 transition">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                             <p className="font-extrabold text-blue-900 text-sm">₨ {(item.price * item.quantity).toLocaleString()}</p>
+                             <p className="font-black text-gray-900 text-sm">₨ {(item.price * item.quantity).toLocaleString()}</p>
                           </div>
                         </div>
                      ))}

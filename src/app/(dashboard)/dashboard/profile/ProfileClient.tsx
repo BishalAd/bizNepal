@@ -87,16 +87,18 @@ export default function ProfileClient({ business, categories, districts, userId 
         name: formData.name,
         slug: newSlug,
         description: formData.description,
-        category_id: formData.category_id || null, // Ensure categorization is not empty string
+        category_id: formData.category_id || null,
         phone: formData.phone,
         whatsapp: formData.whatsapp,
         email: formData.email,
         website: formData.website,
-        district_id: formData.district_id || null, // Fix: integer syntax error for ""
+        facebook: formData.facebook_url || null,
+        instagram: formData.instagram_url || null,
+        district_id: formData.district_id ? Number(formData.district_id) : null,
         city: formData.city,
         address: formData.address,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
+        latitude: formData.latitude ? Number(formData.latitude) : null,
+        longitude: formData.longitude ? Number(formData.longitude) : null,
         cover_url: formData.cover_url,
         logo_url: formData.logo_url,
         hours: formData.hours,
@@ -131,18 +133,19 @@ export default function ProfileClient({ business, categories, districts, userId 
       return
     }
 
-    toast.loading("Fetching your location...")
+    const toastId = toast.loading("Fetching your location...")
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords
         setFormData(prev => ({ ...prev, latitude, longitude }))
-        toast.dismiss()
-        toast.success("Location updated!")
+        toast.dismiss(toastId)
+        toast.success("📍 Location captured! Drag the map pin to fine-tune if needed.")
       },
       (error) => {
-        toast.dismiss()
+        toast.dismiss(toastId)
         toast.error("Failed to get location: " + error.message)
-      }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
   }
 
