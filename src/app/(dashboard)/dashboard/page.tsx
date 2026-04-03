@@ -20,8 +20,19 @@ export default async function DashboardOverviewPage() {
   if (!user) redirect('/login')
 
   // 2. Get Business
-  const { data: business } = await supabase.from('businesses').select('id, name').eq('owner_id', user.id).single()
-  if (!business) redirect('/setup-profile')
+  const { data: business, error: bizError } = await supabase
+    .from('businesses')
+    .select('id, name')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+
+  if (bizError) {
+    console.error('Error fetching business for dashboard:', bizError)
+  }
+
+  if (!business) {
+    redirect('/setup-profile')
+  }
 
   // 3. Fetch Stats Data
   const todayStart = new Date()

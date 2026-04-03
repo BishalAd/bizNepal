@@ -152,7 +152,7 @@ export default function JobsClientListing({ categories, districts }: any) {
                <h3 className="font-semibold text-gray-900 mb-3">Category</h3>
                <select value={filters.category || ''} onChange={e=>setFilters({...filters, category: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none font-medium text-gray-700">
                  <option value="">All Categories</option>
-                 {categories.map((c:any) => <option key={c.id} value={c.id}>{c.name_en}</option>)}
+                 {categories.map((c:any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                </select>
              </div>
 

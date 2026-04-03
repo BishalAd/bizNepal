@@ -84,7 +84,7 @@ export default async function HomePage() {
                 <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center group-hover:bg-red-100 transition-colors">
                   <span className="text-xl">{cat.icon || '📦'}</span>
                 </div>
-                <span className="font-semibold text-gray-800 text-sm">{cat.name_en}</span>
+                <span className="font-semibold text-gray-800 text-sm">{cat.name}</span>
               </Link>
             ))}
           </div>

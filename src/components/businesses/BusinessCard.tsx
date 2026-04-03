@@ -56,7 +56,7 @@ export default function BusinessCard({ business }: { business: any }) {
 
            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-medium text-gray-600">
              <span className="bg-gray-100 px-2 py-1 rounded uppercase tracking-wider text-[10px] font-bold">
-               {Array.isArray(business.category) ? business.category[0]?.name_en : (business.category as any)?.name_en || 'Business'}
+               {Array.isArray(business.category) ? business.category[0]?.name : (business.category as any)?.name || 'Business'}
              </span>
              <span className="flex items-center">
                <MapPin className="w-3 h-3 justify-center mr-1 text-gray-400"/> 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, Upload, CheckCircle2, Briefcase } from 'lucide-react'
-import { Toaster } from 'react-hot-toast'
+import { Toaster, toast } from 'react-hot-toast'
 
 export default function SetupProfilePage() {
   const router = useRouter()
@@ -27,6 +27,7 @@ export default function SetupProfilePage() {
   const [bizName, setBizName] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [bizPhone, setBizPhone] = useState('')
+  const [bizAddress, setBizAddress] = useState('')
   const [categories, setCategories] = useState<any[]>([])
 
   useEffect(() => {
@@ -52,14 +53,14 @@ export default function SetupProfilePage() {
         
         // If business, check if business exists
         if (prof.role === 'business') {
-          const { data: biz } = await supabase
+          const { data: biz, error: bizError } = await supabase
             .from('businesses')
             .select('id')
             .eq('owner_id', session.user.id)
-            .single()
+            .maybeSingle()
             
           if (biz) {
-            router.push('/dashboard/dashboard') // already completed
+            router.push('/dashboard')
             return
           }
           setStep(2) // Jump to business setup if role is already business but no biz record
@@ -138,6 +139,7 @@ export default function SetupProfilePage() {
           slug,
           category_id: categoryId || null,
           phone: bizPhone,
+          address: bizAddress,
         })
 
       if (bizError) throw bizError
@@ -158,8 +160,10 @@ export default function SetupProfilePage() {
         })
       }).catch(err => console.error('Failed to trigger n8n onboarding webhook:', err))
 
-      // Redirect to the actual dashboard overview
-      router.push('/dashboard/dashboard')
+      // 3. Final Redirect
+      toast.success('Business profile created successfully!')
+      router.push('/dashboard')
+      router.refresh()
     } catch (err: any) {
       setError(err.message || 'Failed to create business profile')
     } finally {
@@ -278,7 +282,7 @@ export default function SetupProfilePage() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border bg-white">
                 <option value="">Select a category</option>
                 {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name_en}</option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
             </div>
@@ -286,6 +290,13 @@ export default function SetupProfilePage() {
             <div>
               <label className="block text-sm font-medium text-gray-700">Business Phone</label>
               <input type="text" value={bizPhone} onChange={e => setBizPhone(e.target.value)} required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Business Address</label>
+              <input type="text" value={bizAddress} onChange={e => setBizAddress(e.target.value)} required
+                placeholder="Street name, Area, City"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
             </div>
 

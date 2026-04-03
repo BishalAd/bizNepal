@@ -87,7 +87,7 @@ export default function BusinessProfileClient({ business, tabsData }: any) {
                  </div>
 
                  <div className="flex flex-wrap items-center gap-3 mb-4">
-                   <span className="bg-blue-50 text-blue-700 px-3 py-1 font-bold text-xs uppercase tracking-wider rounded-lg border border-blue-100">{business.category?.name_en || 'Business'}</span>
+                   <span className="bg-blue-50 text-blue-700 px-3 py-1 font-bold text-xs uppercase tracking-wider rounded-lg border border-blue-100">{business.category?.name || 'Business'}</span>
                    <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-100">
                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-500 mr-1.5" />
                      <span className="text-sm font-bold text-yellow-700 mr-1">{business.rating || '0.0'}</span>

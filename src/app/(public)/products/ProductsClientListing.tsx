@@ -91,7 +91,7 @@ export default function ProductsClientListing({ initialFilters, categories, dist
                     onChange={() => handleFilterChange('category', cat.id)} 
                     className="text-red-600 focus:ring-red-500 rounded-full" 
                   />
-                  <span className="text-sm text-gray-700">{cat.name_en}</span>
+                  <span className="text-sm text-gray-700">{cat.name}</span>
                 </label>
               ))}
             </div>
