@@ -6,14 +6,14 @@ import { useCartStore } from '@/store/cartStore'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import toast, { Toaster } from 'react-hot-toast'
-import { CreditCard, Truck, Store, MapPin, User, Phone, Mail, ShoppingBag, ArrowRight, Plus, Minus, Trash2, X } from 'lucide-react'
+import { CreditCard, Truck, Store, MapPin, User, Phone, Mail, ShoppingBag, ArrowRight, Plus, Minus, Trash2, X, Loader2 } from 'lucide-react'
 import EsewaButton from '@/components/payments/EsewaButton'
 import CODCheckout from '@/components/payments/CODCheckout'
 import ReserveCheckout from '@/components/payments/ReserveCheckout'
 
 export default function CheckoutContent() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const supabase = createClient()
   
   const { items, totalAmount, totalItems, clearCart, updateQuantity, removeItem } = useCartStore()
@@ -23,8 +23,52 @@ export default function CheckoutContent() {
   useEffect(() => setMounted(true), [])
 
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', address: '', district: '', city: ''
+    name: '', email: '', phone: '', address: '', district: '', city: '',
+    latitude: null as number | null,
+    longitude: null as number | null
   })
+  const [isGettingLocation, setIsGettingLocation] = useState(false)
+
+  // Sync user/profile data once loaded
+  useEffect(() => {
+    if (!formData.name && (profile?.full_name || user?.user_metadata?.full_name)) {
+      setFormData(prev => ({ ...prev, name: profile?.full_name || user?.user_metadata?.full_name }))
+    }
+    if (!formData.email && user?.email) {
+      setFormData(prev => ({ ...prev, email: user.email }))
+    }
+    if (!formData.phone && (profile?.phone || profile?.whatsapp)) {
+      setFormData(prev => ({ ...prev, phone: profile?.phone || profile?.whatsapp }))
+    }
+    if (!formData.address && profile?.address) {
+      setFormData(prev => ({ ...prev, address: profile.address }))
+    }
+  }, [user, profile])
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      return toast.error('Geolocation is not supported by your browser')
+    }
+
+    setIsGettingLocation(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData(prev => ({
+          ...prev,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        }))
+        setIsGettingLocation(false)
+        toast.success('Location captured (Optional coordinates recorded)')
+      },
+      (error) => {
+        setIsGettingLocation(false)
+        console.error('Location error:', error)
+        toast.error('Could not get location. Entering manually.')
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    )
+  }
   
   const searchParams = useSearchParams()
   const [directItem, setDirectItem] = useState<any>(null)
@@ -91,54 +135,90 @@ export default function CheckoutContent() {
     const toastId = toast.loading('Generating secure order...')
 
     try {
-      // Map 'reserve' UI mode to valid DB payment_method
       const dbPaymentMethod = paymentMethod === 'reserve' ? 'store_pickup' : paymentMethod
+      
+      // DEFERRED ORDER PLACEMENT LOGIC
+      // If payment is COD or Pickup, place immediately. 
+      // If online (eSewa/Khalti), store in payment_attempts and create order ONLY after success.
 
-      // 1. Create a master Order in Supabase
-      const { data: newOrder, error } = await supabase.from('orders').insert({
-         customer_id: user?.id || null,
-         business_id: businessId,
-         items: checkoutItems.map(i => ({ id: i.id, title: i.title, price: i.price, quantity: i.quantity })),
-         subtotal: subtotal,
-         delivery_fee: deliveryFee,
-         total: grandTotal,
-         order_status: 'pending',
-         payment_method: dbPaymentMethod,
-         payment_status: 'pending',
-         customer_name: formData.name,
-         customer_email: formData.email,
-         customer_phone: formData.phone,
-         delivery_address: `${formData.address}, ${formData.city}, ${formData.district}`
+      if (paymentMethod === 'cod' || paymentMethod === 'reserve') {
+        const { data: newOrder, error } = await supabase.from('orders').insert({
+          customer_id: user?.id || null,
+          business_id: businessId,
+          items: checkoutItems.map(i => ({ id: i.id, title: i.title, price: i.price, quantity: i.quantity })),
+          subtotal: subtotal,
+          delivery_fee: deliveryFee,
+          total: grandTotal,
+          order_status: 'pending',
+          payment_method: dbPaymentMethod,
+          payment_status: 'pending',
+          customer_name: formData.name,
+          customer_email: formData.email,
+          customer_phone: formData.phone,
+          delivery_address: `${formData.address}, ${formData.city}, ${formData.district}`,
+          latitude: formData.latitude,
+          longitude: formData.longitude
+        }).select('id').single()
+
+        if (error) throw error
+        setPendingOrderId(newOrder.id)
+        toast.success('Order placed successfully.', { id: toastId })
+        return // Finished for COD/Pickup
+      }
+
+      // ONLINE PAYMENT FLOW: Store in payment_attempts first
+      const orderMetadata = {
+        customer_id: user?.id || null,
+        business_id: businessId,
+        items: checkoutItems.map(i => ({ id: i.id, title: i.title, price: i.price, quantity: i.quantity })),
+        subtotal: subtotal,
+        delivery_fee: deliveryFee,
+        total: grandTotal,
+        payment_method: dbPaymentMethod,
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        delivery_address: `${formData.address}, ${formData.city}, ${formData.district}`,
+        latitude: formData.latitude,
+        longitude: formData.longitude
+      }
+
+      const { data: attempt, error: attemptError } = await supabase.from('payment_attempts').insert({
+        order_data: orderMetadata,
+        status: 'pending'
       }).select('id').single()
 
-      if (error) throw error
+      if (attemptError) {
+        console.error('Attempt Error:', attemptError)
+        throw new Error('Failed to initiate secure payment session. Please run the provided database migration SQL.')
+      }
 
-      setPendingOrderId(newOrder.id)
-      toast.success('Order logged successfully. Awaiting payment.', { id: toastId })
+      // Use the attempt ID as the purchase order reference
+      const referenceId = attempt.id
 
-      // 2. If Khalti, init logic directly
       if (paymentMethod === 'khalti') {
-         const res = await fetch('/api/payments/khalti/initiate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-               amount: grandTotal,
-               orderId: newOrder.id,
-               customerName: formData.name,
-               customerPhone: formData.phone,
-               customerEmail: formData.email,
-               purchaseOrderName: `BizNepal Order BN-${newOrder.id.slice(0,8)}`
-            })
-         })
-         const khaltiData = await res.json()
-         if (!res.ok) throw new Error(khaltiData.error || 'Khalti setup failed')
-         
-         // Redirect to Khalti payment page
-         window.location.href = khaltiData.payment_url
+        const res = await fetch('/api/payments/khalti/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: grandTotal,
+            orderId: referenceId, // Using attempt ID
+            customerName: formData.name,
+            customerPhone: formData.phone,
+            customerEmail: formData.email,
+            purchaseOrderName: `BizNepal Payment Ref-${referenceId.slice(0,8)}`
+          })
+        })
+        const khaltiData = await res.json()
+        if (!res.ok) throw new Error(khaltiData.error || 'Khalti setup failed')
+        window.location.href = khaltiData.payment_url
+      } else if (paymentMethod === 'esewa') {
+        setPendingOrderId(referenceId)
+        toast.success('Payment session initiated.', { id: toastId })
       }
 
     } catch (err: any) {
-      toast.error(err.message || 'Failed to generate order.', { id: toastId })
+      toast.error(err.message || 'Failed to process order.', { id: toastId })
       setPendingOrderId(null)
     } finally {
       setIsProcessing(false)
@@ -197,10 +277,19 @@ export default function CheckoutContent() {
                        </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Detailed Address <span className="text-red-500">*</span></label>
-                      <textarea required value={formData.address} onChange={e=>setFormData({...formData, address: e.target.value})} disabled={!!pendingOrderId} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition disabled:opacity-50 resize-none" rows={2} placeholder="Street name, near landmarks, house number..." />
+                    <div className="flex justify-between items-center mb-2">
+                       <label className="block text-sm font-bold text-gray-700">Detailed Address <span className="text-red-500">*</span></label>
+                       <button 
+                         type="button" 
+                         onClick={handleGetLocation}
+                         disabled={isGettingLocation || !!pendingOrderId}
+                         className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full transition hover:bg-blue-100"
+                       >
+                         <MapPin className={`w-3 h-3 ${isGettingLocation ? 'animate-bounce' : ''}`}/>
+                         {formData.latitude ? 'Location Captured' : 'Use My Current Location'}
+                       </button>
                     </div>
+                    <textarea required value={formData.address} onChange={e=>setFormData({...formData, address: e.target.value})} disabled={!!pendingOrderId} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition disabled:opacity-50 resize-none" rows={2} placeholder="Street name, near landmarks, house number..." />
                  </form>
                </div>
 

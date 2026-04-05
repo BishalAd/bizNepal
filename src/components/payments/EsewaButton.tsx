@@ -11,9 +11,10 @@ interface EsewaButtonProps {
 }
 
 export default function EsewaButton({ amount, orderId, productName, customerName }: EsewaButtonProps) {
-  // Using test environment credentials/logic. In prod, env vars should provide the secret.
-  const secretKey = process.env.NEXT_PUBLIC_ESEWA_SECRET || '8gBm/:&EnhH.1/q'
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  // eSewa test key is a publicly known test credential from eSewa's docs.
+  // For production, set NEXT_PUBLIC_ESEWA_SECRET in environment variables.
+  const secretKey = process.env.NEXT_PUBLIC_ESEWA_SECRET || '8gBm/:&EnhH.1/q' // eSewa public test key
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '') // Remove trailing slash
 
   const signature = useMemo(() => {
     return generateEsewaSignature(secretKey, amount, orderId, ESEWA_PRODUCT_CODE)

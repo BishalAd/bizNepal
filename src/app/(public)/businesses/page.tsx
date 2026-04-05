@@ -15,12 +15,12 @@ export default async function BusinessDirectoryPage() {
     { data: districts },
     { data: initialBusinesses }
   ] = await Promise.all([
-    supabase.from('categories').select('id, name, slug').eq('type', 'business'),
-    supabase.from('districts').select('id, name').order('name_en'),
+    supabase.from('categories').select('id, name_en, slug').in('type', ['product', 'service']),
+    supabase.from('districts').select('id, name_en').order('name_en'),
     supabase.from('businesses').select(`
       id, name, slug, logo_url, cover_url, rating, review_count, city, address, 
-      latitude, longitude, is_verified, hours, whatsapp,
-      category:categories(name),
+      latitude, longitude, is_verified, hours, whatsapp, district_id, category_id,
+      category:categories(name_en),
       district_info:districts(name_en)
     `).eq('is_active', true).limit(50)
   ])

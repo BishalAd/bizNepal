@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import BookingConfirmation from '@/components/events/BookingConfirmation'
 import { createClient } from '@/lib/supabase/client'
@@ -9,7 +9,7 @@ import { Calendar, MapPin, ArrowRight, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 
 export default function BookingFlowClient({ event }: any) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const supabase = createClient()
 
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -17,12 +17,25 @@ export default function BookingFlowClient({ event }: any) {
   const [bookingResult, setBookingResult] = useState<any>(null)
   
   const [formData, setFormData] = useState({
-    name: user?.user_metadata?.full_name || '',
-    email: user?.email || '',
+    name: '',
+    email: '',
     phone: '',
     seats: 1,
     paymentMethod: event.is_free ? 'free' : 'esewa'
   })
+
+  // Sync user/profile data once loaded
+  useEffect(() => {
+    if (!formData.name && (profile?.full_name || user?.user_metadata?.full_name)) {
+      setFormData(prev => ({ ...prev, name: profile?.full_name || user?.user_metadata?.full_name }))
+    }
+    if (!formData.email && user?.email) {
+      setFormData(prev => ({ ...prev, email: user.email }))
+    }
+    if (!formData.phone && (profile?.phone || profile?.whatsapp)) {
+      setFormData(prev => ({ ...prev, phone: profile?.phone || profile?.whatsapp }))
+    }
+  }, [user, profile])
 
   // Basic validation rules
   const isStep1Valid = formData.name.trim() !== '' && formData.phone.trim() !== '' && formData.seats > 0

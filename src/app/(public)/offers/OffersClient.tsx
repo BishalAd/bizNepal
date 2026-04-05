@@ -117,56 +117,52 @@ export default function OffersClient({ initialOffers, categories, searchParams }
                 const isUnder5 = stockLeft !== null && stockLeft <= 5
 
                 return (
-                  <div key={offer.id} className="bg-white rounded-2xl border border-red-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition">
-                    <div className="h-48 bg-gray-100 relative overflow-hidden">
+                  <div key={offer.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-red-500/10 overflow-hidden flex flex-col group transition-all duration-500 hover:-translate-y-1">
+                    <div className="h-52 bg-gray-100 relative overflow-hidden">
                       {offer.banner_url ? (
-                        <Image src={offer.banner_url} alt={offer.title} fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover group-hover:scale-105 transition duration-500" />
+                        <Image src={offer.banner_url} alt={offer.title} fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover group-hover:scale-110 transition duration-700 ease-out" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">Offer Banner</div>
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50 uppercase tracking-widest font-black text-xs">No Image</div>
                       )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      
                       {offer.discount_percent && (
-                        <div className="absolute top-4 left-4 bg-red-600 text-white font-extrabold px-3 py-1.5 rounded-lg shadow-lg rotate-[-2deg] text-lg">
+                        <div className="absolute top-4 left-4 bg-red-600 text-white font-black px-3.5 py-2 rounded-2xl shadow-lg shadow-red-600/40 rotate-[-3deg] text-lg z-10">
                           {offer.discount_percent}% OFF
                         </div>
                       )}
+                      
+                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md text-gray-900 font-bold px-3 py-1.5 rounded-xl shadow-sm text-xs flex items-center gap-1.5 z-10 border border-white/20">
+                        <Flame className="w-3.5 h-3.5 text-red-500 fill-red-500" />
+                        Hot Deal
+                      </div>
                     </div>
                     
-                    <div className="p-5 flex flex-col flex-grow">
-                      <div className="flex items-center gap-2 text-sm text-gray-500 mb-3 truncate">
-                        <Store className="w-4 h-4 flex-shrink-0" />
-                        <span className="truncate font-medium">{offer.business?.name}</span>
+                    <div className="p-6 flex flex-col flex-grow">
+                      <div className="flex items-center gap-2 text-xs font-bold text-gray-400 mb-3 tracking-wide uppercase">
+                        <Store className="w-3.5 h-3.5 text-red-500" />
+                        <span className="truncate">{offer.business?.name}</span>
                       </div>
                       
-                      <h3 className="font-bold text-gray-900 text-lg leading-snug line-clamp-2 mb-4 group-hover:text-red-700 transition">
+                      <h3 className="font-extrabold text-gray-900 text-xl leading-tight line-clamp-2 mb-4 group-hover:text-red-600 transition-colors">
                         {offer.title}
                       </h3>
 
-                      <div className="mt-auto">
-                        <div className="flex items-end gap-3 mb-6 bg-red-50/50 p-3 rounded-xl">
-                          <span className="text-2xl font-extrabold text-red-600 leading-none">₨ {offer.offer_price.toLocaleString()}</span>
-                          <span className="text-sm text-gray-400 line-through mb-0.5 font-medium">₨ {offer.original_price.toLocaleString()}</span>
+                      <div className="mt-auto space-y-5">
+                        <div className="flex items-center gap-3">
+                          <span className="text-3xl font-black text-red-600 tracking-tight">₨ {offer.offer_price.toLocaleString()}</span>
+                          <span className="text-sm text-gray-400 line-through font-bold">₨ {offer.original_price.toLocaleString()}</span>
                         </div>
+ 
+                        <div className="pt-4 border-t border-gray-50">
+                           <div className="mb-5 flex justify-center">
+                             <CountdownTimer endsAt={offer.ends_at} size="sm" />
+                           </div>
 
-                        {/* Stock Bar */}
-                        {stockPercent !== null && typeof stockPercent === 'number' && (
-                          <div className="mb-6">
-                            <div className="flex justify-between text-xs font-semibold mb-1.5 text-gray-600">
-                              <span>{offer.grabbed_count || 0} grabbed</span>
-                              {isUnder5 ? <span className="text-red-600 animate-pulse">Only {stockLeft} left!</span> : <span>{stockLeft} left</span>}
-                            </div>
-                            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full transition-all duration-1000 ${isUnder5 ? 'bg-red-500' : 'bg-red-400'}`} style={{ width: `${Math.min(stockPercent, 100)}%` }}></div>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="mb-6 flex justify-center">
-                          <CountdownTimer endsAt={offer.ends_at} />
+                           <Link href={`/offers/${offer.id}`} className="block w-full text-center bg-gray-900 hover:bg-black text-white font-black py-4 rounded-2xl shadow-lg shadow-gray-900/10 transition-all active:scale-95 text-sm uppercase tracking-widest">
+                             Grab Deal Now
+                           </Link>
                         </div>
-
-                        <Link href={`/offers/${offer.id}`} className="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-sm transition">
-                          Grab This Deal
-                        </Link>
                       </div>
                     </div>
                   </div>

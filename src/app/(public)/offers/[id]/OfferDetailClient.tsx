@@ -3,12 +3,15 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { MapPin, Phone, MessageCircle, Store, Check, Info, AlertTriangle, X, FileText, ShoppingBag } from 'lucide-react'
+import { MapPin, Phone, MessageCircle, Store, Check, Info, AlertTriangle, X, FileText, ShoppingBag, Flame } from 'lucide-react'
 import CountdownTimer from '@/components/offers/CountdownTimer'
 import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import dynamic from 'next/dynamic'
+import { CreditCard, ArrowRight } from 'lucide-react'
+import EsewaButton from '@/components/payments/EsewaButton'
+import { useRouter } from 'next/navigation'
 
 // Leaflet map needs to be dynamically imported to avoid SSR issues
 const SimpleMap = dynamic(() => import('@/components/ui/SimpleMap'), { 
@@ -24,6 +27,9 @@ export default function OfferDetailClient({ offer, similarOffers }: any) {
   const [bookingState, setBookingState] = useState<'form' | 'loading' | 'success'>('form')
   const [ticketCode, setTicketCode] = useState('')
   const [formData, setFormData] = useState({ name: user?.user_metadata?.full_name || '', phone: '' })
+  const [paymentMethod, setPaymentMethod] = useState<'esewa' | 'khalti' | 'store_pickup'>('store_pickup')
+  const [isProcessing, setIsProcessing] = useState(false)
+  const router = useRouter()
 
   const stockLeft = offer.max_quantity ? offer.max_quantity - (offer.grabbed_count || 0) : null
   const stockPercent = offer.max_quantity ? Math.round(((offer.grabbed_count || 0) / offer.max_quantity) * 100) : null
@@ -60,12 +66,17 @@ export default function OfferDetailClient({ offer, similarOffers }: any) {
       if (error) throw error
       
       // Increment grabbed count
-      await supabase.rpc('increment_offer_grab', { row_id: offer.id })
+      const { error: rpcError } = await supabase.rpc('increment_offer_grab', { row_id: offer.id })
+      if (rpcError) console.error('RPC Error:', rpcError)
       
       // Fake n8n WhatsApp call
       fetch('/api/webhooks/whatsapp', { method: 'POST', body: JSON.stringify({ type: 'OFFER_GRABBED', code, phone: formData.phone, offer: offer.title }) }).catch(()=>console.log('webhook mocked out'))
       
       setBookingState('success')
+      // Refresh page after a short delay to update counters
+      setTimeout(() => {
+        router.refresh()
+      }, 2000)
     } catch (err: any) {
       toast.error(err.message || 'Failed to grab offer')
       setBookingState('form')
@@ -77,25 +88,39 @@ export default function OfferDetailClient({ offer, similarOffers }: any) {
       <Toaster position="top-center" />
 
       {/* Hero Banner */}
-      <div className="w-full h-[40vh] md:h-[50vh] bg-gray-900 relative">
+      <div className="w-full h-[45vh] md:h-[60vh] bg-gray-950 relative overflow-hidden">
         {offer.banner_url ? (
-          <Image src={offer.banner_url} alt={offer.title} fill sizes="100vw" className="object-cover opacity-80" />
+          <Image src={offer.banner_url} alt={offer.title} fill sizes="100vw" className="object-cover opacity-60 scale-105" priority />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-white/30 text-2xl font-bold">Offer Banner</div>
+          <div className="w-full h-full flex items-center justify-center text-white/10 text-4xl font-black tracking-tighter">BIZNEPAL DEALS</div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-950/80 via-transparent to-transparent"></div>
         
-        <div className="absolute bottom-0 left-0 w-full p-4 md:p-8">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-end justify-between gap-6">
-            <div className="text-white">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">{offer.discount_percent}% OFF</span>
-                <span className="bg-white/20 backdrop-blur text-white text-xs font-semibold px-3 py-1 rounded-full">Ends soon</span>
+        <div className="absolute bottom-0 left-0 w-full p-6 md:p-12">
+          <div className="max-w-7xl mx-auto">
+            <div className="max-w-3xl">
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <span className="bg-red-600 text-white text-sm font-black px-4 py-1.5 rounded-2xl shadow-xl shadow-red-600/20 rotate-[-2deg] flex items-center gap-2">
+                  <Flame className="w-4 h-4 fill-white" />
+                  {offer.discount_percent}% OFF EXCLUSIVE
+                </span>
+                <span className="bg-white/10 backdrop-blur-md text-white text-xs font-bold px-4 py-1.5 rounded-2xl border border-white/10">LIMITED STOCK</span>
               </div>
-              <h1 className="text-3xl md:text-5xl font-extrabold leading-tight mb-2 drop-shadow-md">{offer.title}</h1>
-              <Link href={`/businesses/${offer.business.slug}`} className="flex items-center text-gray-300 hover:text-white transition font-medium">
-                <Store className="w-4 h-4 mr-2" /> {offer.business.name}
-              </Link>
+              <h1 className="text-4xl md:text-7xl font-black text-white leading-[1.1] mb-6 tracking-tight drop-shadow-2xl">
+                {offer.title}
+              </h1>
+              <div className="flex items-center gap-6">
+                <Link href={`/businesses/${offer.business.slug}`} className="group flex items-center bg-white/5 backdrop-blur-sm border border-white/10 pl-2 pr-5 py-2 rounded-2xl hover:bg-white/10 transition-all">
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden mr-3">
+                    {offer.business.logo_url ? <img src={offer.business.logo_url} alt="" className="w-full h-full object-cover"/> : <Store className="w-5 h-5 text-gray-900" />}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">OFFER BY</p>
+                    <p className="text-white font-bold leading-none">{offer.business.name}</p>
+                  </div>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -190,16 +215,99 @@ export default function OfferDetailClient({ offer, similarOffers }: any) {
                   </div>
                )}
 
-               <div className="space-y-3">
-                 <button onClick={() => setShowGrabModal(true)} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl text-lg transition shadow-md">
-                   Grab & Pay in Store
+               <div className="space-y-4">
+                 <button 
+                   onClick={() => { setPaymentMethod('store_pickup'); setShowGrabModal(true); }} 
+                   className={`w-full group relative overflow-hidden p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'store_pickup' ? 'border-red-600 bg-red-50/50' : 'border-gray-100 hover:border-gray-200'}`}
+                 >
+                   <div className="flex items-center justify-between relative z-10">
+                     <div className="flex items-center gap-3 text-left">
+                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${paymentMethod === 'store_pickup' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                         <Store className="w-5 h-5" />
+                       </div>
+                       <div>
+                         <p className="font-black text-gray-900 leading-tight">Pay in Store</p>
+                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Grab Code & Pay Locally</p>
+                       </div>
+                     </div>
+                     {paymentMethod === 'store_pickup' && <Check className="w-5 h-5 text-red-600" />}
+                   </div>
                  </button>
-                 <button className="w-full bg-[#60BB46] hover:bg-[#509f39] text-white font-bold py-3.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
-                   Pay with eSewa
+
+                 <button 
+                  onClick={() => setPaymentMethod('esewa')}
+                  className={`w-full group relative overflow-hidden p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'esewa' ? 'border-[#60BB46] bg-[#60BB46]/5' : 'border-gray-100 hover:border-gray-200'}`}
+                 >
+                   <div className="flex items-center justify-between relative z-10">
+                     <div className="flex items-center gap-3 text-left">
+                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${paymentMethod === 'esewa' ? 'bg-[#60BB46] text-white' : 'bg-gray-100 text-[#60BB46]'}`}>eS</div>
+                       <div>
+                         <p className="font-black text-gray-900 leading-tight">eSewa Wallet</p>
+                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Instant Digital Payment</p>
+                       </div>
+                     </div>
+                     {paymentMethod === 'esewa' && <Check className="w-5 h-5 text-[#60BB46]" />}
+                   </div>
                  </button>
-                 <button className="w-full bg-[#5C2D91] hover:bg-[#4a2475] text-white font-bold py-3.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
-                   Pay with Khalti
+
+                 <button 
+                   onClick={() => setPaymentMethod('khalti')}
+                   className={`w-full group relative overflow-hidden p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'khalti' ? 'border-[#5C2D91] bg-[#5C2D91]/5' : 'border-gray-100 hover:border-gray-200'}`}
+                 >
+                   <div className="flex items-center justify-between relative z-10">
+                     <div className="flex items-center gap-3 text-left">
+                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${paymentMethod === 'khalti' ? 'bg-[#5C2D91] text-white' : 'bg-gray-100 text-[#5C2D91]'}`}>K</div>
+                       <div>
+                         <p className="font-black text-gray-900 leading-tight">Khalti SDK</p>
+                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Secure Gateway</p>
+                       </div>
+                     </div>
+                     {paymentMethod === 'khalti' && <Check className="w-5 h-5 text-[#5C2D91]" />}
+                   </div>
                  </button>
+
+                 <div className="pt-4 mt-2">
+                    {paymentMethod === 'store_pickup' ? (
+                      <button 
+                        onClick={() => setShowGrabModal(true)} 
+                        className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-[1.5rem] shadow-xl shadow-red-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        Grab Deal Now <ArrowRight className="w-4 h-4" />
+                      </button>
+                    ) : paymentMethod === 'esewa' ? (
+                      <EsewaButton amount={offer.offer_price} orderId={`OFFER-${offer.id.slice(0,8)}`} productName={offer.title} />
+                    ) : (
+                      <button 
+                        onClick={async () => {
+                          setIsProcessing(true);
+                          const tid = toast.loading('Initiating Khalti...');
+                          try {
+                            const res = await fetch('/api/payments/khalti/initiate', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                amount: offer.offer_price,
+                                orderId: offer.id,
+                                customerName: formData.name || 'Customer',
+                                purchaseOrderName: offer.title
+                              })
+                            });
+                            const data = await res.json();
+                            if (data.payment_url) window.location.href = data.payment_url;
+                            else throw new Error('Failed to get payment link');
+                          } catch (e: any) {
+                            toast.error(e.message, { id: tid });
+                          } finally {
+                            setIsProcessing(false);
+                          }
+                        }}
+                        disabled={isProcessing}
+                        className="w-full bg-[#5C2D91] hover:bg-[#4a2475] text-white font-black py-4 rounded-[1.5rem] shadow-xl shadow-[#5C2D91]/20 transition-all flex items-center justify-center gap-2"
+                      >
+                        {isProcessing ? 'Connecting...' : 'Pay with Khalti'}
+                      </button>
+                    )}
+                 </div>
                </div>
             </div>
           </div>

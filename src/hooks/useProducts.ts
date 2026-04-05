@@ -34,14 +34,16 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
     setError(null)
 
     try {
+      // Try round-robin view first, fallback to products table if missing
+      let tableToQuery = 'products_round_robin'
+      
       let query = supabase
-        .from('products_round_robin')
+        .from(tableToQuery)
         .select(`
           *,
           business:businesses(*)
         `)
         .eq('status', 'active')
-        .eq('businesses.is_active', true)
 
       // Apply Filters
       if (currentFilters.category) {
@@ -59,22 +61,17 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
       if (currentFilters.search) {
         query = query.ilike('name', `%${currentFilters.search}%`)
       }
+      
+      // Payment method filters
       if (currentFilters.paymentMethod && currentFilters.paymentMethod.length > 0) {
-        if (currentFilters.paymentMethod.includes('esewa')) query = query.eq('esewa_available', true)
-        if (currentFilters.paymentMethod.includes('khalti')) query = query.eq('khalti_available', true)
-        if (currentFilters.paymentMethod.includes('cod')) query = query.eq('cod_available', true)
+        if (currentFilters.paymentMethod.includes('esewa')) query = query.eq('allows_esewa', true)
+        if (currentFilters.paymentMethod.includes('khalti')) query = query.eq('allows_khalti', true)
+        if (currentFilters.paymentMethod.includes('cod')) query = query.eq('allows_cod', true)
       }
       
-      // District filtering (requires filtering on business, which is done locally or via inner join if requested, but postgREST handles it awkwardly without proper foreign table filtering syntax unless we use inner joins. Supabase select supports inner join logic or we can filter locally if small scale. For scalability, we should use RPC or filter. But we can just use `!inner` on businesses)
-      /*
-      Actually, in Supabase we can do:
-      .select('..., business:businesses!inner(*)')
-      .eq('businesses.district_id', districtId)
-      Let's update to use !inner to allow filtering by business district.
-      */
-
       // Sort
-      switch (currentFilters.sort) {
+      const sortBy = currentFilters.sort || 'newest'
+      switch (sortBy) {
         case 'price_asc':
           query = query.order('price', { ascending: true })
           break
@@ -86,7 +83,7 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
           break
         case 'newest':
         default:
-          query = query.order('bn_rank', { ascending: true }).order('created_at', { ascending: false })
+          query = query.order('created_at', { ascending: false })
           break
       }
 
@@ -102,8 +99,6 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
       // Process and set
       let formattedData = (data as unknown) as ProductWithBusiness[]
       
-      // Since inner join features are complex to type directly, we just assume the relation returned successfully
-      // We manually fetch saved items for the user if logged in to map 'isSaved' state
       const { data: { user } } = await supabase.auth.getUser()
       if (user && formattedData.length > 0) {
         const { data: savedItems } = await supabase
@@ -112,7 +107,7 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
           .eq('user_id', user.id)
           .in('product_id', formattedData.map(p => p.id))
           
-        const savedIds = new Set(savedItems?.map(s => s.product_id))
+        const savedIds = new Set(savedItems?.map((s: any) => s.product_id))
         formattedData = formattedData.map(p => ({
           ...p,
           isSaved: savedIds.has(p.id)
@@ -121,15 +116,59 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
 
       if (isReset) {
         setProducts(formattedData)
+        setPage(1)
       } else {
         setProducts(prev => [...prev, ...formattedData])
+        setPage(p => p + 1)
       }
 
       setHasMore(formattedData.length === pageSize)
-      if (!isReset) setPage(p => p + 1)
-      else setPage(1)
 
     } catch (err: any) {
+      // Fallback if view is missing
+      if (err.code === 'PGRST116' || (err.message && err.message.includes('products_round_robin'))) {
+        console.warn('View products_round_robin missing, falling back to products table')
+        try {
+          let fbQuery = supabase
+            .from('products')
+            .select('*, business:businesses(*)')
+            .eq('status', 'active')
+
+          if (currentFilters.category) fbQuery = fbQuery.eq('category_id', currentFilters.category)
+          if (currentFilters.minPrice) fbQuery = fbQuery.gte('price', currentFilters.minPrice)
+          if (currentFilters.maxPrice) fbQuery = fbQuery.lte('price', currentFilters.maxPrice)
+          
+          if (currentFilters.paymentMethod && currentFilters.paymentMethod.length > 0) {
+            if (currentFilters.paymentMethod.includes('esewa')) fbQuery = fbQuery.eq('allows_esewa', true)
+            if (currentFilters.paymentMethod.includes('khalti')) fbQuery = fbQuery.eq('allows_khalti', true)
+            if (currentFilters.paymentMethod.includes('cod')) fbQuery = fbQuery.eq('allows_cod', true)
+          }
+
+          const sortBy = currentFilters.sort || 'newest'
+          if (sortBy === 'price_asc') fbQuery = fbQuery.order('price', { ascending: true })
+          else if (sortBy === 'price_desc') fbQuery = fbQuery.order('price', { ascending: false })
+          else fbQuery = fbQuery.order('created_at', { ascending: false })
+
+          const { data, error: fbError } = await fbQuery
+            .range(currentPage * pageSize, (currentPage * pageSize) + pageSize - 1)
+          
+          if (fbError) throw fbError
+          
+          let formattedData = (data as unknown) as ProductWithBusiness[]
+          if (isReset) {
+            setProducts(formattedData)
+            setPage(1)
+          } else {
+            setProducts(prev => [...prev, ...formattedData])
+            setPage(p => p + 1)
+          }
+          setHasMore(formattedData.length === pageSize)
+          return
+        } catch (fbErr: any) {
+          setError(fbErr.message || 'Error fetching products after fallback.')
+        }
+      }
+
       console.error('Error fetching products:', {
         message: err.message,
         details: err.details,
@@ -147,7 +186,7 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
     if (products.length === 0) {
       fetchProducts({ reset: true })
     }
-  }, []) // intentionally only on mount unless filters change
+  }, [])
 
   const loadMore = () => {
     if (!loading && hasMore) {
@@ -156,9 +195,7 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
   }
 
   const toggleSave = async (id: string, currentlySaved: boolean) => {
-    // Optimistic update
     setProducts(prev => prev.map(p => p.id === id ? { ...p, isSaved: !currentlySaved } : p))
-    
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not logged in')
@@ -169,7 +206,6 @@ export function useProducts({ initialData = [], filters = {}, pageSize = 12 }: {
         await supabase.from('saved_items').insert({ user_id: user.id, product_id: id })
       }
     } catch (err: any) {
-      // Revert on error
       console.error('Error toggling save status:', err)
       setProducts(prev => prev.map(p => p.id === id ? { ...p, isSaved: currentlySaved } : p))
     }

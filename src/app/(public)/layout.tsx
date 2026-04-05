@@ -28,7 +28,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     }
     getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e: any, session: any) => {
       if (!session) { setUser(null); setProfile(null) }
     })
     return () => subscription.unsubscribe()

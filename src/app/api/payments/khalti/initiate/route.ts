@@ -6,8 +6,11 @@ export async function POST(request: Request) {
     const { amount, orderId, customerName, customerPhone, customerEmail, purchaseOrderName } = await request.json()
 
     // Required by Khalti epayment initiation endpoint
-    const secretKey = process.env.KHALTI_SECRET_KEY || '80bd819afc11488c9a629af94a4c6a99' // mock default
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const secretKey = process.env.KHALTI_SECRET_KEY
+    if (!secretKey) {
+      return NextResponse.json({ error: 'Khalti payment is not configured. Please set KHALTI_SECRET_KEY in environment variables.' }, { status: 500 })
+    }
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '')
 
     const payload = {
       return_url: `${appUrl}/payment/khalti/success`,

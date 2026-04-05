@@ -41,6 +41,7 @@ export default function ProductCard({
           src={mainImage} 
           alt={product.name} 
           fill
+          priority
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           className="object-cover group-hover:scale-105 transition-transform duration-300" 
         />
@@ -104,9 +105,9 @@ export default function ProductCard({
           </div>
 
           <div className="flex items-center gap-2 mt-3 text-xs font-medium text-gray-500">
-            {product.cod_available && <span className="px-1.5 py-0.5 bg-gray-100 rounded">COD</span>}
-            {product.esewa_available && <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded">eSewa</span>}
-            {product.khalti_available && <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded">Khalti</span>}
+            {product.allows_cod && <span className="px-1.5 py-0.5 bg-gray-100 rounded">COD</span>}
+            {product.allows_esewa && <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded">eSewa</span>}
+            {product.allows_khalti && <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded">Khalti</span>}
           </div>
 
           <div className="flex gap-2 mt-3">

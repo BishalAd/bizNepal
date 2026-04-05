@@ -7,35 +7,8 @@ import toast, { Toaster } from 'react-hot-toast'
 import { 
   Star, MessageSquareQuote, Flag, Reply, Send, User, MessageCircle, X
 } from 'lucide-react'
+import { RatingStars } from '@/components/dashboard/shared/DashboardShared'
 
-const RatingStars = ({ rating, size='w-4 h-4' }:{rating:number, size?:string}) => (
-  <div className="flex gap-0.5">
-    {[1,2,3,4,5].map(star => (
-      <Star key={star} className={`${size} ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-100 text-gray-200'}`} />
-    ))}
-  </div>
-)
-
-const OrderStatusBadge = ({ status }: { status: string }) => {
-  const colors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    confirmed: 'bg-blue-100 text-blue-800',
-    dispatched: 'bg-purple-100 text-purple-800',
-    delivered: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800'
-  }
-  return <span className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize ${colors[status] || 'bg-gray-100'}`}>{status}</span>
-}
-
-const PaymentMethodBadge = ({ method }: { method: string }) => {
-  const colors: Record<string, string> = {
-    esewa: 'bg-green-100 text-green-700 border-green-200',
-    khalti: 'bg-purple-100 text-purple-700 border-purple-200',
-    cod: 'bg-orange-100 text-orange-700 border-orange-200',
-    reserve: 'bg-blue-100 text-blue-700 border-blue-200'
-  }
-  return <span className={`px-2 py-0.5 border rounded text-[10px] font-extrabold uppercase ${colors[method] || 'bg-gray-100'}`}>{method}</span>
-}
 
 export default function ReviewsClient({ initialReviews, business }: any) {
   const supabase = createClient()

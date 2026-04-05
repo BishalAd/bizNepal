@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import 'leaflet/dist/leaflet.css'
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import { Search, Loader2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 const customIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -63,12 +65,55 @@ function LocationMarker({ position, onChange }: LocationPickerProps) {
 }
 
 export default function LocationPickerMap({ position, onChange }: LocationPickerProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!searchQuery.trim()) return
+
+    setIsSearching(true)
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`)
+      const data = await res.json()
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat)
+        const lon = parseFloat(data[0].lon)
+        onChange(lat, lon)
+      } else {
+        toast.error('Location not found. Try a different search term.')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Search failed. Please check your connection.')
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
   return (
-    <div className="h-[300px] w-full rounded-2xl overflow-hidden border border-gray-200 z-0 relative">
+    <div className="h-[300px] sm:h-[400px] w-full rounded-2xl overflow-hidden border border-gray-200 z-0 relative">
+      {/* Search Overlay */}
+      <div className="absolute top-4 left-4 right-4 sm:right-auto sm:w-80 z-[400]">
+        <form onSubmit={handleSearch} className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search location..."
+            className="w-full bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="absolute left-3 top-3 text-gray-400">
+            {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+          </div>
+        </form>
+      </div>
+
       <MapContainer 
         center={position} 
         zoom={13} 
-        scrollWheelZoom={true} 
+        scrollWheelZoom={true}
+        touchZoom={true}
         style={{ height: '100%', width: '100%' }}
       >
         <ChangeView center={position} />
@@ -85,3 +130,4 @@ export default function LocationPickerMap({ position, onChange }: LocationPicker
     </div>
   )
 }
+

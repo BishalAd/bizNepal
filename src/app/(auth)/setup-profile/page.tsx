@@ -47,7 +47,7 @@ export default function SetupProfilePage() {
 
       if (prof) {
         setProfile(prof)
-        setFullName(prof.full_name || '')
+        setFullName(prof.full_name || session.user.user_metadata?.full_name || '')
         setWhatsapp(prof.whatsapp || '')
         setSelectedRole(prof.role === 'admin' ? 'business' : (prof.role as any || 'user'))
         

@@ -6,26 +6,41 @@ import { formatDistanceToNow, format } from 'date-fns'
 import toast, { Toaster } from 'react-hot-toast'
 import { 
   Users, Briefcase, ChevronRight, Download, FileText, CheckCircle2, 
-  XCircle, Filter, ChevronDown, ChevronUp, Mail, Phone, MessageCircle, FileDown 
+  XCircle, Filter, ChevronDown, ChevronUp, Mail, Phone, MessageCircle, FileDown, Search 
 } from 'lucide-react'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
+import { StatusBadge } from '@/components/dashboard/shared/DashboardShared'
 
 export default function ApplicationsClient({ initialJobs }: any) {
   const supabase = createClient()
   const [jobs, setJobs] = useState(initialJobs)
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(initialJobs[0]?.id || null)
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(initialJobs?.[0]?.id || null)
   const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set())
   const [activeStatusFilter, setActiveStatusFilter] = useState('all')
   const [expandedCoverLetterId, setExpandedCoverLetterId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const selectedJob = useMemo(() => jobs.find((j:any) => j.id === selectedJobId), [jobs, selectedJobId])
 
   const applications = useMemo(() => {
     if (!selectedJob) return []
-    if (activeStatusFilter === 'all') return selectedJob.job_applications
-    return selectedJob.job_applications.filter((a:any) => a.status === activeStatusFilter)
-  }, [selectedJob, activeStatusFilter])
+    let filtered = selectedJob.job_applications || []
+    
+    if (activeStatusFilter !== 'all') {
+      filtered = filtered.filter((a:any) => a.status === activeStatusFilter)
+    }
+    
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      filtered = filtered.filter((a:any) => 
+        a.applicant_name?.toLowerCase().includes(q) || 
+        a.applicant_email?.toLowerCase().includes(q)
+      )
+    }
+    
+    return filtered
+  }, [selectedJob, activeStatusFilter, searchQuery])
 
   const handleStatusChange = async (appId: string, newStatus: string) => {
     setJobs((prev:any) => prev.map((j:any) => j.id === selectedJobId ? {
@@ -112,15 +127,6 @@ export default function ApplicationsClient({ initialJobs }: any) {
     toast.success('Exported to CSV')
   }
 
-  const StatusBadge = ({ status }: { status: string }) => {
-    const s = status.toLowerCase()
-    const color = s === 'new' ? 'bg-blue-100 text-blue-800' :
-                  s === 'reviewed' ? 'bg-yellow-100 text-yellow-800' :
-                  s === 'shortlisted' ? 'bg-purple-100 text-purple-800' :
-                  s === 'hired' ? 'bg-green-100 text-green-800' :
-                  'bg-red-100 text-red-800'
-    return <span className={`px-2.5 py-1 rounded-full text-xs font-bold capitalize ${color}`}>{status}</span>
-  }
 
   return (
     <>
@@ -182,40 +188,51 @@ export default function ApplicationsClient({ initialJobs }: any) {
                    <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                      <div>
                        <h2 className="text-xl font-extrabold text-gray-900 leading-tight">{selectedJob.title}</h2>
-                       <p className="text-sm font-bold text-gray-500 mt-1 flex items-center gap-2">
-                         <span className={selectedJob.status === 'active' ? 'text-green-600' : 'text-orange-500'}>{selectedJob.status.toUpperCase()}</span>
-                         • <span className="text-gray-400">Total Applicants: {selectedJob.job_applications.length}</span>
+                       <p className="text-xs font-black text-gray-400 mt-1 uppercase tracking-widest">
+                         Hiring Pipeline • <span className="text-purple-600">{selectedJob.job_applications?.length || 0} Total</span>
                        </p>
                      </div>
                      
                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Search Bar */}
+                        <div className="relative group w-full xl:w-64">
+                           <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 group-focus-within:text-purple-600 transition-colors" />
+                           <input 
+                             type="text" 
+                             placeholder="Search candidate..." 
+                             value={searchQuery}
+                             onChange={e => setSearchQuery(e.target.value)}
+                             className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2 pl-9 pr-4 text-sm font-bold focus:ring-4 focus:ring-purple-50 focus:border-purple-500 outline-none transition-all"
+                           />
+                        </div>
+
                         {/* Filter Dd */}
                         <div className="relative group">
-                           <select value={activeStatusFilter} onChange={e=>setActiveStatusFilter(e.target.value)} className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl pl-4 pr-10 py-2.5 outline-none cursor-pointer hover:bg-gray-100 transition focus:border-purple-500">
-                             <option value="all">All Applications ({selectedJob.job_applications.length})</option>
-                             <option value="new">New Inbox</option>
-                             <option value="reviewed">Reviewed</option>
-                             <option value="shortlisted">Shortlisted</option>
-                             <option value="rejected">Rejected</option>
-                             <option value="hired">Hired</option>
+                           <select value={activeStatusFilter} onChange={e=>setActiveStatusFilter(e.target.value)} className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-xs font-black uppercase tracking-wider rounded-xl pl-4 pr-10 py-2.5 outline-none cursor-pointer hover:bg-gray-100 transition focus:border-purple-500">
+                             <option value="all">📊 All</option>
+                             <option value="new">🆕 New</option>
+                             <option value="reviewed">👀 Reviewed</option>
+                             <option value="shortlisted">⭐ Shortlisted</option>
+                             <option value="rejected">❌ Rejected</option>
+                             <option value="hired">🎉 Hired</option>
                            </select>
-                           <Filter className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none"/>
+                           <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none"/>
                         </div>
                         
                         {/* Selected Bulk Actions */}
                         {selectedApps.size > 0 && (
                           <div className="flex animate-in fade-in slide-in-from-right-4 duration-300">
-                             <span className="bg-purple-100 text-purple-800 text-sm font-bold px-4 py-2.5 rounded-l-xl flex items-center border border-r-0 border-purple-200">
+                             <span className="bg-purple-100 text-purple-800 text-[10px] font-black px-4 py-2.5 rounded-l-xl flex items-center border border-r-0 border-purple-200 uppercase">
                                {selectedApps.size} Selected
                              </span>
-                             <button onClick={()=>handleBulkAction('shortlisted')} className="bg-white border-y border-gray-200 px-4 py-2.5 text-sm font-bold hover:bg-green-50 hover:text-green-700 transition">Shortlist</button>
-                             <button onClick={()=>handleBulkAction('rejected')} className="bg-white border text-red-600 border-gray-200 px-4 py-2.5 text-sm font-bold hover:bg-red-50 rounded-r-xl transition">Reject</button>
+                             <button onClick={()=>handleBulkAction('shortlisted')} className="bg-white border-y border-gray-200 px-4 py-2.5 text-xs font-black uppercase hover:bg-green-50 hover:text-green-700 transition">Shortlist</button>
+                             <button onClick={()=>handleBulkAction('rejected')} className="bg-white border text-red-600 border-gray-200 px-4 py-2.5 text-xs font-black uppercase hover:bg-red-50 rounded-r-xl transition">Reject</button>
                           </div>
                         )}
 
                         <div className="flex rounded-xl overflow-hidden border border-gray-200 ml-auto">
-                           <button onClick={exportCSV} className="bg-white hover:bg-gray-50 px-4 py-2.5 text-sm font-bold text-gray-700 border-r border-gray-200 flex items-center gap-1.5 transition" title="Export CSV Data"><FileText className="w-4 h-4"/> CSV Export</button>
-                           <button onClick={handleDownloadAllCVs} className="bg-white hover:bg-gray-50 px-4 py-2.5 text-sm font-bold text-gray-700 flex items-center gap-1.5 transition" title="Download all PDFs as ZIP"><FileDown className="w-4 h-4"/> Get Resumes (.ZIP)</button>
+                           <button onClick={exportCSV} className="bg-white hover:bg-gray-50 px-4 py-2.5 text-xs font-black uppercase text-gray-700 border-r border-gray-200 flex items-center gap-1.5 transition" title="Export CSV Data"><FileText className="w-4 h-4"/> CSV</button>
+                           <button onClick={handleDownloadAllCVs} className="bg-white hover:bg-gray-50 px-4 py-2.5 text-xs font-black uppercase text-gray-700 flex items-center gap-1.5 transition" title="Download all PDFs as ZIP"><FileDown className="w-4 h-4"/> ZIP CVs</button>
                         </div>
                      </div>
                    </div>
@@ -274,23 +291,24 @@ export default function ApplicationsClient({ initialJobs }: any) {
                                       </div>
                                    </div>
 
-                                   <select 
-                                     value={app.status} 
-                                     onChange={e=>handleStatusChange(app.id, e.target.value)}
-                                     onClick={e=>e.stopPropagation()}
-                                     className={`text-xs font-bold appearance-none pl-3 pr-8 py-1.5 rounded-full border cursor-pointer outline-none transition focus:ring-2 focus:ring-purple-500 
-                                      ${app.status==='new' ? 'bg-blue-50 text-blue-800 border-blue-200' : 
-                                        app.status==='reviewed' ? 'bg-yellow-50 text-yellow-800 border-yellow-200' :
-                                        app.status==='shortlisted' ? 'bg-purple-50 text-purple-800 border-purple-200' :
-                                        app.status==='hired' ? 'bg-green-50 text-green-800 border-green-200' : 
-                                        'bg-red-50 text-red-800 border-red-200'}`}
-                                   >
-                                     <option value="new">🆕 New</option>
-                                     <option value="reviewed">👀 Reviewed</option>
-                                     <option value="shortlisted">⭐ Shortlisted</option>
-                                     <option value="hired">🎉 Hired</option>
-                                     <option value="rejected">❌ Rejected</option>
-                                   </select>
+                                   <div className="flex items-center gap-2">
+                                      <StatusBadge status={app.status} />
+                                      <div className="relative group">
+                                         <select 
+                                           value={app.status} 
+                                           onChange={e=>handleStatusChange(app.id, e.target.value)}
+                                           onClick={e=>e.stopPropagation()}
+                                           className="text-[10px] font-black appearance-none pl-3 pr-8 py-1.5 rounded-full border border-gray-200 cursor-pointer outline-none transition bg-white hover:bg-gray-50 uppercase tracking-widest"
+                                         >
+                                           <option value="new">🆕 New</option>
+                                           <option value="reviewed">👀 Reviewed</option>
+                                           <option value="shortlisted">⭐ Shortlisted</option>
+                                           <option value="hired">🎉 Hired</option>
+                                           <option value="rejected">❌ Rejected</option>
+                                         </select>
+                                         <ChevronDown className="w-3 h-3 text-gray-400 absolute right-2.5 top-2 pointer-events-none"/>
+                                      </div>
+                                    </div>
                                 </div>
 
                                 {/* Contact Details */}

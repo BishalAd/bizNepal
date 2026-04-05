@@ -3,9 +3,10 @@
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, Search, Filter, Edit, Trash2, Eye, MoreVertical, PackageOpen, CheckCircle2, Clock } from 'lucide-react'
+import { Plus, Search, Filter, Edit, Trash2, Eye, MoreVertical, PackageOpen, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
 import StatsCard from '@/components/dashboard/StatsCard'
+import { StatusBadge } from '@/components/dashboard/shared/DashboardShared'
 
 export default function ProductsClient({ initialProducts, categories, businessId }: any) {
   const supabase = createClient()
@@ -243,19 +244,15 @@ export default function ProductsClient({ initialProducts, categories, businessId
                            </p>
                          </td>
                          
-                         <td className="px-6 py-4">
-                           <button 
-                             onClick={() => handleToggleStatus(p.id, p.status)} 
-                             className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize inline-flex items-center gap-1.5 transition border ${
-                               p.status === 'active' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' : 
-                               'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
-                             }`}
-                             title="Click to toggle status"
-                           >
-                             <span className={`w-1.5 h-1.5 rounded-full ${p.status === 'active' ? 'bg-green-500' : 'bg-gray-500'}`}></span>
-                             {p.status}
-                           </button>
-                         </td>
+                          <td className="px-6 py-4">
+                            <button 
+                              onClick={() => handleToggleStatus(p.id, p.status)} 
+                              className="hover:scale-105 transition-transform"
+                              title="Click to toggle status"
+                            >
+                              <StatusBadge status={p.status} />
+                            </button>
+                          </td>
 
                          <td className="px-6 py-4 text-center">
                            <div className="inline-flex items-center gap-1.5 text-gray-500 font-bold bg-gray-50 border border-gray-100 px-2 py-1 rounded-md">
@@ -287,7 +284,3 @@ export default function ProductsClient({ initialProducts, categories, businessId
   )
 }
 
-// Add AlertCircle icon import fix
-function AlertCircle(props:any) {
-  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-}

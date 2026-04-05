@@ -2,11 +2,12 @@
 
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Plus, Briefcase, MapPin, Globe, CheckCircle2, Monitor, AlertCircle, Edit, Trash2, XCircle } from 'lucide-react'
+import { Plus, Briefcase, MapPin, Globe, CheckCircle2, Monitor, AlertCircle, Edit, Trash2, XCircle, Search, Eye } from 'lucide-react'
 import StatsCard from '@/components/dashboard/StatsCard'
 import { formatDistanceToNow, format, isPast } from 'date-fns'
 import toast, { Toaster } from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import { StatusBadge } from '@/components/dashboard/shared/DashboardShared'
 
 export default function JobsClient({ initialJobs }: any) {
   const supabase = createClient()
@@ -156,12 +157,15 @@ export default function JobsClient({ initialJobs }: any) {
                            </div>
                            
                            {/* Quick Actions */}
-                           <div className="flex items-center gap-1.5">
-                              {activeTab === 'active' && (
-                                <button onClick={() => handleCloseJob(j.id)} disabled={loadingAction===j.id} className="p-2 text-gray-500 hover:text-orange-600 bg-white border border-gray-200 hover:bg-orange-50 rounded-lg transition" title="Close Applications"><XCircle className="w-4 h-4"/></button>
-                              )}
-                              <Link href={`/dashboard/jobs/${j.id}/edit`} className="p-2 text-gray-500 hover:text-blue-600 bg-white border border-gray-200 hover:bg-blue-50 rounded-lg transition" title="Edit Job"><Edit className="w-4 h-4"/></Link>
-                              <button onClick={() => handleDelete(j.id)} disabled={loadingAction===j.id} className="p-2 text-gray-500 hover:text-red-600 bg-white border border-gray-200 hover:bg-red-50 rounded-lg transition" title="Delete Permanently"><Trash2 className="w-4 h-4"/></button>
+                           <div className="flex items-center gap-1.5 text-gray-500">
+                               <StatusBadge status={j.status} />
+                               <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                               <Link href={`/dashboard/applications?jobId=${j.id}`} className="p-2 hover:text-purple-600 bg-white border border-gray-200 hover:bg-purple-50 rounded-lg transition" title="View Applicants"><Search className="w-4 h-4"/></Link>
+                               {activeTab === 'active' && (
+                                 <button onClick={() => handleCloseJob(j.id)} disabled={loadingAction===j.id} className="p-2 hover:text-orange-600 bg-white border border-gray-200 hover:bg-orange-50 rounded-lg transition" title="Close Applications"><XCircle className="w-4 h-4"/></button>
+                               )}
+                               <Link href={`/dashboard/jobs/${j.id}/edit`} className="p-2 hover:text-blue-600 bg-white border border-gray-200 hover:bg-blue-50 rounded-lg transition" title="Edit Job"><Edit className="w-4 h-4"/></Link>
+                               <button onClick={() => handleDelete(j.id)} disabled={loadingAction===j.id} className="p-2 hover:text-red-600 bg-white border border-gray-200 hover:bg-red-50 rounded-lg transition" title="Delete Permanently"><Trash2 className="w-4 h-4"/></button>
                            </div>
                         </div>
 

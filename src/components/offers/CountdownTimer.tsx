@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 
-export default function CountdownTimer({ endsAt }: { endsAt: string | Date }) {
+export default function CountdownTimer({ endsAt, size = 'lg' }: { endsAt: string | Date, size?: 'sm' | 'lg' }) {
   const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null)
   const [isExpired, setIsExpired] = useState(false)
 
@@ -43,33 +43,35 @@ export default function CountdownTimer({ endsAt }: { endsAt: string | Date }) {
 
   if (isExpired) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-600 font-bold px-4 py-2 rounded-lg text-center">
+      <div className={`bg-red-50 border border-red-200 text-red-600 font-bold px-4 py-2 rounded-lg text-center ${size === 'sm' ? 'text-xs px-2 py-1' : ''}`}>
         EXPIRED
       </div>
     )
   }
 
   if (!timeLeft) {
-    return <div className="animate-pulse bg-gray-100 h-10 rounded-lg"></div>
+    return <div className={`animate-pulse bg-gray-100 rounded-lg ${size === 'sm' ? 'h-8' : 'h-10'}`}></div>
   }
 
   const isUnderOneHour = timeLeft.days === 0 && timeLeft.hours === 0
 
   const Box = ({ label, value }: { label: string, value: number }) => (
-    <div className={`flex flex-col items-center justify-center bg-white border rounded-lg p-2 min-w-[3.5rem] sm:min-w-[4rem] shadow-sm ${isUnderOneHour ? 'border-red-300 text-red-600' : 'border-gray-200 text-gray-900'}`}>
-      <span className="text-xl sm:text-2xl font-bold font-mono leading-none tracking-tighter">{value.toString().padStart(2, '0')}</span>
-      <span className="text-[9px] sm:text-[10px] uppercase font-bold text-gray-400 mt-1 tracking-wider">{label}</span>
+    <div className={`flex flex-col items-center justify-center bg-gray-50/50 backdrop-blur-sm border rounded-xl shadow-sm transition-colors 
+      ${size === 'sm' ? 'p-1 min-w-[2.75rem]' : 'p-1.5 min-w-[3.25rem] sm:min-w-[4rem]'}
+      ${isUnderOneHour ? 'border-red-200 text-red-600 bg-red-50/30' : 'border-gray-100 text-gray-900 font-medium'}`}>
+      <span className={`font-black font-mono leading-none tracking-tighter ${size === 'sm' ? 'text-sm' : 'text-lg sm:text-2xl'}`}>{value.toString().padStart(2, '0')}</span>
+      <span className={`uppercase font-extrabold text-gray-400 mt-0.5 tracking-widest ${size === 'sm' ? 'text-[7px]' : 'text-[8px] sm:text-[9px]'}`}>{label}</span>
     </div>
   )
 
   return (
-    <div className="flex items-center gap-2 sm:gap-3">
+    <div className={`flex items-center ${size === 'sm' ? 'gap-1' : 'gap-1.5 sm:gap-3'}`}>
       <Box label="Days" value={timeLeft.days} />
-      <span className={`text-xl font-bold ${isUnderOneHour ? 'text-red-400' : 'text-gray-400'}`}>:</span>
+      <span className={`font-bold ${size === 'sm' ? 'text-xs' : 'text-lg'} ${isUnderOneHour ? 'text-red-400' : 'text-gray-300'}`}>:</span>
       <Box label="Hrs" value={timeLeft.hours} />
-      <span className={`text-xl font-bold ${isUnderOneHour ? 'text-red-400' : 'text-gray-400'}`}>:</span>
+      <span className={`font-bold ${size === 'sm' ? 'text-xs' : 'text-lg'} ${isUnderOneHour ? 'text-red-400' : 'text-gray-300'}`}>:</span>
       <Box label="Mins" value={timeLeft.minutes} />
-      <span className={`text-xl font-bold ${isUnderOneHour ? 'text-red-400' : 'text-gray-400'}`}>:</span>
+      <span className={`font-bold ${size === 'sm' ? 'text-xs' : 'text-lg'} ${isUnderOneHour ? 'text-red-400' : 'text-gray-300'}`}>:</span>
       <Box label="Secs" value={timeLeft.seconds} />
     </div>
   )

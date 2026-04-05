@@ -22,11 +22,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(10)
-      .then(({ data }) => { if (data) setNotifications(data) })
+      .then(({ data }: { data: any }) => { if (data) setNotifications(data) })
 
     // Realtime subscription
     const channel = supabase.channel('realtime_notifications')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, (payload: any) => {
          setNotifications(prev => [payload.new, ...prev].slice(0, 10))
          audioRef.current?.play().catch(()=>{})
       })

@@ -16,7 +16,10 @@ export default async function HomePage() {
     { data: featuredBusinesses },
     { data: flashDeals },
     { data: latestJobs },
-    { data: upcomingEvents }
+    { data: upcomingEvents },
+    { count: totalBusinesses },
+    { count: totalProducts },
+    { count: totalJobs }
   ] = await Promise.all([
     supabase.from('categories').select('*').limit(12),
     supabase.from('businesses').select('*').eq('is_active', true).order('rating', { ascending: false }).limit(12),
@@ -26,8 +29,12 @@ export default async function HomePage() {
       .gt('ends_at', new Date().toISOString())
       .order('ends_at', { ascending: true })
       .limit(4),
-    supabase.from('jobs').select('*, business:businesses(name, logo_url)').order('created_at', { ascending: false }).limit(3),
-    supabase.from('events').select('*').order('starts_at', { ascending: true }).limit(3)
+    supabase.from('jobs').select('*, business:businesses(name, logo_url)').eq('status', 'active').order('created_at', { ascending: false }).limit(3),
+    supabase.from('events').select('*').gt('starts_at', new Date().toISOString()).order('starts_at', { ascending: true }).limit(3),
+    // Real counts for hero stats
+    supabase.from('businesses').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('products').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('status', 'active'),
   ])
 
   return (
@@ -55,9 +62,9 @@ export default async function HomePage() {
 
           {/* Stats row */}
           <div className="flex flex-wrap justify-center gap-6 mb-10 text-sm font-bold text-red-100/80">
-            <span>🏢 10,000+ Businesses</span>
-            <span>📦 50,000+ Products</span>
-            <span>💼 5,000+ Jobs</span>
+            <span>🏢 {totalBusinesses?.toLocaleString() || '0'}+ Businesses</span>
+            <span>📦 {totalProducts?.toLocaleString() || '0'}+ Products</span>
+            <span>💼 {totalJobs?.toLocaleString() || '0'}+ Jobs</span>
             <span>🏧 All 77 Districts</span>
           </div>
 
@@ -84,7 +91,7 @@ export default async function HomePage() {
                 <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center group-hover:bg-red-100 transition-colors">
                   <span className="text-xl">{cat.icon || '📦'}</span>
                 </div>
-                <span className="font-semibold text-gray-800 text-sm">{cat.name}</span>
+                <span className="font-semibold text-gray-800 text-sm">{cat.name_en}</span>
               </Link>
             ))}
           </div>

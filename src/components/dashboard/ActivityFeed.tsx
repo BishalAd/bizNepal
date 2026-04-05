@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatDistanceToNow } from 'date-fns'
 import { ShoppingBag, Briefcase, CalendarCheck, Star, Activity } from 'lucide-react'
+import Link from 'next/link'
 
 interface ActivityItem {
   id: string
@@ -29,15 +30,15 @@ export default function ActivityFeed({ businessId }: { businessId: string }) {
         { data: reviews }
       ] = await Promise.all([
         supabase.from('orders').select('id, customer_name, total, created_at, items').eq('business_id', businessId).order('created_at', { ascending: false }).limit(5),
-        supabase.from('job_applications').select('id, applicant_name, created_at, job:jobs(title)').eq('business_id', businessId).order('created_at', { ascending: false }).limit(5),
-        supabase.from('event_bookings').select('id, attendee_name, total_amount, created_at, event:events(title)').eq('event:events.business_id', businessId).order('created_at', { ascending: false }).limit(5), // Wait, event_bookings doesn't have business_id, it links to events which has business_id. We'll fetch bookings for events of this business.
+        supabase.from('job_applications').select('id, applicant_name, created_at, job:jobs!inner(title, business_id)').eq('job.business_id', businessId).order('created_at', { ascending: false }).limit(5),
+        supabase.from('event_bookings').select('id, attendee_name, total_amount, created_at, event:events!inner(title, business_id)').eq('event.business_id', businessId).order('created_at', { ascending: false }).limit(5),
         supabase.from('reviews').select('id, rating, created_at, user:profiles(full_name)').eq('business_id', businessId).order('created_at', { ascending: false }).limit(5)
       ])
 
       const combined: ActivityItem[] = []
 
       // Map Orders
-      orders?.forEach(o => combined.push({
+      orders?.forEach((o: any) => combined.push({
         id: o.id,
         type: 'order',
         title: `New order from ${o.customer_name}`,
@@ -47,7 +48,7 @@ export default function ActivityFeed({ businessId }: { businessId: string }) {
       }))
 
       // Map Jobs
-      jobs?.forEach(j => combined.push({
+      jobs?.forEach((j: any) => combined.push({
         id: j.id,
         type: 'job_application',
         title: `New application from ${j.applicant_name}`,
@@ -55,9 +56,8 @@ export default function ActivityFeed({ businessId }: { businessId: string }) {
         created_at: j.created_at
       }))
 
-      // Map Events (Note: Supabase embedded filtering might not work easily for generic select, so let's check structure. We assume it returned bookings for this business's events)
-      // If the above query failed for events due to foreign constraint, we'll just ignore for now or handle safely.
-      events?.forEach(e => combined.push({
+      // Map Events
+      events?.forEach((e: any) => combined.push({
         id: e.id,
         type: 'event_booking',
         title: `New booking from ${e.attendee_name}`,
@@ -67,7 +67,7 @@ export default function ActivityFeed({ businessId }: { businessId: string }) {
       }))
 
       // Map Reviews
-      reviews?.forEach(r => combined.push({
+      reviews?.forEach((r: any) => combined.push({
         id: r.id,
         type: 'review',
         title: `New ${r.rating}-star review`,
@@ -93,7 +93,7 @@ export default function ActivityFeed({ businessId }: { businessId: string }) {
 
     // Subscribe to realtime updates for this business
     const ordersSub = supabase.channel('dashboard-orders')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter: `business_id=eq.${businessId}` }, payload => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter: `business_id=eq.${businessId}` }, (payload: any) => {
         const o = payload.new
         setActivities(prev => [{
           id: o.id, type: 'order', title: `New order from ${o.customer_name || 'Customer'}`, description: `New purchase`, amount: o.total, created_at: o.created_at
@@ -101,7 +101,7 @@ export default function ActivityFeed({ businessId }: { businessId: string }) {
       }).subscribe()
 
     const jobsSub = supabase.channel('dashboard-jobs')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'job_applications', filter: `business_id=eq.${businessId}` }, payload => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'job_applications' }, (payload: any) => {
         const j = payload.new
         setActivities(prev => [{
           id: j.id, type: 'job_application', title: `New application from ${j.applicant_name}`, description: `New job application`, created_at: j.created_at
@@ -109,7 +109,7 @@ export default function ActivityFeed({ businessId }: { businessId: string }) {
       }).subscribe()
 
     const reviewsSub = supabase.channel('dashboard-reviews')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reviews', filter: `business_id=eq.${businessId}` }, payload => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reviews', filter: `business_id=eq.${businessId}` }, (payload: any) => {
         const r = payload.new
         setActivities(prev => [{
           id: r.id, type: 'review', title: `New ${r.rating}-star review`, description: `Customer review added`, created_at: r.created_at
@@ -163,26 +163,36 @@ export default function ActivityFeed({ businessId }: { businessId: string }) {
              <p className="text-sm">No recent activity detected.</p>
            </div>
         ) : (
-          <ul className="divide-y divide-gray-50">
-            {activities.map((item, idx) => (
-              <li key={item.id + idx} className="p-4 hover:bg-gray-50 transition rounded-xl flex items-start gap-4">
-                <div className={`p-2.5 rounded-xl border flex-shrink-0 ${getBg(item.type)}`}>
-                  {getIcon(item.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-bold text-gray-900 truncate pr-4">{item.title}</p>
-                    <span className="text-xs text-gray-500 whitespace-nowrap">{formatDistanceToNow(new Date(item.created_at))} ago</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600 truncate mr-2">{item.description}</span>
-                    {item.amount !== undefined && (
-                      <span className="font-extrabold text-blue-600 flex-shrink-0">₨ {item.amount.toLocaleString()}</span>
-                    )}
-                  </div>
-                </div>
-              </li>
-            ))}
+          <ul className="divide-y divide-gray-50 px-2 pb-2">
+            {activities.map((item, idx) => {
+              const href = 
+                item.type === 'order' ? `/dashboard/orders` :
+                item.type === 'job_application' ? `/dashboard/applications` :
+                item.type === 'event_booking' ? `/dashboard/events` :
+                item.type === 'review' ? `/dashboard/reviews` : '/dashboard'
+
+              return (
+                <li key={item.id + idx}>
+                  <Link href={href} className="p-4 hover:bg-gray-50 transition rounded-2xl flex items-start gap-4 group">
+                    <div className={`p-2.5 rounded-xl border flex-shrink-0 transition group-hover:scale-110 ${getBg(item.type)}`}>
+                      {getIcon(item.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="text-sm font-bold text-gray-900 truncate pr-4 group-hover:text-blue-600 transition">{item.title}</p>
+                        <span className="text-xs text-gray-500 whitespace-nowrap">{formatDistanceToNow(new Date(item.created_at))} ago</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600 truncate mr-2">{item.description}</span>
+                        {item.amount !== undefined && (
+                          <span className="font-extrabold text-blue-600 flex-shrink-0">₨ {item.amount.toLocaleString()}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>

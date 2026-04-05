@@ -43,7 +43,7 @@ export function useAuth() {
     getUserData()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (_event: any, session: any) => {
         if (!session) {
           setUser(null)
           setProfile(null)

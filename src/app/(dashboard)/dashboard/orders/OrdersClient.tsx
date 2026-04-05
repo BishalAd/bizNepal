@@ -6,38 +6,18 @@ import { formatDistanceToNow, format } from 'date-fns'
 import toast, { Toaster } from 'react-hot-toast'
 import { 
   PackageSearch, BellRing, Phone, Mail, MapPin, Search, ChevronDown, 
-  ChevronUp, Printer, FileText, CheckCircle2, XCircle, Truck, Package, Clock 
+  ChevronUp, Printer, FileText, CheckCircle2, XCircle, Truck, Package, Clock, ShoppingBag
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-
-// --- Helper Components (Defined outside to prevent focal lose on re-render) ---
-const OrderStatusBadge = ({ status }: { status: string }) => {
-  const colors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    confirmed: 'bg-blue-100 text-blue-800',
-    dispatched: 'bg-purple-100 text-purple-800',
-    delivered: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800'
-  }
-  return <span className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize ${colors[status] || 'bg-gray-100'}`}>{status}</span>
-}
-
-const PaymentMethodBadge = ({ method }: { method: string }) => {
-  const colors: Record<string, string> = {
-    esewa: 'bg-green-100 text-green-700 border-green-200',
-    khalti: 'bg-purple-100 text-purple-700 border-purple-200',
-    cod: 'bg-orange-100 text-orange-700 border-orange-200',
-    reserve: 'bg-blue-100 text-blue-700 border-blue-200'
-  }
-  return <span className={`px-2 py-0.5 border rounded text-[10px] font-extrabold uppercase ${colors[method] || 'bg-gray-100'}`}>{method}</span>
-}
+import { StatusBadge, PaymentBadge } from '@/components/dashboard/shared/DashboardShared'
 
 export default function OrdersClient({ initialOrders, business }: any) {
   const supabase = createClient()
   const [orders, setOrders] = useState(initialOrders)
   const [activeTab, setActiveTab] = useState('All')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   
   // Audio ref for notification
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -55,7 +35,7 @@ export default function OrdersClient({ initialOrders, business }: any) {
         schema: 'public',
         table: 'orders',
         filter: `business_id=eq.${business.id}`
-      }, (payload) => {
+      }, (payload: any) => {
          const newOrder = payload.new
          setOrders((prev:any) => [newOrder, ...prev])
          toast.success('🔔 New Order Arrived!', { duration: 5000, position: 'top-center' })
@@ -66,7 +46,7 @@ export default function OrdersClient({ initialOrders, business }: any) {
         schema: 'public',
         table: 'orders',
         filter: `business_id=eq.${business.id}`
-      }, (payload) => {
+      }, (payload: any) => {
          // Some other client/admin might have updated the order
          setOrders((prev:any) => prev.map((o:any) => o.id === payload.new.id ? { ...o, ...payload.new } : o))
       })
@@ -78,9 +58,20 @@ export default function OrdersClient({ initialOrders, business }: any) {
   const tabs = ['All', 'pending', 'confirmed', 'dispatched', 'delivered', 'cancelled']
 
   const displayOrders = useMemo(() => {
-    if (activeTab === 'All') return orders
-    return orders.filter((o:any) => o.order_status === activeTab)
-  }, [orders, activeTab])
+    let filtered = orders
+    if (activeTab !== 'All') {
+      filtered = filtered.filter((o:any) => o.order_status === activeTab)
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      filtered = filtered.filter((o:any) => 
+        o.customer_name?.toLowerCase().includes(q) || 
+        o.customer_phone?.includes(q) ||
+        o.id.toLowerCase().includes(q)
+      )
+    }
+    return filtered
+  }, [orders, activeTab, searchQuery])
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     // Optimistic UI update
@@ -128,19 +119,29 @@ export default function OrdersClient({ initialOrders, business }: any) {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Orders Inbox</h1>
-            <p className="text-gray-500 mt-1">Manage physical purchases, reservations, and delivery flow.</p>
+            <p className="text-gray-500 mt-1 uppercase text-[10px] font-black tracking-widest">Physical & Digital Shipments</p>
+          </div>
+          <div className="relative w-full sm:w-72 group">
+            <Search className="absolute left-3.5 top-3 w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+            <input 
+              type="text" 
+              placeholder="Search by Name or BN-ID..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-sm font-bold focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all"
+            />
           </div>
         </div>
 
         {/* Tab Bar */}
-        <div className="flex gap-2 p-1.5 bg-gray-100 rounded-2xl overflow-x-auto no-scrollbar scroll-smooth">
+        <div className="flex flex-wrap gap-2 p-1.5 bg-gray-100 rounded-2xl">
           {tabs.map(tab => (
              <button 
                key={tab} 
                onClick={() => setActiveTab(tab)}
-               className={`px-5 py-2.5 rounded-xl text-sm font-bold capitalize transition-all whitespace-nowrap ${activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200'}`}
+               className={`px-5 py-2.5 rounded-xl text-sm font-bold capitalize transition-all whitespace-nowrap ${activeTab === tab ? 'bg-white text-gray-900 shadow-sm border border-gray-200/50' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200'}`}
              >
-               {tab} {tab !== 'All' && <span className={`ml-1.5 px-2 py-0.5 rounded-full text-xs bg-gray-100 ${activeTab === tab ? 'bg-gray-100 text-gray-900' : ''}`}>{orders.filter((o:any)=>o.order_status===tab).length}</span>}
+               {tab} {tab !== 'All' && <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[10px] bg-gray-100 ${activeTab === tab ? 'bg-gray-200 text-gray-900' : ''}`}>{orders.filter((o:any)=>o.order_status===tab).length}</span>}
              </button>
           ))}
         </div>
@@ -189,21 +190,18 @@ export default function OrdersClient({ initialOrders, business }: any) {
                          <div className="xl:w-2/12">
                            <p className="font-extrabold text-gray-900 text-lg">₨ {Number(o.total || 0).toLocaleString()}</p>
                            <div className="flex gap-2 items-center mt-1">
-                             <PaymentMethodBadge method={o.payment_method} />
+                             <PaymentBadge method={o.payment_method} />
                              {o.payment_status === 'paid' ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500"/> : o.payment_status === 'pending' ? <Clock className="w-3.5 h-3.5 text-yellow-500"/> : <XCircle className="w-3.5 h-3.5 text-red-500"/>}
                            </div>
                          </div>
 
                          <div className="xl:w-2/12 flex gap-3 items-center justify-end w-full xl:w-auto">
+                            <StatusBadge status={o.order_status} />
                             <select 
                               onClick={e => e.stopPropagation()} 
                               value={o.order_status} 
                               onChange={e => handleStatusChange(o.id, e.target.value)} 
-                              className={`text-sm font-bold outline-none cursor-pointer border px-3 py-1.5 rounded-lg appearance-none text-center ${
-                                o.order_status === 'pending' ? 'bg-yellow-50 border-yellow-200 text-yellow-800' :
-                                o.order_status === 'delivered' ? 'bg-green-50 border-green-200 text-green-800' :
-                                'bg-gray-50 border-gray-200 text-gray-800'
-                              }`}
+                              className="text-[10px] font-black outline-none cursor-pointer border border-gray-200 px-2 py-1.5 rounded-lg appearance-none bg-white hover:bg-gray-50 transition-colors uppercase tracking-widest"
                             >
                               <option value="pending">Pending</option>
                               <option value="confirmed">Confirmed</option>

@@ -4,6 +4,7 @@ export interface Category {
   id: string
   name_en: string
   name_np?: string
+  name?: string // keeping for compatibility
   icon?: string
   type: 'product' | 'service' | 'job' | 'event'
   parent_id?: string
@@ -46,10 +47,13 @@ export interface Product {
   images?: string[] // keeping for legacy
   category_id?: string
   stock_quantity: number
-  cod_available: boolean
-  esewa_available: boolean
-  khalti_available: boolean
-  pickup_available: boolean
+  allows_cod: boolean
+  allows_esewa: boolean
+  allows_khalti: boolean
+  allows_pickup: boolean
+  cod_available?: boolean // keeping for compatibility
+  esewa_available?: boolean // keeping for compatibility
+  khalti_available?: boolean // keeping for compatibility
   status: 'active' | 'draft' | 'out_of_stock'
   view_count: number
   created_at: string

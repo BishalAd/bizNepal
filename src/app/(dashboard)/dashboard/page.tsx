@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import StatsCard from '@/components/dashboard/StatsCard'
 import ActivityFeed from '@/components/dashboard/ActivityFeed'
+import { StatusBadge, PaymentBadge } from '@/components/dashboard/shared/DashboardShared'
 import { 
   DollarSign, Package, ShoppingBag, Briefcase, 
   CalendarCheck, Star, PlusCircle, ArrowRight
@@ -42,30 +43,40 @@ export default async function DashboardOverviewPage() {
   const [
     { data: todayOrders },
     { count: activeListings },
-    { count: unreadJobs },
+    { data: jobsWithApps },
     { data: todayEvents },
     { count: unreadReviews },
-    { data: recentOrders }
+    { data: recentOrders },
+    { data: lifetimeOrders }
   ] = await Promise.all([
     // Today's Revenue & Orders
     supabase.from('orders').select('total, created_at').eq('business_id', business.id).gte('created_at', todayISO),
     // Active Listings
     supabase.from('products').select('*', { count: 'exact', head: true }).eq('business_id', business.id).eq('status', 'active'),
-    // Unread Jobs
-    supabase.from('job_applications').select('*', { count: 'exact', head: true }).eq('business_id', business.id).eq('status', 'new'),
+    // New Job Applications — fetch jobs with their applications via join
+    supabase.from('jobs').select('id, job_applications(id, status)').eq('business_id', business.id),
     // Today's Bookings
-    // Note: Bookings link to event_id, wait, let's just get count where created_at >= today by fetching events for this business first
     supabase.from('events').select('id, event_bookings(id, created_at)').eq('business_id', business.id),
-    // Unread Reviews
-    // Assume reviews without reply are 'unread'. We'll just count all for this demo or where reply is null if that column existed.
+    // Total Reviews
     supabase.from('reviews').select('*', { count: 'exact', head: true }).eq('business_id', business.id),
     // Recent Orders Table
-    supabase.from('orders').select('id, customer_name, total, payment_method, order_status, created_at, items').eq('business_id', business.id).order('created_at', { ascending: false }).limit(5)
+    supabase.from('orders').select('id, customer_name, total, payment_method, order_status, created_at, items').eq('business_id', business.id).order('created_at', { ascending: false }).limit(5),
+    // Lifetime Revenue
+    supabase.from('orders').select('total').eq('business_id', business.id)
   ])
 
   // Process manual counts
   const todaysRevenue = todayOrders?.reduce((acc, curr) => acc + Number(curr.total || 0), 0) || 0
   const todaysOrdersCount = todayOrders?.length || 0
+  const lifetimeRevenue = lifetimeOrders?.reduce((acc, curr) => acc + Number(curr.total || 0), 0) || 0
+
+  // Count new (unread) job applications via the jobs join
+  let unreadJobs = 0
+  jobsWithApps?.forEach((job: any) => {
+    job.job_applications?.forEach((app: any) => {
+      if (app.status === 'new') unreadJobs++
+    })
+  })
   
   // Calculate today's event bookings
   let todaysBookingsCount = 0
@@ -82,8 +93,10 @@ export default async function DashboardOverviewPage() {
       
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Welcome back, {business.name}</h1>
-        <p className="text-gray-500 mt-1">Here's what's happening with your business today.</p>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+          Welcome back, <span className="text-blue-600">{business.name}</span>
+        </h1>
+        <p className="text-gray-500 mt-2 font-medium">Monitoring your business performance for today.</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -97,34 +110,34 @@ export default async function DashboardOverviewPage() {
               title="Today's Revenue" 
               value={`₨ ${todaysRevenue.toLocaleString()}`} 
               icon={<DollarSign className="w-6 h-6" />}
-              color="green" trend="up" trendValue="12%"
+              color="green" trend="up" trendValue="Live"
             />
             <StatsCard 
-              title="Active Listings" 
+              title="Active Inventory" 
               value={activeListings || 0} 
               icon={<Package className="w-6 h-6" />}
-              color="blue" trend="up" trendValue="2"
+              color="blue" trend="neutral" trendValue="Products"
             />
             <StatsCard 
               title="New Orders" 
               value={todaysOrdersCount} 
               icon={<ShoppingBag className="w-6 h-6" />}
-              color="purple" trend="up" trendValue="5%"
+              color="purple" trend="up" trendValue="Today"
             />
             <StatsCard 
-              title="Unread Job Apps" 
+              title="Unread Apps" 
               value={unreadJobs || 0} 
               icon={<Briefcase className="w-6 h-6" />}
-              color="orange" trend="neutral" trendValue="0"
+              color="orange" trend="neutral" trendValue="Jobs"
             />
             <StatsCard 
               title="Today's Bookings" 
               value={todaysBookingsCount} 
               icon={<CalendarCheck className="w-6 h-6" />}
-              color="red" trend="up" trendValue="10%"
+              color="red" trend="up" trendValue="Events"
             />
             <StatsCard 
-              title="New Reviews" 
+              title="Total Reviews" 
               value={unreadReviews || 0} 
               icon={<Star className="w-6 h-6 text-yellow-500" />}
               color="gray"
@@ -135,7 +148,7 @@ export default async function DashboardOverviewPage() {
           <div>
             <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Link href="/dashboard/listings/new" className="bg-white border text-center border-gray-100 hover:border-blue-200 hover:shadow-md p-4 rounded-2xl transition group">
+              <Link href="/dashboard/products/new" className="bg-white border text-center border-gray-100 hover:border-blue-200 hover:shadow-md p-4 rounded-2xl transition group">
                 <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition"><PlusCircle className="w-5 h-5"/></div>
                 <span className="font-semibold text-gray-700 text-sm">Add Product</span>
               </Link>

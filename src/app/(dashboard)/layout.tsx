@@ -71,7 +71,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
     }
     load()
-  }, [pathname])
+
+    // Real-time subscription for business profile updates
+    const channel = supabase.channel('sidebar_business_sync')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'businesses' 
+      }, (payload: any) => {
+        if (business && payload.new.id === business.id) {
+          setBusiness((prev: any) => ({ ...prev, ...payload.new }))
+        }
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [pathname, business?.id])
 
   // Close mobile menu on route change
   useEffect(() => { setMobileOpen(false) }, [pathname])

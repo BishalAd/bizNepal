@@ -84,14 +84,17 @@ export default function ProductsClientListing({ initialFilters, categories, dist
                 <input type="radio" checked={!filters.category} onChange={() => handleFilterChange('category', '')} className="text-red-600 focus:ring-red-500 rounded-full" />
                 <span className="text-sm text-gray-700">All Categories</span>
               </label>
-              {categories?.filter((c:any)=>c.type==='product').map((cat: any) => (
+              {categories?.filter((c:any)=>{
+                if (!c.type) return true; // Show all if no type column
+                return c.type==='product';
+              }).map((cat: any) => (
                 <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
                   <input type="radio" 
                     checked={filters.category === cat.id} 
                     onChange={() => handleFilterChange('category', cat.id)} 
                     className="text-red-600 focus:ring-red-500 rounded-full" 
                   />
-                  <span className="text-sm text-gray-700">{cat.name}</span>
+                  <span className="text-sm text-gray-700">{cat.name_en || cat.name}</span>
                 </label>
               ))}
             </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Building2, MapPin, Clock, DollarSign, Globe, Briefcase, X, UploadCloud, CheckCircle2 } from 'lucide-react'
@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
 
 export default function JobDetailClient({ job, companyJobs, relatedJobs }: any) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const supabase = createClient()
 
   const [showApplyModal, setShowApplyModal] = useState(false)
@@ -18,13 +18,26 @@ export default function JobDetailClient({ job, companyJobs, relatedJobs }: any) 
   const [isSuccess, setIsSuccess] = useState(false)
 
   const [formData, setFormData] = useState({
-    name: user?.user_metadata?.full_name || '',
-    email: user?.email || '',
+    name: '',
+    email: '',
     phone: '',
     coverLetter: '',
     confirmAccurate: false
   })
   const [cvFile, setCvFile] = useState<File | null>(null)
+
+  // Sync user/profile data once loaded
+  useEffect(() => {
+    if (!formData.name && (profile?.full_name || user?.user_metadata?.full_name)) {
+      setFormData(prev => ({ ...prev, name: profile?.full_name || user?.user_metadata?.full_name }))
+    }
+    if (!formData.email && user?.email) {
+      setFormData(prev => ({ ...prev, email: user.email }))
+    }
+    if (!formData.phone && profile?.phone) {
+      setFormData(prev => ({ ...prev, phone: profile.phone }))
+    }
+  }, [user, profile])
 
   const postedAgo = formatDistanceToNow(new Date(job.created_at), { addSuffix: true })
 

@@ -33,8 +33,8 @@ export default function BusinessDirectoryClient({ categories, districts, initial
     try {
       let query = supabase.from('businesses').select(`
         id, name, slug, logo_url, cover_url, rating, review_count, city, address, 
-        latitude, longitude, is_verified, hours, whatsapp,
-        category:categories(name),
+        latitude, longitude, is_verified, hours, whatsapp, district_id, category_id,
+        category:categories(name_en),
         district_info:districts(name_en)
       `).eq('is_active', true)
 
@@ -131,10 +131,10 @@ export default function BusinessDirectoryClient({ categories, districts, initial
            <div className="space-y-8">
              <div>
                <h3 className="font-semibold text-gray-900 mb-3">Category</h3>
-               <select value={filters.category} onChange={e=>setFilters({...filters, category: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl font-medium text-gray-700 outline-none focus:ring-2 focus:ring-blue-500">
-                 <option value="">All Categories</option>
-                 {categories.map((c:any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-               </select>
+                <select value={filters.category} onChange={e=>setFilters({...filters, category: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl font-medium text-gray-700 outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">All Categories</option>
+                  {categories.map((c:any) => <option key={c.id} value={c.id}>{c.name_en || c.name}</option>)}
+                </select>
              </div>
 
              <div>
@@ -196,7 +196,7 @@ export default function BusinessDirectoryClient({ categories, districts, initial
 
           {viewMode === 'map' && (
              <>
-               <BusinessMap businesses={businesses} onBoundsChange={setMapBounds} />
+               <BusinessMap businesses={businesses} districts={districts} onBoundsChange={setMapBounds} />
                
                {/* Fixed bottom scrolling list overlay */}
                <div className="absolute bottom-6 left-6 w-80 max-h-[60vh] overflow-y-auto pointer-events-auto custom-scrollbar hidden md:block">

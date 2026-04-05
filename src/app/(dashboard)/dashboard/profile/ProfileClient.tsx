@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
 import ImageUpload from '@/components/dashboard/ImageUpload'
-import { Save, Store, Loader2, Link as LinkIcon, Facebook, Instagram, Phone, Mail, FileText, BadgeCheck, Clock, MapPin, Search } from 'lucide-react'
+import { Save, Store, Loader2, Link as LinkIcon, Facebook, Instagram, Phone, Mail, FileText, BadgeCheck, Clock, MapPin, Search, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { useDebounce } from 'react-use'
+import { enhanceDescription } from '@/app/_actions/ai'
 
 // Dynamically import Map to prevent SSR issues
 const LocationPickerMap = dynamic(() => import('@/components/dashboard/LocationPickerMap'), {
@@ -66,8 +68,41 @@ export default function ProfileClient({ business, categories, districts, userId 
     longitude: business.longitude || 85.3240,
     cover_url: business.cover_url || '',
     logo_url: business.logo_url || '',
-    hours: business.hours || defaultHours
+    hours: business.hours || defaultHours,
+    slug: business.slug || ''
   })
+
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
+  const [isEnhancing, setIsEnhancing] = useState(false)
+
+  // Debounced Slug Check
+  useDebounce(async () => {
+    if (!formData.slug || formData.slug === business.slug) {
+      setSlugStatus('idle')
+      return
+    }
+
+    // Basic format check
+    if (!/^[a-z0-9-]+$/.test(formData.slug)) {
+      setSlugStatus('taken') // Or invalid format
+      toast.error('Slug can only contain lowercase letters, numbers, and hyphens.')
+      return
+    }
+
+    // Reserved words check
+    const reservedWords = ['admin', 'api', 'login', 'dashboard', 'offers', 'jobs', 'events', 'businesses', 'register', 'cart']
+    if (reservedWords.includes(formData.slug)) {
+      setSlugStatus('taken')
+      toast.error('This URL is reserved.')
+      return
+    }
+
+    setSlugStatus('checking')
+    const { data, error } = await supabase.from('businesses').select('id').eq('slug', formData.slug).maybeSingle()
+    
+    if (data) setSlugStatus('taken')
+    else setSlugStatus('available')
+  }, 600, [formData.slug])
 
   // Verification state
   const [isVerifying, setIsVerifying] = useState(false)
@@ -77,15 +112,16 @@ export default function ProfileClient({ business, categories, districts, userId 
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (slugStatus === 'taken') {
+       toast.error("Please choose a valid & available customized URL")
+       return
+    }
     setIsSaving(true)
 
     try {
-      // Basic slug generation on name change
-      const newSlug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
-
       const payload = {
         name: formData.name,
-        slug: newSlug,
+        slug: formData.slug || business.slug, // prioritize new slug
         description: formData.description,
         category_id: formData.category_id || null,
         phone: formData.phone,
@@ -114,6 +150,23 @@ export default function ProfileClient({ business, categories, districts, userId 
       toast.error(err.message || "Failed to save profile")
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleEnhanceDescription = async () => {
+    if (!formData.description) return toast.error("Write something first!")
+    setIsEnhancing(true)
+    
+    try {
+      const result = await enhanceDescription(formData.description, formData.name, formData.city, formData.province)
+      if (result.success && result.enhancedDescription) {
+         setFormData(prev => ({ ...prev, description: result.enhancedDescription }))
+         toast.success("Description enhanced with AI! ✨")
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to enhance description")
+    } finally {
+      setIsEnhancing(false)
     }
   }
 
@@ -219,6 +272,28 @@ export default function ProfileClient({ business, categories, districts, userId 
                            <span className="absolute right-4 top-3.5 text-xs text-gray-400 font-bold">{formData.tagline.length}/150</span>
                          </div>
                        </InputGroup>
+
+                       <InputGroup label="Business Vanity URL (Slug)" description="Your public link: biznepal.com/business/[your-slug]">
+                         <div className="relative flex items-center">
+                           <div className="absolute left-4 text-gray-400 font-bold text-sm pointer-events-none">.../business/</div>
+                           <input 
+                             type="text" 
+                             value={formData.slug} 
+                             onChange={e=>setFormData({...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} 
+                             className={`w-full bg-gray-50 border rounded-xl pl-24 pr-12 py-3 font-bold focus:ring-2 outline-none transition ${
+                               slugStatus === 'taken' ? 'border-red-300 focus:ring-red-500' : 
+                               slugStatus === 'available' ? 'border-green-300 focus:ring-green-500' : 
+                               'border-gray-200 focus:ring-blue-500'
+                             }`} 
+                           />
+                           <div className="absolute right-4">
+                             {slugStatus === 'checking' && <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />}
+                             {slugStatus === 'available' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                             {slugStatus === 'taken' && <AlertCircle className="w-5 h-5 text-red-500" />}
+                           </div>
+                         </div>
+                         {slugStatus === 'taken' && <p className="text-[10px] font-bold text-red-500 mt-1 uppercase tracking-tight">This URL is already taken by another business</p>}
+                       </InputGroup>
                     </div>
                  )}
 
@@ -245,7 +320,30 @@ export default function ProfileClient({ business, categories, districts, userId 
                        </div>
 
                        <InputGroup label="Description *" description="Tell customers what makes your business special. Supports Nepali Unicode.">
-                         <textarea required rows={6} value={formData.description} onChange={e=>setFormData({...formData, description: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition resize-none" placeholder="We provide authentic Nepali cuisine..."></textarea>
+                         <div className="relative">
+                           <textarea 
+                             required 
+                             rows={6} 
+                             value={formData.description} 
+                             onChange={e=>setFormData({...formData, description: e.target.value})} 
+                             className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition resize-none disabled:opacity-50" 
+                             placeholder="We provide authentic Nepali cuisine..."
+                             disabled={isEnhancing}
+                           ></textarea>
+                           <button 
+                             type="button"
+                             onClick={handleEnhanceDescription}
+                             disabled={isEnhancing}
+                             className="absolute bottom-4 right-4 bg-white hover:bg-gray-50 border border-gray-100 shadow-sm px-4 py-2 rounded-xl text-xs font-black text-gray-700 flex items-center gap-2 transition hover:scale-105 active:scale-95 group overflow-hidden"
+                           >
+                              {isEnhancing ? (
+                                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enhancing...</>
+                              ) : (
+                                <><Sparkles className="w-3.5 h-3.5 text-yellow-500 group-hover:rotate-12 transition" /> Enhance with AI</>
+                              )}
+                              <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                           </button>
+                         </div>
                        </InputGroup>
                     </div>
                  )}

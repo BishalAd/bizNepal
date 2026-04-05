@@ -31,10 +31,41 @@ export default async function EsewaSuccessPage({ searchParams }: { searchParams:
 
   // Update order in Supabase
   const supabase = await createClient()
-  const { error } = await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', orderId)
+  
+  // 1. Check if it's a deferred order (payment_attempts)
+  const { data: attempt } = await supabase
+    .from('payment_attempts')
+    .select('order_data')
+    .eq('id', orderId || '')
+    .single()
+  
+  let finalOrderId = orderId
 
-  if (error) {
-    return <ErrorState message="Payment was successful but we couldn't update your order. Contact support with your transaction code: " code={payload.transaction_code} />
+  if (attempt) {
+     // Create real order from attempt data
+     const { data: newOrder, error: orderError } = await supabase
+       .from('orders')
+       .insert({
+         ...attempt.order_data,
+         order_status: 'pending',
+         payment_status: 'paid',
+       })
+       .select('id')
+       .single()
+     
+     if (orderError) {
+        return <ErrorState message="Payment successful but order creation failed. Contact support." code={payload.transaction_code} />
+     }
+     
+     finalOrderId = newOrder.id
+     // Mark attempt as completed
+     await supabase.from('payment_attempts').update({ status: 'completed' }).eq('id', orderId)
+  } else {
+     // Standard legacy order update
+     const { error } = await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', orderId)
+     if (error) {
+       return <ErrorState message="Payment was successful but we couldn't update your order. Contact support with your transaction code: " code={payload.transaction_code} />
+     }
   }
 
   // Trigger n8n webhook (fire and forget)
@@ -43,7 +74,7 @@ export default async function EsewaSuccessPage({ searchParams }: { searchParams:
      fetch(`${webhookUrl}/new-order`, {
        method: 'POST',
        headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ orderId, method: 'esewa', transaction_code: payload.transaction_code })
+       body: JSON.stringify({ orderId: finalOrderId, method: 'esewa', transaction_code: payload.transaction_code })
      }).catch(() => {}) // ignores fail
   }
 

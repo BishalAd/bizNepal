@@ -6,7 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
   BarChart, Bar, PieChart, Pie, Cell, Legend
 } from 'recharts'
-import { Download, FileText, TrendingUp, ShoppingBag, Users, CalendarDays, Eye, CreditCard } from 'lucide-react'
+import { Download, FileText, TrendingUp, ShoppingBag, Users, CalendarDays, Eye, CreditCard, Package } from 'lucide-react'
 import StatsCard from '@/components/dashboard/StatsCard'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -46,9 +46,14 @@ export default function AnalyticsClient({ orders, products, jobs, events, busine
     fJobs.forEach((j:any) => totalApps += (j.job_applications?.length || 0))
     let totalBookings = 0
     fEvents.forEach((e:any) => totalBookings += (e.event_bookings?.length || 0))
+    
+    // Calculate total product views
     const totalViews = products.reduce((sum:number, p:any) => sum + Number(p.view_count||0), 0)
+    
+    // Conversion Rate: Orders / Views
+    const conversionRate = totalViews > 0 ? ((fOrders.length / totalViews) * 100).toFixed(2) : '0.00'
 
-    return { totalRev, totalOrders: fOrders.length, avgOrder, totalApps, totalBookings, totalViews }
+    return { totalRev, totalOrders: fOrders.length, avgOrder, totalApps, totalBookings, totalViews, conversionRate }
   }, [fOrders, fJobs, fEvents, products])
 
   // CHART 1: Revenue Over Time
@@ -83,15 +88,19 @@ export default function AnalyticsClient({ orders, products, jobs, events, busine
     }))
   }, [fJobs])
 
-  // CHART 4: Event Timeline
-  const eventsData = useMemo(() => {
-    const dailyMap: Record<string, number> = {}
-    fEvents.forEach((e:any) => {
-      const d = format(new Date(e.created_at), 'MMM dd')
-      dailyMap[d] = (dailyMap[d] || 0) + (e.event_bookings?.length || 0)
+  // CHART 5: Category Distribution
+  const categoryData = useMemo(() => {
+    const catMap: Record<string, number> = {}
+    products.forEach((p:any) => {
+      const cat = Array.isArray(p.category) ? p.category[0]?.name_en : (p.category as any)?.name_en || 'Other'
+      catMap[cat] = (catMap[cat] || 0) + 1
     })
-    return Object.keys(dailyMap).map(k => ({ date: k, bookings: dailyMap[k] }))
-  }, [fEvents])
+    return Object.keys(catMap).map((k, i) => ({ 
+      name: k, 
+      value: catMap[k],
+      fill: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][i % 5]
+    }))
+  }, [products])
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -183,9 +192,10 @@ export default function AnalyticsClient({ orders, products, jobs, events, busine
 
         <div id="analytics-dashboard" className="space-y-8 !bg-transparent p-1">
            {/* STATS ROW */}
-           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6">
-              <StatsCard title="Revenue" value={`₨ ${stats.totalRev.toLocaleString()}`} icon={<TrendingUp className="w-5 h-5"/>} color="green" />
-              <StatsCard title="Orders" value={stats.totalOrders} icon={<ShoppingBag className="w-5 h-5"/>} color="blue" />
+           <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+              <StatsCard title="Total Revenue" value={`₨ ${stats.totalRev.toLocaleString()}`} icon={<TrendingUp className="w-5 h-5"/>} color="green" />
+              <StatsCard title="Conversion" value={`${stats.conversionRate}%`} icon={<TrendingUp className="w-5 h-5"/>} color="green" />
+              <StatsCard title="Total Orders" value={stats.totalOrders} icon={<ShoppingBag className="w-5 h-5"/>} color="blue" />
               <StatsCard title="Avg Order" value={`₨ ${Math.round(stats.avgOrder).toLocaleString()}`} icon={<CreditCard className="w-5 h-5"/>} color="purple" />
               <StatsCard title="Applications" value={stats.totalApps} icon={<Users className="w-5 h-5"/>} color="orange" />
               <StatsCard title="Event Bookings" value={stats.totalBookings} icon={<CalendarDays className="w-5 h-5"/>} color="red" />
@@ -193,10 +203,10 @@ export default function AnalyticsClient({ orders, products, jobs, events, busine
            </div>
 
            {/* MAJOR CHARTS */}
-           <div className="grid lg:grid-cols-3 gap-6">
+           <div className="grid lg:grid-cols-4 gap-6">
                
                {/* Line Chart */}
-               <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+               <div className="lg:col-span-3 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                  <h3 className="font-extrabold text-gray-900 mb-6 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-teal-500"/> Revenue Over Time</h3>
                  <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -217,6 +227,24 @@ export default function AnalyticsClient({ orders, products, jobs, events, busine
                  </div>
                </div>
 
+               {/* Category Dist Donut */}
+               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                 <h3 className="font-extrabold text-gray-900 mb-6 flex items-center gap-2"><Package className="w-5 h-5 text-orange-500"/> Categories</h3>
+                 <div className="h-[250px] w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={categoryData} innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
+                          {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend verticalAlign="bottom" height={36} iconType="circle" formatter={(v) => <span className="text-[10px] font-bold text-gray-700 ml-1">{v}</span>}/>
+                      </PieChart>
+                    </ResponsiveContainer>
+                 </div>
+               </div>
+
+           </div>
+
                {/* Donut Chart */}
                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
                  <h3 className="font-extrabold text-gray-900 mb-6 flex items-center gap-2"><ShoppingBag className="w-5 h-5 text-blue-500"/> Order Status</h3>
@@ -236,8 +264,6 @@ export default function AnalyticsClient({ orders, products, jobs, events, busine
                     </div>
                  </div>
                </div>
-
-           </div>
 
            <div className="grid lg:grid-cols-2 gap-6">
               

@@ -18,7 +18,8 @@ const InputGroup = ({ label, children, description }: any) => (
   </div>
 )
 
-export default function OfferFormClient({ products, business }: any) {
+export default function OfferFormClient({ products, business, offer }: any) {
+  const isEditMode = !!offer
   const supabase = createClient()
   const router = useRouter()
 
@@ -26,17 +27,17 @@ export default function OfferFormClient({ products, business }: any) {
   const [discountMode, setDiscountMode] = useState<'amount' | 'percent'>('percent')
   
   const [formData, setFormData] = useState({
-    product_id: '',
-    title: '',
-    original_price: '',
-    offer_price: '',
-    discount_percent: '',
-    max_quantity: '',
-    start_date: '', // Keep for internal form handling if needed, or rename to matches
-    starts_at: new Date().toISOString().slice(0, 16),
-    ends_at: '',
-    banner_url: '',
-    terms: ''
+    product_id: offer?.product_id || '',
+    title: offer?.title || '',
+    original_price: offer?.original_price?.toString() || '',
+    offer_price: offer?.offer_price?.toString() || '',
+    discount_percent: offer?.discount_percent?.toString() || '',
+    max_quantity: offer?.max_quantity?.toString() || '',
+    start_date: '',
+    starts_at: offer?.starts_at ? new Date(offer.starts_at).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+    ends_at: offer?.ends_at ? new Date(offer.ends_at).toISOString().slice(0, 16) : '',
+    banner_url: offer?.banner_url || '',
+    terms: offer?.terms_html || ''
   })
 
   // Autofill from product selection
@@ -107,14 +108,19 @@ export default function OfferFormClient({ products, business }: any) {
         status: status
       }
 
-      const { error } = await supabase.from('offers').insert(payload)
-      if (error) throw error
-      
-      toast.success("Offer published successfully!")
+      if (isEditMode) {
+        const { error } = await supabase.from('offers').update(payload).eq('id', offer.id)
+        if (error) throw error
+        toast.success('Offer updated successfully!')
+      } else {
+        const { error } = await supabase.from('offers').insert(payload)
+        if (error) throw error
+        toast.success('Offer published successfully!')
+      }
       router.push('/dashboard/offers')
 
     } catch (err: any) {
-      toast.error(err.message || "Failed to create offer")
+      toast.error(err.message || (isEditMode ? 'Failed to update offer' : 'Failed to create offer'))
     } finally {
       setIsSaving(false)
     }

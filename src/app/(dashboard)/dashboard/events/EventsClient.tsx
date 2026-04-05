@@ -2,11 +2,12 @@
 
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Plus, Calendar, MapPin, Globe, Users, DollarSign, Edit, Trash2, CheckCircle2 } from 'lucide-react'
+import { Plus, Calendar, MapPin, Globe, Users, DollarSign, Edit, Trash2, CheckCircle2, Camera, Search } from 'lucide-react'
 import StatsCard from '@/components/dashboard/StatsCard'
 import { format, isPast } from 'date-fns'
 import toast, { Toaster } from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import QRScanner from '@/components/dashboard/QRScanner'
 
 export default function EventsClient({ initialEvents }: any) {
   const supabase = createClient()
@@ -33,6 +34,8 @@ export default function EventsClient({ initialEvents }: any) {
 
   const displayEvents = activeTab === 'upcoming' ? stats.upcoming : stats.past
 
+  const [showScanner, setShowScanner] = useState(false)
+
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this event permanently? All RSVPs will be lost.")) return
     setLoadingAction(id)
@@ -48,6 +51,31 @@ export default function EventsClient({ initialEvents }: any) {
     }
   }
 
+  const handleScanSuccess = async (decodedText: string) => {
+    // Basic logic to verify ticket (In a real app, this would call an API with the event_id and ticket_code)
+    try {
+      toast.loading("Validating ticket...", { id: 'validate' })
+      // We assume decodedText contains the booking_id or a unique code
+      const { data, error } = await supabase.from('event_bookings').select('*, status').eq('id', decodedText).maybeSingle()
+      
+      if (error) throw error
+      if (!data) {
+        toast.error("Invalid ticket code scanned from other source", { id: 'validate' })
+        return
+      }
+
+      if (data.status === 'confirmed') {
+        // Mark as checked-in? We'd ideally have a check_in column.
+        toast.success(`Ticket Valid! Welcome ${data.attendee_name || 'Guest'}`, { id: 'validate' })
+      } else {
+        toast.error(`Ticket status: ${data.status}`, { id: 'validate' })
+      }
+
+    } catch (e: any) {
+      toast.error(e.message || "Failed to validate", { id: 'validate' })
+    }
+  }
+
   return (
     <>
       <Toaster position="top-right" />
@@ -59,9 +87,17 @@ export default function EventsClient({ initialEvents }: any) {
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Events Management</h1>
             <p className="text-gray-500 mt-1">Host webinars, workshops, and physical events.</p>
           </div>
-          <Link href="/dashboard/events/new" className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-xl font-bold transition flex items-center shadow-sm whitespace-nowrap">
-            <Plus className="w-5 h-5 mr-2" /> Create Event
-          </Link>
+          <div className="flex gap-3 w-full sm:w-auto">
+             <button 
+               onClick={() => setShowScanner(true)}
+               className="flex-1 sm:flex-none bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold transition flex items-center justify-center shadow-lg shadow-gray-950/20"
+             >
+               <Camera className="w-5 h-5 mr-2 text-orange-400" /> Scan Tickets
+             </button>
+             <Link href="/dashboard/events/new" className="flex-1 sm:flex-none bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-xl font-bold transition flex items-center justify-center shadow-sm whitespace-nowrap">
+               <Plus className="w-5 h-5 mr-2" /> Create Event
+             </Link>
+          </div>
         </div>
 
         {/* Stats */}
@@ -141,6 +177,7 @@ export default function EventsClient({ initialEvents }: any) {
                               </div>
                               
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                                <Link href={`/dashboard/events/${e.id}/attendees`} className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="View Attendees"><Search className="w-4 h-4"/></Link>
                                 <Link href={`/dashboard/events/${e.id}/edit`} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit Event"><Edit className="w-4 h-4"/></Link>
                                 <button onClick={() => handleDelete(e.id)} disabled={loadingAction===e.id} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete"><Trash2 className="w-4 h-4"/></button>
                               </div>
@@ -154,6 +191,13 @@ export default function EventsClient({ initialEvents }: any) {
           </div>
         </div>
       </div>
+
+      {showScanner && (
+        <QRScanner 
+          onClose={() => setShowScanner(false)}
+          onScanSuccess={handleScanSuccess}
+        />
+      )}
     </>
   )
 }

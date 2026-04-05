@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { UploadCloud, X, Loader2, Image as ImageIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
+import CropModal from './CropModal'
 
 interface ImageUploadProps {
   bucket: string
@@ -30,16 +31,14 @@ export default function ImageUpload({
   const [isUploading, setIsUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentImageUrl || null)
   const [progress, setProgress] = useState(0)
+  
+  // Cropping State
+  const [showCrop, setShowCrop] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (disabled || acceptedFiles.length === 0) return
-    const file = acceptedFiles[0]
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File exceeds 5MB limit')
-      return
-    }
-
+  const uploadFile = async (file: File | Blob) => {
+    if (disabled) return
+    
     try {
       setIsUploading(true)
       setProgress(10)
@@ -47,7 +46,6 @@ export default function ImageUpload({
       // 1. Delete old image if exists
       if (currentImageUrl && currentImageUrl.includes(bucket)) {
         try {
-          // Extract file path from public URL
           const urlParts = currentImageUrl.split(`${bucket}/`)
           if (urlParts.length === 2) {
             const oldPath = urlParts[1]
@@ -61,7 +59,7 @@ export default function ImageUpload({
       setProgress(40)
 
       // 2. Upload new image
-      const fileExt = file.name.split('.').pop()
+      const fileExt = (file as File).name?.split('.').pop() || 'jpg'
       const fileName = `${Math.random().toString(36).substring(2, 10)}_${Date.now()}.${fileExt}`
       const filePath = folder ? `${folder}/${fileName}` : fileName
 
@@ -96,9 +94,29 @@ export default function ImageUpload({
       setTimeout(() => {
         setIsUploading(false)
         setProgress(0)
+        setShowCrop(false)
+        setSelectedImage(null)
       }, 500)
     }
-  }, [bucket, folder, currentImageUrl, onUploadSuccess, disabled, supabase])
+  }
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (disabled || acceptedFiles.length === 0) return
+    const file = acceptedFiles[0]
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File exceeds 5MB limit')
+      return
+    }
+
+    // Instead of uploading, show the crop modal
+    const reader = new FileReader()
+    reader.onload = () => {
+      setSelectedImage(reader.result as string)
+      setShowCrop(true)
+    }
+    reader.readAsDataURL(file)
+  }, [disabled])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -161,6 +179,17 @@ export default function ImageUpload({
           </div>
         )}
       </div>
+
+      {showCrop && selectedImage && (
+        <CropModal 
+          image={selectedImage}
+          aspect={aspectRatio === 'square' ? 1/1 : 2.5/1}
+          onClose={() => {setShowCrop(false); setSelectedImage(null)}}
+          onCropComplete={(blob) => {
+            uploadFile(blob)
+          }}
+        />
+      )}
     </div>
   )
 }

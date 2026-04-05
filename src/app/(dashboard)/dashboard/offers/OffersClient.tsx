@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Plus, Tag, Clock, CheckCircle2, AlertCircle, Edit, Trash2, StopCircle } from 'lucide-react'
+import { Plus, Tag, Clock, CheckCircle2, AlertCircle, Edit, Trash2, StopCircle, Search } from 'lucide-react'
 import StatsCard from '@/components/dashboard/StatsCard'
 import { formatDistanceToNow, format } from 'date-fns'
 import toast, { Toaster } from 'react-hot-toast'
@@ -12,7 +12,7 @@ export default function OffersClient({ initialOffers }: any) {
   const supabase = createClient()
   const [offers, setOffers] = useState(initialOffers)
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'active' | 'ended'>('active')
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'ended'>('active')
 
   // Derived Stats
   const stats = useMemo(() => {
@@ -31,7 +31,9 @@ export default function OffersClient({ initialOffers }: any) {
     return { totalGrabbed, potentialRevenue, active, ended }
   }, [offers])
 
-  const displayOffers = activeTab === 'active' ? stats.active : stats.ended
+  const displayOffers = 
+    activeTab === 'all' ? offers :
+    activeTab === 'active' ? stats.active : stats.ended
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this offer permanently?")) return
@@ -97,6 +99,9 @@ export default function OffersClient({ initialOffers }: any) {
              <button onClick={()=>setActiveTab('ended')} className={`pb-4 font-bold text-sm tracking-wide transition border-b-2 ${activeTab === 'ended' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900'}`}>
                Ended Archive <span className={`ml-1.5 px-2 py-0.5 rounded-full text-xs ${activeTab === 'ended' ? 'bg-gray-200 text-gray-900' : 'bg-gray-100 text-gray-600'}`}>{stats.ended.length}</span>
              </button>
+             <button onClick={()=>setActiveTab('all')} className={`pb-4 font-bold text-sm tracking-wide transition border-b-2 ${activeTab === 'all' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}>
+               All History <span className={`ml-1.5 px-2 py-0.5 rounded-full text-xs ${activeTab === 'all' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>{offers.length}</span>
+             </button>
           </div>
 
           <div className="p-6">
@@ -140,16 +145,22 @@ export default function OffersClient({ initialOffers }: any) {
                            </p>
                          </div>
 
-                         <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
-                            {activeTab === 'active' && (
-                              <button onClick={() => handleEndEarly(o.id)} disabled={loadingAction===o.id} className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1.5 transition">
-                                <StopCircle className="w-4 h-4"/> End Early
-                              </button>
-                            )}
-                            <button onClick={() => handleDelete(o.id)} disabled={loadingAction===o.id} className="w-10 h-[36px] bg-white border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-gray-400 rounded-lg flex items-center justify-center transition ml-auto">
-                              <Trash2 className="w-4 h-4"/>
-                            </button>
-                         </div>
+                          <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
+                             <Link 
+                               href={`/dashboard/offers/${o.id}/customers`}
+                               className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-black py-2.5 rounded-lg flex items-center justify-center gap-1.5 transition"
+                             >
+                               <Search className="w-4 h-4"/> View Grabs
+                             </Link>
+                             {activeTab === 'active' && (
+                               <button onClick={() => handleEndEarly(o.id)} disabled={loadingAction===o.id} className="bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold p-2.5 rounded-lg flex items-center justify-center transition">
+                                 <StopCircle className="w-4 h-4"/>
+                               </button>
+                             )}
+                             <button onClick={() => handleDelete(o.id)} disabled={loadingAction===o.id} className="w-10 h-[36px] bg-white border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-gray-400 rounded-lg flex items-center justify-center transition">
+                               <Trash2 className="w-4 h-4"/>
+                             </button>
+                          </div>
                       </div>
                    </div>
                  ))}
