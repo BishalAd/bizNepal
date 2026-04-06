@@ -65,9 +65,15 @@ export default function JobFormClient({ categories, districts, businessId }: any
         status: status
       }
 
-      const { error } = await supabase.from('jobs').insert(payload)
+      const { data: job, error } = await supabase.from('jobs').insert(payload).select('id').single()
       if (error) throw error
       
+      // Trigger Webhook & Notifications (Job Created)
+      if (job?.id && status === 'active') {
+        const { triggerNewPostWebhook } = await import('@/app/_actions/postWebhooks')
+        triggerNewPostWebhook('job', job.id).catch(e => console.error('Job webhook failed:', e))
+      }
+
       toast.success("Job posted successfully!")
       router.push('/dashboard/jobs')
 

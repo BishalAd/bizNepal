@@ -90,8 +90,24 @@ export default function BookingFlowClient({ event }: any) {
         booked_seats: (event.booked_seats || 0) + formData.seats
       }).eq('id', event.id)
       
-      // 3. Fake Webhook to n8n for WhatsApp
-      fetch('/api/webhooks/whatsapp', { method: 'POST', body: JSON.stringify({ type: 'EVENT_BOOKING', ticketCode, phone: formData.phone, event: event.title }) }).catch(()=>null)
+      // 3. Trigger Webhook through API proxy
+      fetch('/api/webhooks/event-booking', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          eventId: event.id,
+          eventTitle: event.title,
+          eventDate: event.starts_at,
+          venueName: event.venue_name,
+          businessId: event.business_id,
+          attendeeName: formData.name,
+          attendeePhone: formData.phone,
+          attendeeUserId: user?.id,
+          seats: formData.seats,
+          totalAmount: totalAmount,
+          ticketCode: ticketCode
+        }) 
+      }).catch(e => console.error('Booking webhook failed:', e))
 
       setBookingResult(bData)
       setStep(3)

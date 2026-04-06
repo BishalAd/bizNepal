@@ -177,8 +177,15 @@ export default function ProductFormClient({ initialData, categories, businessId 
         if (error) throw error
         toast.success("Product updated!")
       } else {
-        const { error } = await supabase.from('products').insert(payload)
+        const { data: newProduct, error } = await supabase.from('products').insert(payload).select('id').single()
         if (error) throw error
+        
+        // Trigger Webhook & Notifications (Product Created)
+        if (newProduct?.id && (statusOverride || formData.status) === 'active') {
+          const { triggerNewPostWebhook } = await import('@/app/_actions/postWebhooks')
+          triggerNewPostWebhook('product', newProduct.id).catch(e => console.error('Product webhook failed:', e))
+        }
+
         localStorage.removeItem('draft_product')
         toast.success("Product published!")
       }

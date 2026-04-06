@@ -202,6 +202,30 @@ export default function ProfileClient({ business, categories, districts, userId 
     )
   }
 
+   const [isConnecting, setIsConnecting] = useState(false)
+   const [tgStatus, setTgStatus] = useState<'unlinked' | 'connected'>(business.telegram_chat_id ? 'connected' : 'unlinked')
+
+   // Poll for telegram_chat_id if we just clicked connect
+   useEffect(() => {
+     let interval: NodeJS.Timeout
+     if (isConnecting && tgStatus === 'unlinked') {
+       interval = setInterval(async () => {
+         try {
+           const res = await fetch(`/api/bot/check-connection?businessId=${business.id}`)
+           const data = await res.json()
+           if (data.connected) {
+             setTgStatus('connected')
+             setIsConnecting(false)
+             toast.success("Telegram connected successfully! 🎉")
+             clearInterval(interval)
+             router.refresh()
+           }
+         } catch (e) {}
+       }, 3000)
+     }
+     return () => clearInterval(interval)
+   }, [isConnecting, tgStatus, business.id])
+
   return (
     <>
       <Toaster position="top-right" />
@@ -497,48 +521,99 @@ export default function ProfileClient({ business, categories, districts, userId 
                  )}
 
                  {activeTab === 'telegram' && (
-                    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
-                       <h2 className="text-xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4">Telegram Integrations</h2>
-                       
-                       <div className="p-6 rounded-2xl border bg-blue-50 border-blue-200 text-blue-900 space-y-4">
-                         <div className="flex items-center gap-4">
-                            <div className="bg-blue-100 p-3 rounded-xl border border-blue-200">
-                               <AlertCircle className="w-8 h-8 text-blue-600" />
-                            </div>
-                            <div>
-                               <h3 className="text-xl font-bold">Connect your Telegram Bot</h3>
-                               <p className="text-sm text-blue-800 mt-1">
-                                 Connect to the Telegram bot to get instant notifications and post job events, products, and offers.
-                               </p>
-                            </div>
-                         </div>
-                         
-                         <div className="pt-4 border-t border-blue-100">
-                           <button 
-                             type="button" 
-                             onClick={async () => {
-                               try {
-                                 const toastId = toast.loading('Generating connection link...');
-                                 const res = await fetch('/api/bot/generate-link-token', { method: 'POST' });
-                                 const data = await res.json();
-                                 if (!res.ok) throw new Error(data.error || 'Failed to generate link');
-                                 toast.dismiss(toastId);
-                                 window.open(data.botUrl, '_blank');
-                               } catch (err: any) {
-                                 toast.error(err.message);
-                               }
-                             }}
-                             className="bg-[#0088cc] hover:bg-[#0077b5] text-white px-6 py-3 rounded-xl font-bold transition flex items-center shadow-sm"
-                           >
-                             Connect with Telegram
-                           </button>
-                           <p className="text-xs text-blue-700 mt-3 font-medium">
-                              Note: This will redirect you to t.me/BizNepalNotifyBot for notifications.<br/>
-                              For posting content, use t.me/postOnBizNepal_bot.
-                           </p>
-                         </div>
-                       </div>
-                    </div>
+                     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
+                        <h2 className="text-xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4 flex items-center justify-between">
+                          Telegram Integrations
+                          {tgStatus === 'connected' ? (
+                            <span className="flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-black shadow-sm border border-green-100">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> CONNECTED
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-black">
+                              NOT LINKED
+                            </span>
+                          )}
+                        </h2>
+                        
+                        <div className={`p-6 rounded-2xl border transition-all ${tgStatus === 'connected' ? 'bg-green-50/50 border-green-100 text-green-900' : 'bg-blue-50 border-blue-200 text-blue-900'} space-y-4`}>
+                          <div className="flex items-center gap-4">
+                             <div className={`p-3 rounded-xl border ${tgStatus === 'connected' ? 'bg-green-100 border-green-200' : 'bg-blue-100 border-blue-200'}`}>
+                                {tgStatus === 'connected' ? <CheckCircle2 className="w-8 h-8 text-green-600" /> : <AlertCircle className="w-8 h-8 text-blue-600" />}
+                             </div>
+                             <div>
+                                <h3 className="text-xl font-bold">{tgStatus === 'connected' ? 'Successfully Linked' : 'Connect your Telegram Bot'}</h3>
+                                <p className="text-sm opacity-90 mt-1">
+                                  {tgStatus === 'connected' 
+                                    ? 'You will now receive instant notifications on Telegram. You can also use the bots to manage content.' 
+                                    : 'Connect to get instant notifications (Orders, Applications, Bookings) and post content directly from Telegram.'}
+                                </p>
+                             </div>
+                          </div>
+                          
+                          <div className={`pt-4 border-t ${tgStatus === 'connected' ? 'border-green-100' : 'border-blue-100'}`}>
+                            {tgStatus === 'connected' ? (
+                              <div className="flex flex-wrap gap-4">
+                                <a 
+                                  href="https://t.me/BizNepalNotifyBot" 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold transition flex items-center shadow-sm"
+                                >
+                                  Open Notification Bot
+                                </a>
+                                <a 
+                                  href="https://t.me/postOnBizNepal_bot" 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 px-6 py-3 rounded-xl font-bold transition shadow-sm"
+                                >
+                                  Open Posting Bot
+                                </a>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                <button 
+                                  type="button" 
+                                  disabled={isConnecting}
+                                  onClick={async () => {
+                                    try {
+                                      const toastId = toast.loading('Generating link...');
+                                      const res = await fetch('/api/bot/generate-link-token', { method: 'POST' });
+                                      const data = await res.json();
+                                      if (!res.ok) throw new Error(data.error || 'Failed');
+                                      toast.dismiss(toastId);
+                                      window.open(data.botUrl, '_blank');
+                                      setIsConnecting(true);
+                                      toast("👉 Press /START in Telegram to finish linking!", { icon: '🤖', duration: 6000 });
+                                    } catch (err: any) {
+                                      toast.error(err.message);
+                                    }
+                                  }}
+                                  className="bg-[#0088cc] hover:bg-[#0077b5] disabled:opacity-50 text-white px-6 py-3 rounded-xl font-bold transition flex items-center shadow-sm"
+                                >
+                                  {isConnecting ? (
+                                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Waiting for Handshake...</>
+                                  ) : (
+                                    'Connect with Telegram'
+                                  )}
+                                </button>
+                                {isConnecting && (
+                                  <div className="bg-white/50 p-4 rounded-xl border border-blue-200 animate-pulse">
+                                    <p className="text-xs font-bold text-blue-800">
+                                      We are waiting for you to press <span className="underline italic">/start</span> in the Telegram bot window. 
+                                      The dashboard will update automatically!
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            <p className="text-xs text-blue-700 mt-3 font-medium">
+                               Note: Notifications are sent via t.me/BizNepalNotifyBot.<br/>
+                               For posting products via chat, use t.me/postOnBizNepal_bot.
+                            </p>
+                          </div>
+                        </div>
+                     </div>
                  )}
 
                  {activeTab === 'verification' && (

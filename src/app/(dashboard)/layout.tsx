@@ -35,22 +35,42 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter()
   const supabase = createClient()
 
+  // 1. Initial Auth & Role Check (runs once on mount)
   useEffect(() => {
-    const load = async () => {
+    const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-
-      const [{ data: profileData }, { data: bizData }] = await Promise.all([
-        supabase.from('profiles').select('full_name, avatar_url, role').eq('id', user.id).single(),
-        supabase.from('businesses').select('id, name, slug, logo_url, is_open').eq('owner_id', user.id).single(),
-      ])
-
-      if (profileData?.role !== 'business' && profileData?.role !== 'admin') {
-        router.push('/setup-profile')
+      if (!user) {
+        router.push('/login')
         return
       }
 
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url, role')
+        .eq('id', user.id)
+        .single()
+
+      if (!profileData || (profileData.role !== 'business' && profileData.role !== 'admin')) {
+        router.replace('/setup-profile')
+        return
+      }
       setProfile(profileData)
+    }
+    checkAuth()
+  }, [])
+
+  // 2. Fetch Business Data & Metadata (runs when pathname changes)
+  useEffect(() => {
+    const loadBusiness = async () => {
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser) return
+
+      const { data: bizData } = await supabase
+        .from('businesses')
+        .select('id, name, slug, logo_url, is_open')
+        .eq('owner_id', currentUser.id)
+        .single()
+
       if (bizData) {
         // Fetch low stock products count (<= 10)
         const { count: lowStockCount } = await supabase
@@ -70,23 +90,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setNotifCount(count || 0)
       }
     }
-    load()
+    loadBusiness()
 
-    // Real-time subscription for business profile updates
-    const channel = supabase.channel('sidebar_business_sync')
+    // Real-time subscription - simple channel name
+    const channel = supabase.channel('sidebar_business_sync_realtime')
       .on('postgres_changes', { 
         event: 'UPDATE', 
         schema: 'public', 
         table: 'businesses' 
       }, (payload: any) => {
-        if (business && payload.new.id === business.id) {
-          setBusiness((prev: any) => ({ ...prev, ...payload.new }))
-        }
+        // If the update is for our current business, update the state
+        setBusiness((prev: any) => {
+          if (prev && payload.new.id === prev.id) {
+            return { ...prev, ...payload.new }
+          }
+          return prev
+        })
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [pathname, business?.id])
+  }, [pathname])
 
   // Close mobile menu on route change
   useEffect(() => { setMobileOpen(false) }, [pathname])

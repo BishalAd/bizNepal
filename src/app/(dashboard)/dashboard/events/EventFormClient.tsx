@@ -110,9 +110,15 @@ export default function EventFormClient({ business, districts }: any) {
         status: status
       }
 
-      const { error } = await supabase.from('events').insert(payload)
+      const { data: event, error } = await supabase.from('events').insert(payload).select('id').single()
       if (error) throw error
       
+      // Trigger Webhook & Notifications (Event Created)
+      if (event?.id && status === 'upcoming') {
+        const { triggerNewPostWebhook } = await import('@/app/_actions/postWebhooks')
+        triggerNewPostWebhook('event', event.id).catch(e => console.error('Event webhook failed:', e))
+      }
+
       toast.success("Event created successfully!")
       router.push('/dashboard/events')
 

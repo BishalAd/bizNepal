@@ -113,8 +113,15 @@ export default function OfferFormClient({ products, business, offer }: any) {
         if (error) throw error
         toast.success('Offer updated successfully!')
       } else {
-        const { error } = await supabase.from('offers').insert(payload)
+        const { data: newOffer, error } = await supabase.from('offers').insert(payload).select('id').single()
         if (error) throw error
+        
+        // Trigger Webhook & Notifications (Offer Created)
+        if (newOffer?.id && status === 'active') {
+          const { triggerNewPostWebhook } = await import('@/app/_actions/postWebhooks')
+          triggerNewPostWebhook('offer', newOffer.id).catch(e => console.error('Offer webhook failed:', e))
+        }
+
         toast.success('Offer published successfully!')
       }
       router.push('/dashboard/offers')
