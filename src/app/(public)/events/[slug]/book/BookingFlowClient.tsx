@@ -90,24 +90,25 @@ export default function BookingFlowClient({ event }: any) {
         booked_seats: (event.booked_seats || 0) + formData.seats
       }).eq('id', event.id)
       
-      // 3. Trigger Webhook through API proxy
-      fetch('/api/webhooks/event-booking', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          eventId: event.id,
-          eventTitle: event.title,
-          eventDate: event.starts_at,
-          venueName: event.venue_name,
-          businessId: event.business_id,
-          attendeeName: formData.name,
-          attendeePhone: formData.phone,
-          attendeeUserId: user?.id,
-          seats: formData.seats,
-          totalAmount: totalAmount,
-          ticketCode: ticketCode
-        }) 
-      }).catch(e => console.error('Booking webhook failed:', e))
+      // 3. Trigger Webhook through secure Server Action
+      const { triggerInteractionWebhook } = await import('@/app/_actions/postWebhooks')
+      const whResult = await triggerInteractionWebhook('event-booking', { 
+        eventId: event.id,
+        eventTitle: event.title,
+        eventDate: event.starts_at,
+        venueName: event.venue_name,
+        businessId: event.business_id,
+        attendeeName: formData.name,
+        attendeePhone: formData.phone,
+        attendeeUserId: user?.id,
+        seats: formData.seats,
+        totalAmount: totalAmount,
+        ticketCode: ticketCode
+      })
+
+      if (!whResult.success) {
+        console.error('Booking webhook failed:', whResult.error)
+      }
 
       setBookingResult(bData)
       setStep(3)

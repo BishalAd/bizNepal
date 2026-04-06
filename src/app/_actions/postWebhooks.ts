@@ -93,3 +93,33 @@ export async function triggerNewPostWebhook(type: 'job' | 'event' | 'product' | 
     return { success: false, error: error.message }
   }
 }
+
+export async function triggerInteractionWebhook(type: 'job-application' | 'event-booking', payload: any) {
+  try {
+    const n8nBaseUrl = process.env.N8N_WEBHOOK_BASE_URL
+    const webhookSecret = process.env.WEBHOOK_SECRET
+
+    // 1. Call the internal API route with the secret
+    // Scaling note: We could also move the logic here directly, but calling the API 
+    // ensures consistency if other external services use it later.
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const res = await fetch(`${baseUrl}/api/webhooks/${type}`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-webhook-secret': webhookSecret || ''
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.error || `Webhook ${type} failed`)
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    console.error(`Interaction webhook (${type}) error:`, error)
+    return { success: false, error: error.message }
+  }
+}

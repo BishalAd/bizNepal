@@ -94,23 +94,24 @@ export default function JobDetailClient({ job, companyJobs, relatedJobs }: any) 
       const { error: insertError } = await supabase.from('job_applications').insert(applicationPayload)
       if (insertError) throw insertError
 
-      // 3. Trigger Webhook through API proxy
-      fetch('/api/webhooks/job-application', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          jobId: job.id, 
-          jobTitle: job.title,
-          businessId: job.business_id,
-          businessName: job.business?.name,
-          businessEmail: job.business?.email,
-          applicantName: formData.name,
-          applicantPhone: formData.phone,
-          applicantEmail: formData.email,
-          applicantUserId: user?.id,
-          cvUrl: cvUrl
-        }) 
-      }).catch(e => console.error('Job application webhook failed:', e))
+      // 3. Trigger Webhook through secure Server Action
+      const { triggerInteractionWebhook } = await import('@/app/_actions/postWebhooks')
+      const whResult = await triggerInteractionWebhook('job-application', { 
+        jobId: job.id, 
+        jobTitle: job.title,
+        businessId: job.business_id,
+        businessName: job.business?.name,
+        businessEmail: job.business?.email,
+        applicantName: formData.name,
+        applicantPhone: formData.phone,
+        applicantEmail: formData.email,
+        applicantUserId: user?.id,
+        cvUrl: cvUrl
+      })
+
+      if (!whResult.success) {
+        console.error('Job webhook failed:', whResult.error)
+      }
 
       setIsSuccess(true)
       toast.success("Application Submitted Successfully!")
