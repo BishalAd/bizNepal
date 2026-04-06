@@ -28,12 +28,14 @@ export async function POST(request: Request) {
       cvUrl,
     } = payload
 
-    // 2. Fetch Business Telegram Chat ID
+    // 2. Fetch Business Telegram Chat ID + notification toggle
     const { data: business } = await supabaseAdmin
       .from('businesses')
-      .select('telegram_chat_id')
+      .select('telegram_chat_id, tg_notify_job_application')
       .eq('id', businessId)
       .single()
+
+    const shouldNotifyTelegram = !!(business?.telegram_chat_id && business?.tg_notify_job_application !== false)
 
     // 3. Fetch Applicant Telegram Chat ID (by user_id if logged in)
     let applicantTelegramChatId: number | null = null
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
       businessId,
       businessName,
       businessEmail,
-      businessTelegramChatId: business?.telegram_chat_id ?? null,
+      businessTelegramChatId: shouldNotifyTelegram ? business?.telegram_chat_id : null,
       applicantName,
       applicantPhone,
       applicantEmail,

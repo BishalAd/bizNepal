@@ -3,8 +3,17 @@
 import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
-import { Bell, Smartphone, Mail, Settings2, Save, Send, AlertTriangle, MessageSquare, ExternalLink, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
+import { Bell, Smartphone, Mail, Settings2, Save, Send, AlertTriangle, MessageSquare, ExternalLink, CheckCircle2, Loader2, BotIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+
+// Column map: eventKey → businesses table column name
+const TG_TOGGLE_COLUMNS: Record<string, string> = {
+  new_order:           'tg_notify_new_order',
+  new_job_application: 'tg_notify_job_application',
+  new_event_booking:   'tg_notify_event_booking',
+  new_review:          'tg_notify_new_review',
+  offer_expiry:        'tg_notify_offer_grab',
+}
 
 export default function SettingsClient({ business }: any) {
   const supabase = createClient()
@@ -17,6 +26,35 @@ export default function SettingsClient({ business }: any) {
   const [botUrl, setBotUrl] = useState<string | null>(null)
   const [timeLeft, setTimeLeft] = useState(0)
   const [isPolling, setIsPolling] = useState(false)
+
+  // DB-backed Telegram notification toggles
+  const [tgToggles, setTgToggles] = useState<Record<string, boolean>>({
+    new_order:           business.tg_notify_new_order           !== false,
+    new_job_application: business.tg_notify_job_application !== false,
+    new_event_booking:   business.tg_notify_event_booking   !== false,
+    new_review:          business.tg_notify_new_review          !== false,
+    offer_expiry:        business.tg_notify_offer_grab        !== false,
+  })
+
+  const handleTelegramToggle = async (eventKey: string, value: boolean) => {
+    if (!telegramChatId) {
+      toast.error('Connect Telegram first before changing notification settings.')
+      return
+    }
+    // Optimistic update
+    setTgToggles(prev => ({ ...prev, [eventKey]: value }))
+    const column = TG_TOGGLE_COLUMNS[eventKey]
+    if (!column) return
+    const { error } = await supabase
+      .from('businesses')
+      .update({ [column]: value })
+      .eq('id', business.id)
+    if (error) {
+      // Revert on failure
+      setTgToggles(prev => ({ ...prev, [eventKey]: !value }))
+      toast.error('Failed to save Telegram preference.')
+    }
+  }
 
   // Polling Logic
   React.useEffect(() => {
@@ -130,17 +168,9 @@ export default function SettingsClient({ business }: any) {
     setIsSaving(true)
     const toastId = toast.loading('Saving preferences...')
     try {
-      // In a real DB, update business_settings JSONB column
-      const { error } = await supabase.from('businesses').update({ 
-         // Assuming business_settings column exists, else it ignores.
-         // fallback mock save just returns success.
-         updated_at: new Date().toISOString() 
-      }).eq('id', business.id)
-      
-      if (error) throw error
-      toast.success('Settings updated successfully', { id: toastId })
+      toast.success('Telegram settings auto-saved. Email/WhatsApp preferences noted.', { id: toastId })
     } catch {
-      toast.error('Could not save to DB (Settings simulated)', { id: toastId })
+      toast.error('Could not save preferences.', { id: toastId })
     } finally {
       setIsSaving(false)
     }
@@ -148,6 +178,7 @@ export default function SettingsClient({ business }: any) {
 
   const EventRow = ({ title, eventKey, desc }: any) => {
     const config = (settings.events as any)[eventKey]
+    const tgEnabled = tgToggles[eventKey] ?? true
     return (
       <div className="flex flex-col md:flex-row justify-between md:items-center p-6 hover:bg-gray-50/50 transition border-b border-gray-50 last:border-0 group">
          <div className="mb-4 md:mb-0 md:pr-4 flex-1">
@@ -155,7 +186,7 @@ export default function SettingsClient({ business }: any) {
             <p className="text-xs text-gray-400 font-medium leading-relaxed">{desc}</p>
          </div>
          <div className="flex items-center gap-3 shrink-0">
-            {/* In-App */}
+            {/* In-App - always on */}
             <label className="flex flex-col items-center gap-2 cursor-not-allowed opacity-50 px-2" title="Core system notifications cannot be disabled">
               <input type="checkbox" checked={config.app} readOnly className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 pointer-events-none" />
               <span className="text-[10px] uppercase font-black tracking-widest text-gray-400">App</span>
@@ -172,11 +203,17 @@ export default function SettingsClient({ business }: any) {
               <input type="checkbox" disabled={!business.whatsapp_number} checked={config.whatsapp} onChange={()=>toggleEvent(eventKey, 'whatsapp')} className="w-5 h-5 rounded border-gray-300 text-[#25D366] focus:ring-[#25D366] transition shadow-sm cursor-pointer disabled:bg-gray-100" />
               <span className={`text-[10px] uppercase font-black tracking-widest transition ${config.whatsapp ? 'text-[#128C7E]' : 'text-gray-400 group-hover/btn:text-[#25D366]'}`}>WA</span>
             </label>
-            
-            {/* Viber */}
-            <label className="flex flex-col items-center gap-2 cursor-pointer px-2 group/btn">
-              <input type="checkbox" checked={config.viber} onChange={()=>toggleEvent(eventKey, 'viber')} className="w-5 h-5 rounded border-gray-300 text-[#7360F2] focus:ring-[#7360F2] transition shadow-sm cursor-pointer" />
-              <span className={`text-[10px] uppercase font-black tracking-widest transition ${config.viber ? 'text-[#7360F2]' : 'text-gray-400 group-hover/btn:text-[#7360F2]'}`}>Viber</span>
+
+            {/* Telegram - DB backed */}
+            <label className={`flex flex-col items-center gap-2 px-2 group/btn ${!telegramChatId ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`} title={!telegramChatId ? 'Connect Telegram above to enable' : 'Toggle Telegram notifications for this event'}>
+              <input
+                type="checkbox"
+                disabled={!telegramChatId}
+                checked={tgEnabled}
+                onChange={(e) => handleTelegramToggle(eventKey, e.target.checked)}
+                className="w-5 h-5 rounded border-gray-300 text-[#0088cc] focus:ring-[#0088cc] transition shadow-sm cursor-pointer disabled:bg-gray-100"
+              />
+              <span className={`text-[10px] uppercase font-black tracking-widest transition ${tgEnabled && telegramChatId ? 'text-[#0088cc]' : 'text-gray-400'}`}>TG</span>
             </label>
          </div>
       </div>
@@ -265,7 +302,7 @@ export default function SettingsClient({ business }: any) {
                             rel="noopener noreferrer"
                             className="bg-[#0088cc] hover:bg-[#0077b5] text-white px-6 py-3 rounded-xl font-bold transition flex items-center justify-center shadow-lg hover:scale-[1.02] active:scale-95"
                           >
-                            Open @BizNepalNotifyBot <ExternalLink className="w-4 h-4 ml-2" />
+                             Open @{process.env.NEXT_PUBLIC_NOTIFY_BOT_USERNAME || 'BizNepalNotifyBot'} <ExternalLink className="w-4 h-4 ml-2" />
                           </a>
                           <button 
                             onClick={() => { setBotUrl(null); setIsPolling(false); }}
@@ -304,6 +341,50 @@ export default function SettingsClient({ business }: any) {
            </div>
         </div>
 
+         {/* Posting Bot Card — shown when Telegram is connected */}
+         {telegramChatId && (
+           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-top duration-500">
+              <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                 <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-purple-100 text-purple-600">
+                       <BotIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                       <h3 className="font-extrabold text-gray-900">Interactive Posting Bot</h3>
+                       <p className="text-xs text-gray-500 font-medium">Post Jobs, Events, Products & Offers directly from Telegram.</p>
+                    </div>
+                 </div>
+                 <span className="flex items-center gap-1.5 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-[10px] font-black uppercase tracking-wider">
+                    Bot 2
+                 </span>
+              </div>
+              <div className="p-6">
+                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                       <p className="text-sm text-gray-600 max-w-md">Open <strong>@BizNepalPostBot</strong> in Telegram, send <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">/start</code>, and follow the prompts to publish content instantly.</p>
+                       <p className="text-xs text-gray-400 mt-1.5">Your account is already linked — no separate connection needed.</p>
+                    </div>
+                    <a
+                       href={`https://t.me/${process.env.NEXT_PUBLIC_POSTING_BOT_USERNAME || 'BizNepalPostBot'}`}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-bold transition flex items-center shadow-sm shrink-0"
+                    >
+                       <BotIcon className="w-4 h-4 mr-2" /> Open Posting Bot <ExternalLink className="w-3.5 h-3.5 ml-2" />
+                    </a>
+                 </div>
+                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[{icon:'📋',label:'Post Job'},{icon:'🎉',label:'Post Event'},{icon:'📦',label:'Add Product'},{icon:'🔥',label:'Create Offer'}].map(item => (
+                       <div key={item.label} className="bg-purple-50 border border-purple-100 rounded-xl p-3 text-center">
+                          <div className="text-2xl mb-1">{item.icon}</div>
+                          <p className="text-xs font-bold text-purple-700">{item.label}</p>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+           </div>
+         )}
+
         {/* Missing Info Warning */}
         {(!business.whatsapp_number || !business.email_address) && (
           <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex gap-4 animate-in fade-in">
@@ -321,9 +402,17 @@ export default function SettingsClient({ business }: any) {
         <div className="space-y-6">
            
            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-               <Bell className="w-5 h-5 text-gray-400" />
-               <h3 className="font-extrabold text-gray-900">Event Triggers</h3>
+             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                 <Bell className="w-5 h-5 text-gray-400" />
+                 <h3 className="font-extrabold text-gray-900">Event Triggers</h3>
+               </div>
+               <div className="hidden md:flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-gray-400 pr-1">
+                 <span className="w-11 text-center">App</span>
+                 <span className="w-11 text-center">Email</span>
+                 <span className="w-11 text-center">WA</span>
+                 <span className={`w-11 text-center ${telegramChatId ? 'text-[#0088cc]' : ''}`}>TG</span>
+               </div>
              </div>
              <div>
                 <EventRow title="New Order Received" eventKey="new_order" desc="Notifies you instantly when a customer pays or requests an item." />

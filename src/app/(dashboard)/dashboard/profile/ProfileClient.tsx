@@ -229,6 +229,7 @@ export default function ProfileClient({ business, categories, districts, userId 
                <NavItem id="contact" label="Contact Links" icon={Phone} activeTab={activeTab} setActiveTab={setActiveTab} />
                <NavItem id="location" label="Location & Map" icon={MapPin} activeTab={activeTab} setActiveTab={setActiveTab} />
                <NavItem id="hours" label="Business Hours" icon={Clock} activeTab={activeTab} setActiveTab={setActiveTab} />
+               <NavItem id="telegram" label="Telegram Bot" icon={AlertCircle} activeTab={activeTab} setActiveTab={setActiveTab} />
                <NavItem id="verification" label="Verification" icon={BadgeCheck} activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
 
@@ -491,6 +492,51 @@ export default function ProfileClient({ business, categories, districts, userId 
                                </div>
                              )
                           })}
+                       </div>
+                    </div>
+                 )}
+
+                 {activeTab === 'telegram' && (
+                    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
+                       <h2 className="text-xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4">Telegram Integrations</h2>
+                       
+                       <div className="p-6 rounded-2xl border bg-blue-50 border-blue-200 text-blue-900 space-y-4">
+                         <div className="flex items-center gap-4">
+                            <div className="bg-blue-100 p-3 rounded-xl border border-blue-200">
+                               <AlertCircle className="w-8 h-8 text-blue-600" />
+                            </div>
+                            <div>
+                               <h3 className="text-xl font-bold">Connect your Telegram Bot</h3>
+                               <p className="text-sm text-blue-800 mt-1">
+                                 Connect to the Telegram bot to get instant notifications and post job events, products, and offers.
+                               </p>
+                            </div>
+                         </div>
+                         
+                         <div className="pt-4 border-t border-blue-100">
+                           <button 
+                             type="button" 
+                             onClick={async () => {
+                               try {
+                                 const toastId = toast.loading('Generating connection link...');
+                                 const res = await fetch('/api/bot/generate-link-token', { method: 'POST' });
+                                 const data = await res.json();
+                                 if (!res.ok) throw new Error(data.error || 'Failed to generate link');
+                                 toast.dismiss(toastId);
+                                 window.open(data.botUrl, '_blank');
+                               } catch (err: any) {
+                                 toast.error(err.message);
+                               }
+                             }}
+                             className="bg-[#0088cc] hover:bg-[#0077b5] text-white px-6 py-3 rounded-xl font-bold transition flex items-center shadow-sm"
+                           >
+                             Connect with Telegram
+                           </button>
+                           <p className="text-xs text-blue-700 mt-3 font-medium">
+                              Note: This will redirect you to t.me/BizNepalNotifyBot for notifications.<br/>
+                              For posting content, use t.me/postOnBizNepal_bot.
+                           </p>
+                         </div>
                        </div>
                     </div>
                  )}

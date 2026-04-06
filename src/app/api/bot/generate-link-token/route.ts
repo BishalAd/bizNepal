@@ -47,7 +47,7 @@ export async function POST() {
     }
 
     // 6. Return response
-    const botUsername = 'BizNepalNotifyBot' // Should ideally be an env var
+    const botUsername = process.env.NOTIFY_BOT_USERNAME || 'BizNepalNotifyBot'
     return NextResponse.json({
       token,
       botUrl: `https://t.me/${botUsername}?start=${token}`

@@ -14,7 +14,7 @@ Here are the complete JSON configurations for the 7 requested n8n workflows.
 The workflows below depend on internal API endpoints. If you encounter issues (e.g., 404 errors), please verify the following:
 
 ### 1. Project Structure & API Paths
-All API routes are located in the `biznepal/src/app/api/` directory. When deploying to Vercel, ensure the `biznepal` folder is the root of your deployment for the URLs below to work.
+All API routes are located in the `biznepal/src/app/api/` directory. When deploying to Vercel, ensure the `biznepal` folder is the root of your deployment for the URLs below to work
 
 - **Businesses Route:** `/api/bot/get-subscribed-businesses`
   - *Internal Path:* `src/app/api/bot/get-subscribed-businesses/route.ts`
@@ -1336,3 +1336,323 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
 
 `
 
+---
+
+### Workflow 10: Interactive Posting Bot (Content Publisher via Telegram Chat)
+
+> **Bot:** `@BizNepalPostBot` (Bot 2 — POSTING_BOT_TOKEN)
+> **Purpose:** Allow verified business owners to post Jobs, Events, Products, and Offers directly through a step-by-step Telegram conversation, including optional image upload to Supabase Storage.
+>
+> **Architecture Notes:**
+> - Conversation state is stored in the `telegram_bot_states` Supabase table (not n8n static memory), making it durable across n8n restarts.
+> - The `Dispatcher Code` node is the single source of truth for all routing logic.
+> - Image uploads are handled by POSTing a base64-encoded image to `/api/bot/upload-telegram-image`.
+> - Content is finalized via POST to `/api/bot/post-content`.
+>
+> **Required credentials in n8n:**
+> - `Telegram API` → Add the `POSTING_BOT_TOKEN` as a separate credential named `BizNepal Posting Bot`
+> - `Header Auth` → Same `WEBHOOK_SECRET` header auth used in other workflows
+
+```json
+{
+  "name": "BizNepal: Interactive Posting Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message", "callback_query"],
+        "additionalFields": {}
+      },
+      "name": "Telegram Trigger (Posting Bot)",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [0, 300],
+      "id": "tg-trigger",
+      "credentials": { "telegramApi": { "id": "BizNepal Posting Bot", "name": "Telegram API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════\n// BIZNEPAL POSTING BOT — DISPATCHER v1.0\n// ═══════════════════════════════════════════════\n// All step logic lives here. Reads/writes to Supabase\n// telegram_bot_states for durable session management.\n\n// ── 1. Extract incoming message data ──────────\nlet userId, text, messageType, fileId, mimeType;\nif ($json.callback_query) {\n  userId = String($json.callback_query.from.id);\n  text = $json.callback_query.data || '';\n  messageType = 'button';\n  fileId = null;\n} else if ($json.message) {\n  userId = String($json.message.from.id);\n  text = $json.message.text || '';\n  messageType = 'text';\n  // Check for photo\n  if ($json.message.photo && $json.message.photo.length > 0) {\n    const photos = $json.message.photo;\n    fileId = photos[photos.length - 1].file_id; // Get largest photo\n    mimeType = 'image/jpeg';\n    messageType = 'photo';\n  } else if ($json.message.document && $json.message.document.mime_type?.startsWith('image/')) {\n    fileId = $json.message.document.file_id;\n    mimeType = $json.message.document.mime_type;\n    messageType = 'photo';\n  }\n} else {\n  return { json: { action: 'noop' } };\n}\n\nif (!userId) return { json: { action: 'noop' } };\n\n// ── 2. Check for global commands ────────────────\nconst isRestart = text === '/start' || text === '/restart' || text === '/cancel';\n\n// ── Helper: Build inline keyboard ───────────────\nfunction kbd(rows) {\n  return JSON.stringify({ inline_keyboard: rows });\n}\n\n// Pass to next node for state fetch + step processing\nreturn { json: {\n  action: 'fetch_state',\n  userId,\n  text,\n  messageType,\n  fileId: fileId || null,\n  mimeType: mimeType || null,\n  isRestart,\n}};"
+      },
+      "name": "Dispatcher — Extract Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "dispatcher-extract"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/telegram_bot_states?telegram_user_id=eq.{{ $json.userId }}&select=state,context",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch State from Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 300],
+      "id": "fetch-state"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════\n// STEP MACHINE — Processes current state and returns next action\n// ═══════════════════════════════════════════════\nconst prev = $node['Dispatcher — Extract Input'].json;\nconst userId = prev.userId;\nconst text = prev.text;\nconst msgType = prev.messageType;\nconst fileId = prev.fileId;\nconst mimeType = prev.mimeType;\nconst isRestart = prev.isRestart;\n\n// Get state from Supabase response\nconst stateRows = $input.all()[0]?.json;\nconst stateRow = Array.isArray(stateRows) ? stateRows[0] : null;\nlet state = isRestart ? 'IDLE' : (stateRow?.state || 'IDLE');\nlet ctx = isRestart ? {} : (stateRow?.context || {});\n\nfunction kbd(rows) {\n  return JSON.stringify({ inline_keyboard: rows });\n}\n\nfunction send(msg, buttons) {\n  return {\n    action: 'send_message',\n    userId,\n    msg,\n    buttons: buttons || null,\n    newState: null,\n    newContext: null,\n  };\n}\n\nfunction sendAndTransition(msg, newState, newContext, buttons) {\n  return {\n    action: 'send_and_save',\n    userId,\n    msg,\n    buttons: buttons || null,\n    newState,\n    newContext: newContext || ctx,\n  };\n}\n\n// ── IDLE / START ──────────────────────────────\nif (state === 'IDLE') {\n  return { json: sendAndTransition(\n    '👋 *Welcome to BizNepal Post Bot!*\\n\\nWhat would you like to post today?',\n    'CHOOSING_TYPE',\n    {},\n    kbd([\n      [{ text: '📋 Post a Job', callback_data: 'type_job' }],\n      [{ text: '🎉 Post an Event', callback_data: 'type_event' }],\n      [{ text: '📦 Post a Product', callback_data: 'type_product' }],\n      [{ text: '🔥 Post an Offer', callback_data: 'type_offer' }]\n    ])\n  ) };\n}\n\n// ── CHOOSING TYPE ─────────────────────────────\nif (state === 'CHOOSING_TYPE') {\n  const typeMap = { type_job: 'job', type_event: 'event', type_product: 'product', type_offer: 'offer' };\n  const chosen = typeMap[text];\n  if (!chosen) return { json: send('Please tap one of the buttons above 👆') };\n  ctx = { type: chosen };\n  return { json: sendAndTransition(`Great! Let\\'s post a *${chosen}*.\\n\\n✏️ Enter the *Title*:`, `ASK_${chosen.toUpperCase()}_TITLE`, ctx) };\n}\n\n// ── JOB FLOW ─────────────────────────────────\nif (state === 'ASK_JOB_TITLE') {\n  if (text.length < 3) return { json: send('❌ Title too short. Please enter at least 3 characters.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📂 Enter the *Job Category* (e.g., IT, Healthcare, Finance):', 'ASK_JOB_CATEGORY', ctx) };\n}\nif (state === 'ASK_JOB_CATEGORY') {\n  ctx.category = text;\n  return { json: sendAndTransition('📝 Enter a *Job Description*:', 'ASK_JOB_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_JOB_DESCRIPTION') {\n  if (text.length < 10) return { json: send('❌ Description is too short. Please add more detail.') };\n  ctx.description = text;\n  return { json: sendAndTransition('💰 Enter the *Salary* (e.g., 50000 or \\'Negotiable\\'):', 'ASK_JOB_SALARY', ctx) };\n}\nif (state === 'ASK_JOB_SALARY') {\n  ctx.salary = text;\n  return { json: sendAndTransition('📅 Enter the *Application Deadline* (YYYY-MM-DD) or type \\'Open\\':', 'ASK_JOB_DEADLINE', ctx) };\n}\nif (state === 'ASK_JOB_DEADLINE') {\n  ctx.deadline = text === 'Open' ? null : text;\n  return { json: sendAndTransition('📍 Enter the *Location* (e.g., Kathmandu, Remote):', 'ASK_JOB_LOCATION', ctx) };\n}\nif (state === 'ASK_JOB_LOCATION') {\n  ctx.location = text;\n  return { json: sendAndTransition('🖼️ Send an *image* for this job listing (or type \\'skip\\' to skip):', 'ASK_JOB_IMAGE', ctx) };\n}\nif (state === 'ASK_JOB_IMAGE') {\n  if (msgType === 'photo') {\n    ctx.pendingFileId = fileId;\n    ctx.pendingMime = mimeType;\n  }\n  const preview = `📋 *Review Job Details:*\\n\\n*Title:* ${ctx.title}\\n*Category:* ${ctx.category}\\n*Salary:* ${ctx.salary}\\n*Deadline:* ${ctx.deadline || 'Open'}\\n*Location:* ${ctx.location}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}\\n\\nLooks good?`;\n  return { json: sendAndTransition(preview, 'CONFIRM_JOB', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_JOB') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'job', ctx } };\n}\n\n// ── EVENT FLOW ────────────────────────────────\nif (state === 'ASK_EVENT_TITLE') {\n  if (text.length < 3) return { json: send('❌ Title too short.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📂 Enter the *Event Category* (e.g., Concert, Sports, Workshop):', 'ASK_EVENT_CATEGORY', ctx) };\n}\nif (state === 'ASK_EVENT_CATEGORY') {\n  ctx.category = text;\n  return { json: sendAndTransition('📝 Enter the *Event Description*:', 'ASK_EVENT_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_EVENT_DESCRIPTION') {\n  ctx.description = text;\n  return { json: sendAndTransition('📅 Enter the *Event Date & Time* (YYYY-MM-DD HH:MM):', 'ASK_EVENT_DATE', ctx) };\n}\nif (state === 'ASK_EVENT_DATE') {\n  ctx.event_date = text;\n  return { json: sendAndTransition('📍 Enter the *Venue Name*:', 'ASK_EVENT_VENUE', ctx) };\n}\nif (state === 'ASK_EVENT_VENUE') {\n  ctx.venue = text;\n  return { json: sendAndTransition('🎟️ Enter *Ticket Price* (0 for free):', 'ASK_EVENT_PRICE', ctx) };\n}\nif (state === 'ASK_EVENT_PRICE') {\n  ctx.ticket_price = text;\n  return { json: sendAndTransition('💺 Enter *Total Seats Available*:', 'ASK_EVENT_SEATS', ctx) };\n}\nif (state === 'ASK_EVENT_SEATS') {\n  ctx.total_seats = text;\n  return { json: sendAndTransition('🖼️ Send an *image* (or type \\'skip\\'):', 'ASK_EVENT_IMAGE', ctx) };\n}\nif (state === 'ASK_EVENT_IMAGE') {\n  if (msgType === 'photo') { ctx.pendingFileId = fileId; ctx.pendingMime = mimeType; }\n  const preview = `📋 *Review Event Details:*\\n\\n*Title:* ${ctx.title}\\n*Date:* ${ctx.event_date}\\n*Venue:* ${ctx.venue}\\n*Ticket:* ₨${ctx.ticket_price}\\n*Seats:* ${ctx.total_seats}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}`;\n  return { json: sendAndTransition(preview, 'CONFIRM_EVENT', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_EVENT') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'event', ctx } };\n}\n\n// ── PRODUCT FLOW ──────────────────────────────\nif (state === 'ASK_PRODUCT_TITLE') {\n  if (text.length < 2) return { json: send('❌ Name too short.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📝 Enter a *Product Description*:', 'ASK_PRODUCT_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_PRODUCT_DESCRIPTION') {\n  ctx.description = text;\n  return { json: sendAndTransition('💰 Enter the *Price* (e.g., 1500):', 'ASK_PRODUCT_PRICE', ctx) };\n}\nif (state === 'ASK_PRODUCT_PRICE') {\n  ctx.price = text;\n  return { json: sendAndTransition('📦 Enter the *Stock Quantity*:', 'ASK_PRODUCT_STOCK', ctx) };\n}\nif (state === 'ASK_PRODUCT_STOCK') {\n  ctx.stock = text;\n  return { json: sendAndTransition('🖼️ Send an *image* (or type \\'skip\\'):', 'ASK_PRODUCT_IMAGE', ctx) };\n}\nif (state === 'ASK_PRODUCT_IMAGE') {\n  if (msgType === 'photo') { ctx.pendingFileId = fileId; ctx.pendingMime = mimeType; }\n  const preview = `📋 *Review Product:*\\n\\n*Name:* ${ctx.title}\\n*Price:* ₨${ctx.price}\\n*Stock:* ${ctx.stock}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}`;\n  return { json: sendAndTransition(preview, 'CONFIRM_PRODUCT', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_PRODUCT') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'product', ctx } };\n}\n\n// ── OFFER FLOW ────────────────────────────────\nif (state === 'ASK_OFFER_TITLE') {\n  if (text.length < 3) return { json: send('❌ Title too short.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📝 Describe this *Offer*:', 'ASK_OFFER_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_OFFER_DESCRIPTION') {\n  ctx.description = text;\n  return { json: sendAndTransition('🏷️ What is the *Original Price* (₨)?', 'ASK_OFFER_ORIGINAL_PRICE', ctx) };\n}\nif (state === 'ASK_OFFER_ORIGINAL_PRICE') {\n  ctx.original_price = text;\n  return { json: sendAndTransition('🔖 What is the *Discount %* (e.g., 20)?', 'ASK_OFFER_DISCOUNT', ctx) };\n}\nif (state === 'ASK_OFFER_DISCOUNT') {\n  ctx.discount_percentage = text;\n  return { json: sendAndTransition('📅 When does this offer *expire*? (YYYY-MM-DD):', 'ASK_OFFER_EXPIRY', ctx) };\n}\nif (state === 'ASK_OFFER_EXPIRY') {\n  ctx.expires_at = text;\n  return { json: sendAndTransition('🖼️ Send an *image* (or type \\'skip\\'):', 'ASK_OFFER_IMAGE', ctx) };\n}\nif (state === 'ASK_OFFER_IMAGE') {\n  if (msgType === 'photo') { ctx.pendingFileId = fileId; ctx.pendingMime = mimeType; }\n  const discountedPrice = (parseFloat(ctx.original_price) * (1 - parseFloat(ctx.discount_percentage) / 100)).toFixed(0);\n  const preview = `📋 *Review Offer:*\\n\\n*Title:* ${ctx.title}\\n*Original Price:* ₨${ctx.original_price}\\n*Discount:* ${ctx.discount_percentage}% → ₨${discountedPrice}\\n*Expires:* ${ctx.expires_at}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}`;\n  return { json: sendAndTransition(preview, 'CONFIRM_OFFER', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_OFFER') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'offer', ctx } };\n}\n\n// ── FALLBACK ──────────────────────────────────\nreturn { json: send('Type /start to begin posting content to your BizNepal business 🚀') };"
+      },
+      "name": "Step Machine — Process State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [750, 300],
+      "id": "step-machine"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.action }}",
+        "rules": {
+          "rules": [
+            { "value2": "send_message", "output": 0 },
+            { "value2": "send_and_save", "output": 1 },
+            { "value2": "submit_content", "output": 2 },
+            { "value2": "noop", "output": 3 }
+          ]
+        },
+        "fallbackOutput": 3
+      },
+      "name": "Action Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [1000, 300],
+      "id": "action-router"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.userId }}",
+        "text": "={{ $json.msg }}",
+        "replyMarkup": "={{ $json.buttons ? 'inlineKeyboard' : 'none' }}",
+        "inlineKeyboard": "={{ $json.buttons ? JSON.parse($json.buttons) : {} }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1250, 100],
+      "id": "tg-send-only",
+      "credentials": { "telegramApi": { "id": "BizNepal Posting Bot", "name": "Telegram API" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/telegram_bot_states",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "resolution=merge-duplicates" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"telegram_user_id\": \"{{ $json.userId }}\", \"state\": \"{{ $json.newState }}\", \"context\": {{ JSON.stringify($json.newContext) }}, \"updated_at\": \"{{ new Date().toISOString() }}\"}",
+        "options": {}
+      },
+      "name": "Save State to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1250, 300],
+      "id": "save-state"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node['Step Machine — Process State'].json.userId }}",
+        "text": "={{ $node['Step Machine — Process State'].json.msg }}",
+        "replyMarkup": "={{ $node['Step Machine — Process State'].json.buttons ? 'inlineKeyboard' : 'none' }}",
+        "inlineKeyboard": "={{ $node['Step Machine — Process State'].json.buttons ? JSON.parse($node['Step Machine — Process State'].json.buttons) : {} }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "name": "Send Message After Save",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1500, 300],
+      "id": "tg-send-after-save",
+      "credentials": { "telegramApi": { "id": "BizNepal Posting Bot", "name": "Telegram API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare image upload if user sent a photo\nconst ctx = $json.ctx;\nconst userId = $json.userId;\nconst contentType = $json.contentType;\n\nif (ctx.pendingFileId) {\n  // Pass to image download node\n  return { json: { action: 'has_image', userId, contentType, ctx, fileId: ctx.pendingFileId, mimeType: ctx.pendingMime || 'image/jpeg' } };\n} else {\n  return { json: { action: 'no_image', userId, contentType, ctx, imageUrl: null } };\n}"
+      },
+      "name": "Check For Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1250, 500],
+      "id": "check-image"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.action }}",
+        "rules": {
+          "rules": [
+            { "value2": "has_image", "output": 0 },
+            { "value2": "no_image", "output": 1 }
+          ]
+        },
+        "fallbackOutput": 1
+      },
+      "name": "Has Image?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [1500, 500],
+      "id": "has-image-switch"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot{{ $env.POSTING_BOT_TOKEN }}/getFile?file_id={{ $json.fileId }}",
+        "options": {}
+      },
+      "name": "Get Telegram File Path",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1750, 400],
+      "id": "get-file-path"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/file/bot{{ $env.POSTING_BOT_TOKEN }}/{{ $json.result.file_path }}",
+        "options": {
+          "response": { "response": { "responseFormat": "file" } }
+        }
+      },
+      "name": "Download Telegram File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2000, 400],
+      "id": "download-file"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert binary to base64 and prepare for upload API\nconst binaryData = $binary.data;\nconst base64 = binaryData ? binaryData.toString('base64') : null;\nconst parentData = $node['Check For Image'].json;\n\nreturn { json: {\n  file_base64: base64,\n  mime_type: parentData.mimeType || 'image/jpeg',\n  content_type: parentData.contentType,\n  telegram_user_id: parentData.userId,\n  // Pass through original data\n  userId: parentData.userId,\n  contentType: parentData.contentType,\n  ctx: parentData.ctx,\n} };"
+      },
+      "name": "Prepare Base64 Upload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2250, 400],
+      "id": "prepare-base64"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXT_PUBLIC_APP_URL }}/api/bot/upload-telegram-image",
+        "authentication": "headerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ file_base64: $json.file_base64, mime_type: $json.mime_type, content_type: $json.content_type, telegram_user_id: $json.telegram_user_id }) }}",
+        "options": {}
+      },
+      "name": "Upload Image to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2500, 400],
+      "id": "upload-image",
+      "credentials": { "httpHeaderAuth": { "id": "WEBHOOK_SECRET", "name": "Header Auth" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NEXT_PUBLIC_APP_URL }}/api/bot/post-content",
+        "authentication": "headerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"telegram_user_id\": \"{{ $json.userId || $node['Check For Image'].json.userId }}\", \"content_type\": \"{{ $json.contentType || $node['Check For Image'].json.contentType }}\", \"data\": {{ JSON.stringify($json.ctx || $node['Check For Image'].json.ctx) }}, \"image_url\": {{ JSON.stringify($json.url || null) }}}",
+        "options": {}
+      },
+      "name": "Submit Content to BizNepal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2750, 450],
+      "id": "submit-content",
+      "credentials": { "httpHeaderAuth": { "id": "WEBHOOK_SECRET", "name": "Header Auth" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Send final success/failure message\nconst result = $json;\nconst userId = $node['Check For Image'].json.userId || $node['Step Machine — Process State'].json.userId;\nconst contentType = result.content_type || 'content';\nconst id = result.id;\nconst appUrl = $env.NEXT_PUBLIC_APP_URL || 'https://biz-nepal.vercel.app';\n\nconst typeToPath = { job: 'jobs', event: 'events', product: 'products', offer: 'offers' };\nconst path = typeToPath[contentType] || contentType + 's';\n\nif (result.success) {\n  return { json: {\n    action: 'send_success',\n    userId,\n    msg: `✅ *${contentType.charAt(0).toUpperCase() + contentType.slice(1)} Posted Successfully!*\\n\\nYour listing is now live on BizNepal.\\n\\n👉 [View in Dashboard](${appUrl}/dashboard/${path})`,\n    clearState: true,\n  } };\n} else {\n  return { json: {\n    action: 'send_error',\n    userId,\n    msg: `❌ *Failed to post:* ${result.error || 'Unknown error'}\\n\\nPlease try again or contact support.`,\n    clearState: false,\n  } };\n}"
+      },
+      "name": "Build Confirmation Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [3000, 450],
+      "id": "build-confirm"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.userId }}",
+        "text": "={{ $json.msg }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "name": "Send Final Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [3250, 350],
+      "id": "tg-confirm",
+      "credentials": { "telegramApi": { "id": "BizNepal Posting Bot", "name": "Telegram API" } }
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/telegram_bot_states?telegram_user_id=eq.{{ $json.userId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Clear Session State",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [3250, 550],
+      "id": "clear-state"
+    }
+  ],
+  "connections": {
+    "Telegram Trigger (Posting Bot)": { "main": [[{ "node": "Dispatcher — Extract Input", "type": "main", "index": 0 }]] },
+    "Dispatcher — Extract Input": { "main": [[{ "node": "Fetch State from Supabase", "type": "main", "index": 0 }]] },
+    "Fetch State from Supabase": { "main": [[{ "node": "Step Machine — Process State", "type": "main", "index": 0 }]] },
+    "Step Machine — Process State": { "main": [[{ "node": "Action Router", "type": "main", "index": 0 }]] },
+    "Action Router": {
+      "main": [
+        [{ "node": "Send Telegram Message", "type": "main", "index": 0 }],
+        [{ "node": "Save State to Supabase", "type": "main", "index": 0 }],
+        [{ "node": "Check For Image", "type": "main", "index": 0 }]
+      ]
+    },
+    "Save State to Supabase": { "main": [[{ "node": "Send Message After Save", "type": "main", "index": 0 }]] },
+    "Check For Image": { "main": [[{ "node": "Has Image?", "type": "main", "index": 0 }]] },
+    "Has Image?": {
+      "main": [
+        [{ "node": "Get Telegram File Path", "type": "main", "index": 0 }],
+        [{ "node": "Submit Content to BizNepal", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get Telegram File Path": { "main": [[{ "node": "Download Telegram File", "type": "main", "index": 0 }]] },
+    "Download Telegram File": { "main": [[{ "node": "Prepare Base64 Upload", "type": "main", "index": 0 }]] },
+    "Prepare Base64 Upload": { "main": [[{ "node": "Upload Image to Supabase", "type": "main", "index": 0 }]] },
+    "Upload Image to Supabase": { "main": [[{ "node": "Submit Content to BizNepal", "type": "main", "index": 0 }]] },
+    "Submit Content to BizNepal": { "main": [[{ "node": "Build Confirmation Message", "type": "main", "index": 0 }]] },
+    "Build Confirmation Message": {
+      "main": [[
+        { "node": "Send Final Confirmation", "type": "main", "index": 0 },
+        { "node": "Clear Session State", "type": "main", "index": 0 }
+      ]]
+    }
+  }
+}
+```

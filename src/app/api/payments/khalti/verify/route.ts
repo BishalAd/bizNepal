@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifyKhaltiPayment } from '@/lib/payments/khalti'
 import { createClient } from '@/lib/supabase/server'
+import { triggerNewOrderWebhook } from '@/app/_actions/orderWebhooks'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -62,14 +63,7 @@ export async function GET(request: Request) {
          }
          
          // Webhook (using the final order ID)
-         const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_BASE_URL
-         if (webhookUrl && !webhookUrl.includes('undefined')) {
-            fetch(`${webhookUrl}/new-order`, { 
-               method: 'POST', 
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ orderId: finalOrderId, method: 'khalti', pidx }) 
-            }).catch(()=>{})
-         }
+         await triggerNewOrderWebhook(finalOrderId).catch(()=>{})
       }
 
       return NextResponse.json({ success: true, data: verificationData })

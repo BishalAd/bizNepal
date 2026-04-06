@@ -47,12 +47,14 @@ export async function POST(request: Request) {
       ticketCode,
     } = payload
 
-    // 2. Fetch Organizer (Business) Telegram Chat ID
+    // 2. Fetch Organizer (Business) Telegram Chat ID + notification toggle
     const { data: business } = await supabaseAdmin
       .from('businesses')
-      .select('telegram_chat_id')
+      .select('telegram_chat_id, tg_notify_event_booking')
       .eq('id', businessId)
       .single()
+
+    const shouldNotifyTelegram = !!(business?.telegram_chat_id && business?.tg_notify_event_booking !== false)
 
     // 3. Fetch Attendee Telegram Chat ID (by user_id if logged in)
     let attendeeTelegramChatId: number | null = null
@@ -71,7 +73,7 @@ export async function POST(request: Request) {
       eventTitle,
       eventDate: eventDate ? formatEventDate(eventDate) : '',
       venueName: venueName ?? '',
-      organizerTelegramChatId: business?.telegram_chat_id ?? null,
+      organizerTelegramChatId: shouldNotifyTelegram ? business?.telegram_chat_id : null,
       attendeeName,
       attendeePhone,
       attendeeTelegramChatId,

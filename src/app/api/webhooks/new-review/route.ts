@@ -17,17 +17,19 @@ export async function POST(request: Request) {
     const payload = await request.json()
     const { businessId, reviewerName, rating, content } = payload
 
-    // 2. Fetch Business Telegram Chat ID
+    // 2. Fetch Business Telegram Chat ID + notification toggle
     const { data: business } = await supabaseAdmin
       .from('businesses')
-      .select('telegram_chat_id')
+      .select('telegram_chat_id, tg_notify_new_review')
       .eq('id', businessId)
       .single()
+
+    const shouldNotifyTelegram = !!(business?.telegram_chat_id && business?.tg_notify_new_review !== false)
 
     // 3. Build exact n8n payload
     const n8nPayload = {
       businessId,
-      businessTelegramChatId: business?.telegram_chat_id ?? null,
+      businessTelegramChatId: shouldNotifyTelegram ? business?.telegram_chat_id : null,
       reviewerName,
       rating,
       content,

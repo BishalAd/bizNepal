@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useCartStore } from '@/store/cartStore'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { triggerNewOrderWebhook } from '@/app/_actions/orderWebhooks'
 import { useAuth } from '@/hooks/useAuth'
 import toast, { Toaster } from 'react-hot-toast'
 import { CreditCard, Truck, Store, MapPin, User, Phone, Mail, ShoppingBag, ArrowRight, Plus, Minus, Trash2, X, Loader2 } from 'lucide-react'
@@ -162,6 +163,10 @@ export default function CheckoutContent() {
 
         if (error) throw error
         setPendingOrderId(newOrder.id)
+        
+        // Trigger generic Webhook for COD & Reserve
+        await triggerNewOrderWebhook(newOrder.id)
+
         toast.success('Order placed successfully.', { id: toastId })
         return // Finished for COD/Pickup
       }

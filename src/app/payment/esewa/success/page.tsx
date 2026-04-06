@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { verifyEsewaPayment } from '@/lib/payments/esewa'
+import { triggerNewOrderWebhook } from '@/app/_actions/orderWebhooks'
 import { CheckCircle, ArrowRight, XCircle } from 'lucide-react'
 import Link from 'next/link'
 
@@ -68,15 +69,8 @@ export default async function EsewaSuccessPage({ searchParams }: { searchParams:
      }
   }
 
-  // Trigger n8n webhook (fire and forget)
-  const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_BASE_URL
-  if (webhookUrl && !webhookUrl.includes('undefined')) {
-     fetch(`${webhookUrl}/new-order`, {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ orderId: finalOrderId, method: 'esewa', transaction_code: payload.transaction_code })
-     }).catch(() => {}) // ignores fail
-  }
+  // Trigger unified webhook handler
+  await triggerNewOrderWebhook(finalOrderId).catch(() => {})
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

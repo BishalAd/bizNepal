@@ -7,7 +7,7 @@ import ActivityFeed from '@/components/dashboard/ActivityFeed'
 import { StatusBadge, PaymentBadge } from '@/components/dashboard/shared/DashboardShared'
 import { 
   DollarSign, Package, ShoppingBag, Briefcase, 
-  CalendarCheck, Star, PlusCircle, ArrowRight
+  CalendarCheck, Star, PlusCircle, ArrowRight, Send
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -23,7 +23,7 @@ export default async function DashboardOverviewPage() {
   // 2. Get Business
   const { data: business, error: bizError } = await supabase
     .from('businesses')
-    .select('id, name')
+    .select('id, name, telegram_chat_id')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -91,6 +91,22 @@ export default async function DashboardOverviewPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
+      {/* Telegram Prompt Banner — shown when not yet connected */}
+      {!business.telegram_chat_id && (
+        <a
+          href="/dashboard/notification-settings"
+          className="flex items-center gap-4 bg-gradient-to-r from-[#0088cc]/10 to-[#0088cc]/5 border border-[#0088cc]/20 rounded-2xl p-4 hover:bg-[#0088cc]/15 transition-all group"
+        >
+          <div className="w-10 h-10 bg-[#0088cc]/15 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+            <Send className="w-5 h-5 text-[#0077b5]" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-[#006699] text-sm">Connect Telegram for instant alerts</p>
+            <p className="text-xs text-[#0077b5]/80 font-medium">Get notified the moment a new order, application, or review arrives.</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-[#0077b5] shrink-0 group-hover:translate-x-1 transition" />
+        </a>
+      )}
       {/* Header */}
       <div>
         <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
