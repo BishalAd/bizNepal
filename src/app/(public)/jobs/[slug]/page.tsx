@@ -26,7 +26,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
     .from('jobs')
     .select(`
       *,
-      business:businesses(id, name, slug, logo_url, city, district_id, website),
+      business:businesses(id, name, slug, logo_url, city, district_id, website, email),
       category:categories(id, name_en),
       district:districts(id, name_en)
     `)

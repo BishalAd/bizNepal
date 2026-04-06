@@ -94,32 +94,155 @@ export async function triggerNewPostWebhook(type: 'job' | 'event' | 'product' | 
   }
 }
 
-export async function triggerInteractionWebhook(type: 'job-application' | 'event-booking', payload: any) {
+function formatEventDate(dateStr: string): string {
   try {
+    const date = new Date(dateStr)
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).format(date)
+  } catch {
+    return dateStr
+  }
+}
+
+export async function triggerInteractionWebhook(
+  type: 'job-application' | 'event-booking', 
+  payload: any
+) {
+  try {
+    console.log(`[Interaction Webhook] Starting trigger for ${type}...`)
+
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     const n8nBaseUrl = process.env.N8N_WEBHOOK_BASE_URL
-    const webhookSecret = process.env.WEBHOOK_SECRET
+    if (!n8nBaseUrl) {
+      console.warn('[Webhook] No N8N_WEBHOOK_BASE_URL found in .env')
+    }
 
-    // 1. Call the internal API route with the secret
-    // Scaling note: We could also move the logic here directly, but calling the API 
-    // ensures consistency if other external services use it later.
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/webhooks/${type}`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'x-webhook-secret': webhookSecret || ''
-      },
-      body: JSON.stringify(payload),
-    })
+    if (type === 'job-application') {
+      const {
+        jobId, jobTitle, businessId, businessName, businessEmail,
+        applicantName, applicantPhone, applicantEmail, applicantUserId, cvUrl
+      } = payload
 
-    if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.error || `Webhook ${type} failed`)
+      if (!businessId) throw new Error('Missing businessId in job-application payload')
+
+      // 1. Fetch Business Notification Settings
+      const { data: business } = await supabaseAdmin
+        .from('businesses')
+        .select('telegram_chat_id, tg_notify_job_application, owner_id')
+        .eq('id', businessId)
+        .single()
+
+      const shouldNotifyTelegram = !!(business?.telegram_chat_id && business?.tg_notify_job_application !== false)
+
+      // 2. Fetch Applicant Telegram Chat ID (if logged in)
+      let applicantTelegramChatId: number | null = null
+      if (applicantUserId) {
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('telegram_chat_id')
+          .eq('id', applicantUserId)
+          .single()
+        applicantTelegramChatId = profile?.telegram_chat_id ?? null
+      }
+
+      // 3. Build n8n payload
+      const n8nPayload = {
+        jobId, jobTitle, businessId, businessName, businessEmail,
+        businessTelegramChatId: shouldNotifyTelegram ? business?.telegram_chat_id : null,
+        applicantName, applicantPhone, applicantEmail, applicantTelegramChatId, cvUrl,
+      }
+
+      // 4. Create In-App Notification for Business Owner
+      await supabaseAdmin.from('notifications').insert({
+        user_id: business?.owner_id || businessId,
+        title: 'New Job Application',
+        message: `${applicantName} applied for the ${jobTitle} position.`,
+        type: 'job',
+        link: `/dashboard/applications?job=${jobId}`,
+      })
+
+      // 5. Forward to n8n
+      if (n8nBaseUrl) {
+        await fetch(`${n8nBaseUrl}/job-application`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(n8nPayload),
+        })
+        console.log(`[N8N] Job Application Trigger Success: ${jobTitle}`)
+      }
+    } 
+    
+    else if (type === 'event-booking') {
+      const {
+        eventId, eventTitle, eventDate, venueName, businessId,
+        attendeeName, attendeePhone, attendeeUserId, seats, totalAmount, ticketCode
+      } = payload
+
+      if (!businessId) throw new Error('Missing businessId in event-booking payload')
+
+      // 1. Fetch Organizer Notification Settings
+      const { data: business } = await supabaseAdmin
+        .from('businesses')
+        .select('telegram_chat_id, tg_notify_event_booking, owner_id')
+        .eq('id', businessId)
+        .single()
+
+      const shouldNotifyTelegram = !!(business?.telegram_chat_id && business?.tg_notify_event_booking !== false)
+
+      // 2. Fetch Attendee Telegram Chat ID
+      let attendeeTelegramChatId: number | null = null
+      if (attendeeUserId) {
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('telegram_chat_id')
+          .eq('id', attendeeUserId)
+          .single()
+        attendeeTelegramChatId = profile?.telegram_chat_id ?? null
+      }
+
+      // 3. Build n8n payload
+      const n8nPayload = {
+        eventId, eventTitle, 
+        eventDate: eventDate ? formatEventDate(eventDate) : '',
+        venueName: venueName ?? '',
+        organizerTelegramChatId: shouldNotifyTelegram ? business?.telegram_chat_id : null,
+        attendeeName, attendeePhone, attendeeTelegramChatId, seats, totalAmount, ticketCode,
+      }
+
+      // 4. Create In-App Notification
+      await supabaseAdmin.from('notifications').insert({
+        user_id: business?.owner_id || businessId,
+        title: 'New Event Booking',
+        message: `${attendeeName} booked ${seats} seats for ${eventTitle}.`,
+        type: 'event',
+        link: `/dashboard/events`,
+      })
+
+      // 5. Forward to n8n
+      if (n8nBaseUrl) {
+        await fetch(`${n8nBaseUrl}/event-booking`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(n8nPayload),
+        })
+        console.log(`[N8N] Event Booking Trigger Success: ${eventTitle}`)
+      }
     }
 
     return { success: true }
   } catch (error: any) {
-    console.error(`Interaction webhook (${type}) error:`, error)
+    console.error(`[Webhook Error] ${type}:`, error.message)
     return { success: false, error: error.message }
   }
 }

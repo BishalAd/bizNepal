@@ -9,7 +9,7 @@ export default async function EventBookingPage({ params }: { params: Promise<{ s
   const { data: event, error } = await supabase
     .from('events')
     .select(`
-      id, title, starts_at, banner_url, venue_name, is_free, price, total_seats, booked_seats, is_online
+      id, title, starts_at, banner_url, venue_name, is_free, price, total_seats, booked_seats, is_online, business_id
     `)
     .eq('slug', slug)
     .single()

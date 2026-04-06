@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import ImageUpload from '@/components/dashboard/ImageUpload'
 import { Save, Store, Loader2, Link as LinkIcon, Facebook, Instagram, Phone, Mail, FileText, BadgeCheck, Clock, MapPin, Search, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react'
@@ -37,6 +38,7 @@ const NavItem = ({ id, label, icon: Icon, activeTab, setActiveTab }: any) => (
 )
 
 export default function ProfileClient({ business, categories, districts, userId }: any) {
+  const router = useRouter()
   const supabase = createClient()
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('branding')
