@@ -32,12 +32,6 @@ export default function NotFound() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
-           <button 
-             onClick={() => window.history.back()}
-             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 hover:text-gray-900 transition shadow-sm"
-           >
-             <ArrowLeft className="w-4 h-4" /> Go Back
-           </button>
            <Link 
              href="/"
              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-red-600 border border-transparent text-white font-bold rounded-xl hover:bg-red-700 transition shadow-sm drop-shadow-md"
