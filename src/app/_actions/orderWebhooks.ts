@@ -47,13 +47,15 @@ export async function triggerNewOrderWebhook(orderId: string) {
     }
 
     // 4. Insert In-App Notification (ignore if fails)
-    await supabaseAdmin.from('notifications').insert({
-      user_id: order.business_id,
-      title: 'New Order Received!',
-      message: `${order.customer_name} placed an order for ${order.items?.length || 1} items (Total: Rs ${order.total}). paid via ${order.payment_method || 'cash'}.`,
-      type: 'order',
-      link: `/dashboard/orders?id=${order.id}`,
-    }).catch(() => {})
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: order.business_id,
+        title: 'New Order Received!',
+        message: `${order.customer_name} placed an order for ${order.items?.length || 1} items (Total: Rs ${order.total}). paid via ${order.payment_method || 'cash'}.`,
+        type: 'order',
+        link: `/dashboard/orders?id=${order.id}`,
+      })
+    } catch (e) {}
 
     // 5. Forward to N8N webhook
     const n8nBaseUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_BASE_URL || process.env.N8N_WEBHOOK_BASE_URL
