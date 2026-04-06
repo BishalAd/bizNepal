@@ -15,7 +15,7 @@ export default async function ApplicationsPage() {
 
   const { data: jobs } = await supabase.from('jobs').select(`
     id, title, status, deadline, 
-    job_applications(id, applicant_name, applicant_email, applicant_phone, cover_letter, resume_url, status, notes, created_at)
+    job_applications(id, applicant_name, applicant_email, applicant_phone, cover_letter, cv_url, status, notes, created_at)
   `).eq('business_id', business.id).order('created_at', { ascending: false })
 
   return (

@@ -199,8 +199,8 @@ export default function SettingsClient({ business }: any) {
             </label>
 
             {/* WhatsApp */}
-            <label className={`flex flex-col items-center gap-2 px-2 group/btn ${!business.whatsapp_number ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} title={!business.whatsapp_number ? 'Add WhatsApp number in Profile' : ''}>
-              <input type="checkbox" disabled={!business.whatsapp_number} checked={config.whatsapp} onChange={()=>toggleEvent(eventKey, 'whatsapp')} className="w-5 h-5 rounded border-gray-300 text-[#25D366] focus:ring-[#25D366] transition shadow-sm cursor-pointer disabled:bg-gray-100" />
+            <label className={`flex flex-col items-center gap-2 px-2 group/btn ${!business.whatsapp ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} title={!business.whatsapp ? 'Add WhatsApp number in Profile' : ''}>
+              <input type="checkbox" disabled={!business.whatsapp} checked={config.whatsapp} onChange={()=>toggleEvent(eventKey, 'whatsapp')} className="w-5 h-5 rounded border-gray-300 text-[#25D366] focus:ring-[#25D366] transition shadow-sm cursor-pointer disabled:bg-gray-100" />
               <span className={`text-[10px] uppercase font-black tracking-widest transition ${config.whatsapp ? 'text-[#128C7E]' : 'text-gray-400 group-hover/btn:text-[#25D366]'}`}>WA</span>
             </label>
 
@@ -386,7 +386,7 @@ export default function SettingsClient({ business }: any) {
          )}
 
         {/* Missing Info Warning */}
-        {(!business.whatsapp_number || !business.email_address) && (
+        {(!business.whatsapp || !business.email) && (
           <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex gap-4 animate-in fade-in">
              <AlertTriangle className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
              <div>

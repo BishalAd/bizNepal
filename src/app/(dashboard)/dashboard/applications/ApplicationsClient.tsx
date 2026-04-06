@@ -98,12 +98,12 @@ export default function ApplicationsClient({ initialJobs }: any) {
        const zip = new JSZip()
        const folder = zip.folder(`${selectedJob.title.replace(/[^a-z0-9]/gi, '_')}_CVs`)
        
-       const downloadPromises = applications.filter((a:any) => a.resume_url).map(async (app:any) => {
+       const downloadPromises = applications.filter((a:any) => a.cv_url).map(async (app:any) => {
           // Since URLs are public or signed, fetch them as blobs
-          const res = await fetch(app.resume_url)
+          const res = await fetch(app.cv_url)
           if (!res.ok) return
           const blob = await res.blob()
-          const ext = app.resume_url.split('.').pop()?.split('?')[0] || 'pdf'
+          const ext = app.cv_url.split('.').pop()?.split('?')[0] || 'pdf'
           folder?.file(`${app.applicant_name.replace(/[^a-z0-9]/gi, '_')}_CV.${ext}`, blob)
        })
        
@@ -324,7 +324,7 @@ export default function ApplicationsClient({ initialJobs }: any) {
                                 {/* Actions & Cover Letter Toggle */}
                                 <div className="space-y-4">
                                    <div className="flex gap-2">
-                                     <a href={app.resume_url} target="_blank" rel="noopener noreferrer" className="flex-1 bg-purple-50 hover:bg-purple-100 text-purple-700 text-center py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition">
+                                     <a href={app.cv_url} target="_blank" rel="noopener noreferrer" className="flex-1 bg-purple-50 hover:bg-purple-100 text-purple-700 text-center py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition">
                                         <Download className="w-4 h-4"/> Get CV
                                      </a>
                                      <a href={`https://wa.me/977${app.applicant_phone}?text=${encodeURIComponent(`Hi ${app.applicant_name}, regarding your BizNepal application for ${selectedJob.title}: `)}`} target="_blank" rel="noopener noreferrer" className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 text-center py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition">

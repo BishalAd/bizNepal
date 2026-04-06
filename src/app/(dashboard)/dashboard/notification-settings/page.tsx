@@ -10,7 +10,7 @@ export default async function NotificationSettingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: business } = await supabase.from('businesses').select('id, whatsapp_number, email_address, telegram_chat_id, tg_notify_new_order, tg_notify_job_application, tg_notify_event_booking, tg_notify_new_review, tg_notify_offer_grab').eq('owner_id', user.id).single()
+  const { data: business } = await supabase.from('businesses').select('id, whatsapp, email, telegram_chat_id, tg_notify_new_order, tg_notify_job_application, tg_notify_event_booking, tg_notify_new_review, tg_notify_offer_grab').eq('owner_id', user.id).single()
   if (!business) redirect('/setup-profile')
 
   return (
