@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import ImageUpload from '@/components/dashboard/ImageUpload'
-import { Save, Store, Loader2, Link as LinkIcon, Facebook, Instagram, Phone, Mail, FileText, BadgeCheck, Clock, MapPin, Search, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Save, Store, Loader2, Link as LinkIcon, Facebook, Instagram, Phone, Mail, FileText, BadgeCheck, Clock, MapPin, Search, Sparkles, CheckCircle2, AlertCircle, CreditCard } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useDebounce } from 'react-use'
 import { enhanceDescription } from '@/app/_actions/ai'
@@ -71,7 +71,12 @@ export default function ProfileClient({ business, categories, districts, userId 
     cover_url: business.cover_url || '',
     logo_url: business.logo_url || '',
     hours: business.hours || defaultHours,
-    slug: business.slug || ''
+    slug: business.slug || '',
+    // Payment gateway fields
+    khalti_merchant_id: business.khalti_merchant_id || '',
+    esewa_merchant_id: business.esewa_merchant_id || '',
+    fonepay_merchant_code: business.fonepay_merchant_code || '',
+    fonepay_secret_key: business.fonepay_secret_key || '',
   })
 
   const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
@@ -123,7 +128,7 @@ export default function ProfileClient({ business, categories, districts, userId 
     try {
       const payload = {
         name: formData.name,
-        slug: formData.slug || business.slug, // prioritize new slug
+        slug: formData.slug || business.slug,
         description: formData.description,
         category_id: formData.category_id || null,
         phone: formData.phone,
@@ -140,6 +145,11 @@ export default function ProfileClient({ business, categories, districts, userId 
         cover_url: formData.cover_url,
         logo_url: formData.logo_url,
         hours: formData.hours,
+        // Payment gateway fields
+        khalti_merchant_id: formData.khalti_merchant_id || null,
+        esewa_merchant_id: formData.esewa_merchant_id || null,
+        fonepay_merchant_code: formData.fonepay_merchant_code || null,
+        fonepay_secret_key: formData.fonepay_secret_key || null,
       }
 
       const { error } = await supabase.from('businesses').update(payload).eq('id', business.id)
@@ -255,6 +265,7 @@ export default function ProfileClient({ business, categories, districts, userId 
                <NavItem id="contact" label="Contact Links" icon={Phone} activeTab={activeTab} setActiveTab={setActiveTab} />
                <NavItem id="location" label="Location & Map" icon={MapPin} activeTab={activeTab} setActiveTab={setActiveTab} />
                <NavItem id="hours" label="Business Hours" icon={Clock} activeTab={activeTab} setActiveTab={setActiveTab} />
+               <NavItem id="payments" label="Payment Gateways" icon={CreditCard} activeTab={activeTab} setActiveTab={setActiveTab} />
                <NavItem id="telegram" label="Telegram Bot" icon={AlertCircle} activeTab={activeTab} setActiveTab={setActiveTab} />
                <NavItem id="verification" label="Verification" icon={BadgeCheck} activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
@@ -518,6 +529,44 @@ export default function ProfileClient({ business, categories, districts, userId 
                                </div>
                              )
                           })}
+                       </div>
+                    </div>
+                 )}
+
+                 {activeTab === 'payments' && (
+                    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
+                       <h2 className="text-xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4">Payment Gateways</h2>
+
+                       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800">
+                         <p className="font-bold mb-1">💡 How purchasing works</p>
+                         <p>If you fill in a merchant ID below, customers will see an <strong>online payment button</strong> on your products, offers, and paid events. Without any gateway, customers see a <strong>WhatsApp button</strong> to contact you directly. <strong>Paid events are disabled</strong> if you have no gateway — use free events or add a merchant ID.</p>
+                       </div>
+
+                       <InputGroup label="Khalti Merchant ID" description="Your live public key from merchant.khalti.com">
+                         <input type="text" value={formData.khalti_merchant_id}
+                           onChange={e => setFormData({...formData, khalti_merchant_id: e.target.value})}
+                           placeholder="live_public_key_xxxx"
+                           className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                       </InputGroup>
+
+                       <InputGroup label="eSewa Merchant ID" description="Your merchant code from esewa.com.np">
+                         <input type="text" value={formData.esewa_merchant_id}
+                           onChange={e => setFormData({...formData, esewa_merchant_id: e.target.value})}
+                           placeholder="e.g. EPAYTEST"
+                           className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                       </InputGroup>
+
+                       <div className="grid sm:grid-cols-2 gap-6">
+                         <InputGroup label="Fonepay Merchant Code">
+                           <input type="text" value={formData.fonepay_merchant_code}
+                             onChange={e => setFormData({...formData, fonepay_merchant_code: e.target.value})}
+                             className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                         </InputGroup>
+                         <InputGroup label="Fonepay Secret Key">
+                           <input type="password" value={formData.fonepay_secret_key}
+                             onChange={e => setFormData({...formData, fonepay_secret_key: e.target.value})}
+                             className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                         </InputGroup>
                        </div>
                     </div>
                  )}

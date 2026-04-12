@@ -3,8 +3,12 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Search, ShoppingCart, User, MapPin, Menu, X, ChevronDown, LogOut, LayoutDashboard, Bell, Settings, ShieldCheck } from 'lucide-react'
+import { Heart, User, MapPin, Menu, X, ChevronDown, LogOut, LayoutDashboard, Bell, Settings, ShieldCheck, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { usePWAInstall } from '@/hooks/usePWAInstall'
+import InstallPrompt from '@/components/pwa/InstallPrompt'
+import OfflineIndicator from '@/components/pwa/OfflineIndicator'
+import PageTracker from '@/components/pwa/PageTracker'
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -12,9 +16,19 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [favCount, setFavCount] = useState(0)
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const { installApp, isInstalled, canInstall } = usePWAInstall()
+
+  const loadFavCount = async (uid: string) => {
+    const { count } = await supabase
+      .from('favourites')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', uid)
+    setFavCount(count || 0)
+  }
 
   useEffect(() => {
     const getUser = async () => {
@@ -23,13 +37,15 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         setUser(user)
         const { data } = await supabase.from('profiles').select('full_name, avatar_url, role').eq('id', user.id).single()
         if (data) setProfile(data)
+        loadFavCount(user.id)
       }
       setLoading(false)
     }
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e: any, session: any) => {
-      if (!session) { setUser(null); setProfile(null) }
+      if (!session) { setUser(null); setProfile(null); setFavCount(0) }
+      else if (session.user) loadFavCount(session.user.id)
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -56,6 +72,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      <OfflineIndicator />
       {/* HEADER */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -95,12 +112,28 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 <ChevronDown className="w-3 h-3" />
               </button>
 
-              {/* Cart */}
+              {/* Install App */}
+              {!isInstalled && canInstall && (
+                <button
+                  onClick={installApp}
+                  className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 transition-colors hover:border-gray-300"
+                >
+                  <Download className="w-4 h-4 text-red-500" />
+                  <span>Get App</span>
+                </button>
+              )}
+
+              {/* Favourites */}
               <Link
-                href="/cart"
+                href="/favourites"
                 className="relative p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
               >
-                <ShoppingCart className="w-5 h-5" />
+                <Heart className="w-5 h-5" />
+                {favCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                    {favCount > 9 ? '9+' : favCount}
+                  </span>
+                )}
               </Link>
 
               {/* Auth Section */}
@@ -142,6 +175,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                           Admin Panel
                         </a>
                       )}
+                      <Link href="/favourites" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <Heart className="w-4 h-4" />
+                        My Favourites{favCount > 0 && <span className="ml-auto text-xs font-bold text-red-600">{favCount}</span>}
+                      </Link>
                       <Link href="/dashboard/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                         <Bell className="w-4 h-4" />
                         My Orders
@@ -247,17 +284,14 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 <li><Link href="/register" className="hover:text-white transition-colors">Claim Your Listing</Link></li>
                 <li><Link href="/dashboard/subscription" className="hover:text-white transition-colors">Pricing Plans</Link></li>
                 <li><Link href="/dashboard" className="hover:text-white transition-colors">Business Dashboard</Link></li>
-                <li><Link href="/setup-profile" className="hover:text-white transition-colors">Set Up Profile</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Contact</h4>
               <ul className="space-y-2.5 text-sm">
-                <li className="flex items-center gap-2"><span>📧</span> support@biznepal.com</li>
-                <li className="flex items-center gap-2"><span>📞</span> +977 1-4XXXXXX</li>
+                <li className="flex items-center gap-2"><span>📧</span> <a href="mailto:hello@biz-nepal.vercel.app" className="hover:text-white transition-colors">hello@biznepal.com.np</a></li>
                 <li className="flex items-center gap-2"><span>📍</span> Kathmandu, Nepal</li>
-                <li><a href="https://admin.biznepal.com" className="hover:text-white transition-colors text-gray-600">Admin</a></li>
               </ul>
             </div>
           </div>
@@ -271,6 +305,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
         </div>
       </footer>
+
+      <InstallPrompt />
+      <PageTracker />
     </div>
   )
 }

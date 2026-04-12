@@ -29,6 +29,11 @@ export default function SetupProfilePage() {
   const [bizPhone, setBizPhone] = useState('')
   const [bizAddress, setBizAddress] = useState('')
   const [categories, setCategories] = useState<any[]>([])
+  // Payment integration (all optional)
+  const [khaltiId, setKhaltiId] = useState('')
+  const [esewaId, setEsewaId] = useState('')
+  const [fonepayCode, setFonepayCode] = useState('')
+  const [fonepaySecret, setFonepaySecret] = useState('')
 
   useEffect(() => {
     async function loadData() {
@@ -139,7 +144,12 @@ export default function SetupProfilePage() {
           slug,
           category_id: categoryId || null,
           phone: bizPhone,
+          whatsapp: whatsapp || null,
           address: bizAddress,
+          khalti_merchant_id: khaltiId || null,
+          esewa_merchant_id: esewaId || null,
+          fonepay_merchant_code: fonepayCode || null,
+          fonepay_secret_key: fonepaySecret || null,
         })
 
       if (bizError) throw bizError
@@ -298,6 +308,42 @@ export default function SetupProfilePage() {
               <input type="text" value={bizAddress} onChange={e => setBizAddress(e.target.value)} required
                 placeholder="Street name, Area, City"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
+            </div>
+
+            {/* Payment Integration — Optional */}
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+                <p className="font-bold mb-1">💳 Payment Integration <span className="font-normal text-amber-700">(Optional)</span></p>
+                <p>Fill these only if you have a merchant account. If not, customers will contact you via
+                  WhatsApp to purchase your products. <strong>Paid events require at least one gateway.</strong></p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Khalti Merchant ID</label>
+                  <input type="text" value={khaltiId} onChange={e => setKhaltiId(e.target.value)}
+                    placeholder="e.g. live_public_key_..."
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">eSewa Merchant ID</label>
+                  <input type="text" value={esewaId} onChange={e => setEsewaId(e.target.value)}
+                    placeholder="e.g. EPAYTEST"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Fonepay Merchant Code</label>
+                    <input type="text" value={fonepayCode} onChange={e => setFonepayCode(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Fonepay Secret Key</label>
+                    <input type="password" value={fonepaySecret} onChange={e => setFonepaySecret(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-4">

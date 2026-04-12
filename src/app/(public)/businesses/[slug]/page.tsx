@@ -6,13 +6,42 @@ import { Metadata } from 'next'
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
-  const { data } = await supabase.from('businesses').select('name, description, logo_url').eq('slug', slug).single()
-  
+  const { data } = await supabase
+    .from('businesses')
+    .select('name, description, logo_url, cover_url, category:categories(name_en), district_info:districts(name_en)')
+    .eq('slug', slug)
+    .single()
+
   if (!data) return { title: 'Business Not Found | BizNepal' }
 
+  const category = (data.category as any)?.name_en ?? 'Business'
+  const district = (data.district_info as any)?.name_en ?? 'Nepal'
+  const title = `${data.name} — ${category} in ${district}, Nepal`
+  const description = data.description
+    ? data.description.substring(0, 157) + (data.description.length > 157 ? '…' : '')
+    : `Explore ${data.name}, a ${category} located in ${district}, Nepal. View contact details, reviews, offers, and more on BizNepal.`
+  const image = data.logo_url || data.cover_url || 'https://biz-nepal.vercel.app/og-default.png'
+  const url = `https://biz-nepal.vercel.app/businesses/${slug}`
+
   return {
-    title: `${data.name} | BizNepal Directory`,
-    description: data.description?.substring(0, 160) || `View ${data.name}'s profile on BizNepal.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'BizNepal',
+      images: [{ url: image, width: 1200, height: 630, alt: data.name }],
+      type: 'website',
+      locale: 'en_US',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image],
+    },
   }
 }
 
@@ -50,6 +79,7 @@ export default async function BusinessProfilePage({ params }: { params: Promise<
   }
 
   // 2. Parallel fetch for all related data tabs
+  // Products: categories with type='product'; Services: categories with type='service'
   const [
     { data: products },
     { data: services },
@@ -58,22 +88,124 @@ export default async function BusinessProfilePage({ params }: { params: Promise<
     { data: jobs },
     { data: reviews }
   ] = await Promise.all([
-    supabase.from('products').select('id, name, slug, price, discount_price, image_keys, rating').eq('business_id', business.id).eq('status', 'active'),
-    // Assuming services are also in 'products' table but with a different category type or flag, or we just fetch all products for now. Wait, schema says categories have type. Let's just pass all products, the client can filter if needed. The prompt says TABS: Products | Services, I'll pass products and filter on client if I had a way, but maybe I don't. Let's send them directly.
-    supabase.from('products').select('id, name, slug, price, discount_price, image_keys, rating').eq('business_id', business.id).eq('status', 'active'), // Placeholder for services
+    supabase
+      .from('products')
+      .select('id, name, slug, price, discount_price, image_keys, rating, category:categories(type)')
+      .eq('business_id', business.id)
+      .eq('status', 'active'),
+    supabase
+      .from('products')
+      .select('id, name, slug, price, discount_price, image_keys, rating, category:categories(type)')
+      .eq('business_id', business.id)
+      .eq('status', 'active'),
     supabase.from('offers').select('id, title, banner_url, offer_price, original_price, discount_percent, ends_at').eq('business_id', business.id).eq('status', 'active'),
     supabase.from('events').select('id, title, slug, banner_url, starts_at, event_type, is_free, price, venue_name, status, is_online, district_info:districts!events_district_id_fkey(name_en)').eq('business_id', business.id).eq('status', 'upcoming'),
     supabase.from('jobs').select('id, slug, title, job_type, location_type, salary_min, salary_max, show_salary, created_at, business:businesses(name, logo_url)').eq('business_id', business.id).eq('status', 'active'),
     supabase.from('reviews').select('id, rating, comment, created_at, user:profiles(full_name, avatar_url)').eq('business_id', business.id)
   ])
 
+  // Split products vs services by category.type
+  const productItems = (products || []).filter((p: any) => p.category?.type !== 'service')
+  const serviceItems = (services || []).filter((p: any) => p.category?.type === 'service')
+
+  const canonicalUrl = `https://biz-nepal.vercel.app/businesses/${slug}`
+  const businessCategory = (business.category as any)?.name_en ?? 'LocalBusiness'
+  const districtName = (business.district_info as any)?.name_en ?? ''
+  const businessImage = business.logo_url || business.cover_url
+
+  // Build opening hours spec array from stored hours object
+  const openingHoursSpec: string[] = []
+  if (business.hours && typeof business.hours === 'object') {
+    const dayMap: Record<string, string> = {
+      monday: 'Mo', tuesday: 'Tu', wednesday: 'We', thursday: 'Th',
+      friday: 'Fr', saturday: 'Sa', sunday: 'Su',
+    }
+    for (const [day, val] of Object.entries(business.hours as Record<string, any>)) {
+      if (val && val.open && val.close && !val.closed) {
+        const dayCode = dayMap[day.toLowerCase()] ?? day
+        openingHoursSpec.push(`${dayCode} ${val.open}-${val.close}`)
+      }
+    }
+  }
+
+  const avgRating = reviews && reviews.length > 0
+    ? (reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
+    : business.rating ?? null
+
+  const localBusinessJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: business.name,
+    description: business.description ?? undefined,
+    url: canonicalUrl,
+    telephone: business.whatsapp ? `+977${business.whatsapp.replace(/^\+977/, '')}` : undefined,
+    image: businessImage ?? undefined,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: business.address ?? undefined,
+      addressLocality: (districtName || business.city) ?? undefined,
+      addressCountry: 'NP',
+    },
+    ...(business.latitude && business.longitude ? {
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: business.latitude,
+        longitude: business.longitude,
+      },
+    } : {}),
+    ...(openingHoursSpec.length > 0 ? { openingHours: openingHoursSpec } : {}),
+    ...(avgRating && reviews && reviews.length > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: avgRating,
+        reviewCount: reviews.length,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    } : {}),
+  }
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://biz-nepal.vercel.app',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Business Directory',
+        item: 'https://biz-nepal.vercel.app/businesses',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: business.name,
+        item: canonicalUrl,
+      },
+    ],
+  }
+
   return (
     <div className="bg-gray-50 min-h-screen pb-20 md:pb-8">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <BusinessProfileClient 
         business={business}
         tabsData={{
-          products: products || [],
-          services: products || [], // We map products to both for now, could filter by category.type if available
+          products: productItems,
+          services: serviceItems,
           offers: offers || [],
           events: events || [],
           jobs: jobs || [],

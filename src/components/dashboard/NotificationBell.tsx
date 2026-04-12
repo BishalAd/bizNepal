@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Bell, CheckCircle2, Package, Briefcase, CalendarDays, MessageSquareQuote, AlertTriangle } from 'lucide-react'
+import { Bell, CheckCircle2, Package, Briefcase, CalendarDays, MessageSquareQuote, AlertTriangle, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
