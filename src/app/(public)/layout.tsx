@@ -137,10 +137,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                         </Link>
                       )}
                       {profile?.role === 'admin' && (
-                        <Link href="/admin" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors">
+                        <a href="https://admin.biznepal.com" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors">
                           <ShieldCheck className="w-4 h-4" />
                           Admin Panel
-                        </Link>
+                        </a>
                       )}
                       <Link href="/dashboard/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                         <Bell className="w-4 h-4" />
@@ -257,7 +257,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 <li className="flex items-center gap-2"><span>📧</span> support@biznepal.com</li>
                 <li className="flex items-center gap-2"><span>📞</span> +977 1-4XXXXXX</li>
                 <li className="flex items-center gap-2"><span>📍</span> Kathmandu, Nepal</li>
-                <li><Link href="/admin" className="hover:text-white transition-colors text-gray-600">Admin</Link></li>
+                <li><a href="https://admin.biznepal.com" className="hover:text-white transition-colors text-gray-600">Admin</a></li>
               </ul>
             </div>
           </div>

@@ -57,7 +57,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
       case 'APPLICATION': return <Briefcase className="w-5 h-5 text-purple-500"/>
       case 'BOOKING': return <CalendarDays className="w-5 h-5 text-orange-500"/>
       case 'REVIEW': return <MessageSquareQuote className="w-5 h-5 text-yellow-500"/>
-      default: return <AlertTriangle className="w-5 h-5 text-gray-500"/>
+      case 'moderation': return <AlertTriangle className="w-5 h-5 text-red-500"/>
+      default: return <ShieldCheck className="w-5 h-5 text-gray-500"/>
     }
   }
 
@@ -67,6 +68,12 @@ export default function NotificationBell({ userId }: { userId: string }) {
       case 'APPLICATION': return `/dashboard/applications`
       case 'REVIEW': return `/dashboard/reviews`
       case 'BOOKING': return `/dashboard/events`
+      case 'moderation': 
+        if (n.data?.table === 'products') return '/dashboard/products'
+        if (n.data?.table === 'jobs') return '/dashboard/jobs'
+        if (n.data?.table === 'events') return '/dashboard/events'
+        if (n.data?.table === 'offers') return '/dashboard/offers'
+        return '/dashboard'
       default: return '#'
     }
   }

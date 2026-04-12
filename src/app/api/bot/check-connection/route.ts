@@ -15,20 +15,44 @@ export async function GET(request: Request) {
       return NextResponse.json({ connected: false, error: 'Missing businessId' }, { status: 400 })
     }
 
-    const { data, error } = await supabaseAdmin
+    // 1. Fetch business and its owner_id
+    const { data: business, error: bizError } = await supabaseAdmin
       .from('businesses')
-      .select('telegram_chat_id')
+      .select('telegram_chat_id, owner_id')
       .eq('id', businessId)
       .single()
 
-    if (error || !data) {
-      return NextResponse.json({ connected: false, error: 'Not found' })
+    if (bizError || !business) {
+      return NextResponse.json({ connected: false, error: 'Business not found' })
     }
 
-    return NextResponse.json({ 
-      connected: !!data.telegram_chat_id, 
-      telegram_chat_id: data.telegram_chat_id 
-    })
+    // 2. If already connected in business, return success
+    if (business.telegram_chat_id) {
+      return NextResponse.json({ connected: true, telegram_chat_id: business.telegram_chat_id })
+    }
+
+    // 3. FALLBACK: Check if the OWNER'S PROFILE has a telegram_chat_id
+    const { data: profile, error: profError } = await supabaseAdmin
+      .from('profiles')
+      .select('telegram_chat_id')
+      .eq('id', business.owner_id)
+      .single()
+
+    if (!profError && profile?.telegram_chat_id) {
+      // 4. AUTO-SYNC: Update the business table so notifications work
+      await supabaseAdmin
+        .from('businesses')
+        .update({ telegram_chat_id: profile.telegram_chat_id })
+        .eq('id', businessId)
+
+      return NextResponse.json({ 
+        connected: true, 
+        telegram_chat_id: profile.telegram_chat_id,
+        synced: true 
+      })
+    }
+
+    return NextResponse.json({ connected: false })
 
   } catch (error: any) {
     return NextResponse.json({ connected: false, error: error.message }, { status: 500 })

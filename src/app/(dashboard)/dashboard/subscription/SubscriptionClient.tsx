@@ -28,12 +28,23 @@ export default function SubscriptionClient({ business, usage }: any) {
       
       const newExpiry = addMonths(new Date(), 1).toISOString()
       
+      // 1. Update business record
       const { error } = await supabase.from('businesses').update({ 
          subscription_plan: selectedUpgrade.id,
          subscription_expires_at: newExpiry
       }).eq('id', business.id)
       
       if (error) throw error
+
+      // 2. Log to subscription history
+      await supabase.from('business_subscriptions').insert({
+        business_id: business.id,
+        plan_id: selectedUpgrade.id,
+        amount: selectedUpgrade.price,
+        status: 'active',
+        starts_at: new Date().toISOString(),
+        ends_at: newExpiry
+      })
       
       setCurrentPlan(selectedUpgrade.id)
       setSelectedUpgrade(null)

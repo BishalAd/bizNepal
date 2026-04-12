@@ -40,19 +40,19 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
 
 ```json
 {
-  "name": "BizNepal: New Order Alerts",
+  "name": "BizNepal: New Order Alerts (Complete)",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "new-order",
-        "options": {}
+        "responseMode": "responseNode"
       },
       "id": "1-webhook",
       "name": "Webhook: New Order",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [240, 300],
+      "position": [200, 300],
       "webhookId": "new-order-listener"
     },
     {
@@ -61,6 +61,7 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
           "string": [
             {
               "value1": "={{$json.body.paymentMethod}}",
+              "operation": "equals",
               "value2": "cod"
             }
           ]
@@ -70,21 +71,38 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
       "name": "Check if COD",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [460, 300]
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body.businessTelegramChatId}}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      },
+      "id": "3-check-telegram",
+      "name": "Check Telegram ID",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [620, 300]
     },
     {
       "parameters": {
         "chatId": "={{$json.body.businessTelegramChatId}}",
-        "text": "=🛍️ *New COD Order!*\n*Product:* {{$json.body.items[0].title}}\n*Amount:* ₨ {{$json.body.total}}\n*Customer:* {{$json.body.customerName}} {{$json.body.customerPhone}}\n*Deliver to:* {{$json.body.customerAddress.address}}",
+        "text": "=🛍️ *New COD Order!*\n\n*Order ID:* {{$json.body.orderId}}\n*Product:* {{$json.body.items[0].title}}\n*Amount:* ₨ {{$json.body.total}}\n\n👤 *Customer:* {{$json.body.customerName}}\n📞 {{$json.body.customerPhone}}\n📍 {{$json.body.customerAddress.address}}\n\n⚠️ Payment: Cash on Delivery",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
       },
-      "id": "3a-telegram-cod",
-      "name": "Telegram (COD)",
+      "id": "4-telegram-cod",
+      "name": "Telegram COD",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1,
-      "position": [700, 200],
+      "position": [850, 180],
       "credentials": {
         "telegramApi": {
           "id": "BizNepal Bot",
@@ -95,16 +113,16 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
     {
       "parameters": {
         "chatId": "={{$json.body.businessTelegramChatId}}",
-        "text": "=✅ *New Paid Order!*\n*Product:* {{$json.body.items[0].title}}\n*Amount:* ₨ {{$json.body.total}} (paid via {{$json.body.paymentMethod}})\n*Customer:* {{$json.body.customerName}} {{$json.body.customerPhone}}",
+        "text": "=✅ *New Paid Order!*\n\n*Order ID:* {{$json.body.orderId}}\n*Product:* {{$json.body.items[0].title}}\n*Amount:* ₨ {{$json.body.total}}\n💳 {{$json.body.paymentMethod}}\n\n👤 *Customer:* {{$json.body.customerName}}\n📞 {{$json.body.customerPhone}}",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
       },
-      "id": "3b-telegram-paid",
-      "name": "Telegram (Paid)",
+      "id": "5-telegram-paid",
+      "name": "Telegram Paid",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1,
-      "position": [700, 400],
+      "position": [850, 420],
       "credentials": {
         "telegramApi": {
           "id": "BizNepal Bot",
@@ -117,109 +135,80 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
         "fromEmail": "orders@biznepal.com",
         "toEmail": "={{$json.body.customerEmail}}",
         "subject": "Order Confirmed - BizNepal",
-        "text": "Hello {{$json.body.customerName}},\n\nYour order has been placed successfully!\nTotal: Rs {{$json.body.total}}.\n\nThank you for shopping on BizNepal.",
-        "options": {}
+        "text": "Hello {{$json.body.customerName}},\n\nYour order has been successfully placed.\n\n🧾 Order ID: {{$json.body.orderId}}\n💰 Total: Rs {{$json.body.total}}\n\nWe will contact you soon.\n\nThank you for using BizNepal!"
       },
-      "id": "4-email-customer",
-      "name": "Email Customer",
+      "id": "6-email",
+      "name": "Send Email",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2,
-      "position": [940, 300]
+      "position": [1050, 300]
     },
     {
       "parameters": {
         "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "ENTER_YOUR_SHEET_ID_HERE",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Sheet1",
-          "mode": "name"
-        },
-        "dataMode": "define",
+        "documentId": "ENTER_YOUR_SHEET_ID_HERE",
+        "sheetName": "Sheet1",
         "columns": {
           "mappingMode": "define",
           "value": {
-            "Order ID": "={{$node[\"Webhook: New Order\"].json.body.orderId}}",
-            "Business ID": "={{$node[\"Webhook: New Order\"].json.body.businessId}}",
-            "Total": "={{$node[\"Webhook: New Order\"].json.body.total}}",
-            "Method": "={{$node[\"Webhook: New Order\"].json.body.paymentMethod}}"
+            "Order ID": "={{$json.body.orderId}}",
+            "Business ID": "={{$json.body.businessId}}",
+            "Total": "={{$json.body.total}}",
+            "Payment Method": "={{$json.body.paymentMethod}}",
+            "Customer": "={{$json.body.customerName}}",
+            "Phone": "={{$json.body.customerPhone}}",
+            "Status": "New",
+            "Date": "={{new Date().toISOString()}}"
           }
-        },
-        "options": {}
+        }
       },
-      "id": "5-google-sheets",
-      "name": "Log to Sheets",
+      "id": "7-sheets",
+      "name": "Log to Google Sheets",
       "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.1,
-      "position": [1160, 300]
+      "typeVersion": 4,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "responseBody": "{ \"status\": \"success\", \"message\": \"Order processed\" }"
+      },
+      "id": "8-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1450, 300]
     }
   ],
   "connections": {
     "Webhook: New Order": {
-      "main": [
-        [
-          {
-            "node": "Check if COD",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Check if COD", "type": "main", "index": 0 }]]
     },
     "Check if COD": {
       "main": [
+        [{ "node": "Check Telegram ID", "type": "main", "index": 0 }],
+        [{ "node": "Check Telegram ID", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check Telegram ID": {
+      "main": [
         [
-          {
-            "node": "3a-telegram-cod",
-            "type": "main",
-            "index": 0
-          }
+          { "node": "Telegram COD", "type": "main", "index": 0 },
+          { "node": "Telegram Paid", "type": "main", "index": 0 }
         ],
-        [
-          {
-            "node": "3b-telegram-paid",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Send Email", "type": "main", "index": 0 }]
       ]
     },
-    "3a-telegram-cod": {
-      "main": [
-        [
-          {
-            "node": "Email Customer",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "Telegram COD": {
+      "main": [[{ "node": "Send Email", "type": "main", "index": 0 }]]
     },
-    "3b-telegram-paid": {
-      "main": [
-        [
-          {
-            "node": "Email Customer",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "Telegram Paid": {
+      "main": [[{ "node": "Send Email", "type": "main", "index": 0 }]]
     },
-    "Email Customer": {
-      "main": [
-        [
-          {
-            "node": "Log to Sheets",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "Send Email": {
+      "main": [[{ "node": "Log to Google Sheets", "type": "main", "index": 0 }]]
+    },
+    "Log to Google Sheets": {
+      "main": [[{ "node": "Webhook Response", "type": "main", "index": 0 }]]
     }
   }
 }
