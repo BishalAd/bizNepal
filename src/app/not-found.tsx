@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { MapPin, SearchX, Home, ArrowLeft } from 'lucide-react'
 
 export const metadata = {
-  title: 'Page Not Found | BizNepal'
+  title: 'Page Not Found | Biznity'
 }
 
 export default function NotFound() {

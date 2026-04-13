@@ -8,8 +8,8 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   const { district: dist, type: eventType } = await searchParams
   const isFiltered = !!(dist || eventType)
 
-  let title = 'Events & Workshops in Nepal — Upcoming Events | BizNepal'
-  let description = 'Discover upcoming workshops, concerts, networking events, and community gatherings in Nepal. Register for free and paid events on BizNepal.'
+  let title = 'Events & Workshops in Nepal — Upcoming Events | Biznity'
+  let description = 'Discover upcoming workshops, concerts, networking events, and community gatherings in Nepal. Register for free and paid events on Biznity.'
 
   if (isFiltered) {
     const supabase = await createClient()
@@ -24,17 +24,17 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
     parts.push('Events')
     if (distName) parts.push(`in ${distName}`)
     parts.push('Nepal')
-    title = `${parts.join(' ')} | BizNepal`
-    description = `Find upcoming ${ typeName || 'all' } events${ distName ? ` in ${distName}` : ' across Nepal' }. Register on BizNepal.`
+    title = `${parts.join(' ')} | Biznity`
+    description = `Find upcoming ${ typeName || 'all' } events${ distName ? ` in ${distName}` : ' across Nepal' }. Register on Biznity.`
   }
 
-  const url = 'https://biz-nepal.vercel.app/events'
+  const url = 'https://biznity.vercel.app/events'
   return {
     title,
     description,
-    keywords: ['nepal events', 'events in nepal', 'workshops nepal', 'concerts nepal', 'networking nepal', 'biznepal events'],
+    keywords: ['nepal events', 'events in nepal', 'workshops nepal', 'concerts nepal', 'networking nepal', 'biznity events'],
     alternates: { canonical: url },
-    openGraph: { title, description, url, siteName: 'BizNepal', type: 'website' },
+    openGraph: { title, description, url, siteName: 'Biznity', type: 'website' },
     twitter: { card: 'summary', title, description },
   }
 }
@@ -57,8 +57,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biz-nepal.vercel.app' },
-      { '@type': 'ListItem', position: 2, name: 'Events in Nepal', item: 'https://biz-nepal.vercel.app/events' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biznity.vercel.app' },
+      { '@type': 'ListItem', position: 2, name: 'Events in Nepal', item: 'https://biznity.vercel.app/events' },
     ],
   }
 

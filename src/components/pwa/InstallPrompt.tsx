@@ -14,7 +14,7 @@ export default function InstallPrompt() {
     if (isInstalled) return
 
     try {
-      const dismissedStr = localStorage.getItem('biznepal_install_dismissed')
+      const dismissedStr = localStorage.getItem('biznity_install_dismissed')
       if (dismissedStr) {
         const timestamp = parseInt(dismissedStr, 10)
         const sevenDays = 7 * 24 * 60 * 60 * 1000
@@ -32,7 +32,7 @@ export default function InstallPrompt() {
   const handleDismiss = () => {
     setIsVisible(false)
     try {
-      localStorage.setItem('biznepal_install_dismissed', Date.now().toString())
+      localStorage.setItem('biznity_install_dismissed', Date.now().toString())
     } catch {}
   }
 
@@ -50,7 +50,7 @@ export default function InstallPrompt() {
         </div>
 
         <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-gray-900 text-sm leading-tight mb-1">{isIOS ? 'Install BizNepal' : 'Install BizNepal App'}</h4>
+          <h4 className="font-bold text-gray-900 text-sm leading-tight mb-1">{isIOS ? 'Install Biznity' : 'Install Biznity App'}</h4>
           <p className="text-xs text-gray-500 line-clamp-2 pr-2">
             {isIOS ? 'Tap Share then "Add to Home Screen"' : 'Add to your home screen — works offline too!'}
           </p>

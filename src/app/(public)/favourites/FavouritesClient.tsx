@@ -39,8 +39,8 @@ interface GroupedFavs {
   }
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://biz-nepal.vercel.app'
-const placeholder = 'https://placehold.co/400x400?text=BizNepal'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://biznity.vercel.app'
+const placeholder = 'https://placehold.co/400x400?text=Biznity'
 
 export default function FavouritesClient({ grouped: initialGrouped, userId }: {
   grouped: GroupedFavs
@@ -150,7 +150,7 @@ export default function FavouritesClient({ grouped: initialGrouped, userId }: {
               <div key={bizId} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 {/* Business header */}
                 <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-100">
-                  <Link href={`/businesses/${business.slug}`} className="flex items-center gap-3 group">
+                  <Link href={`/${business.slug}`} className="flex items-center gap-3 group">
                     <div className="w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center overflow-hidden">
                       {business.logo_url
                         ? <img src={business.logo_url} alt="" className="w-full h-full object-cover" />

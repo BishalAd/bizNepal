@@ -58,7 +58,7 @@ export async function triggerNewPostWebhook(type: 'job' | 'event' | 'product' | 
       title: item.title || item.name,
       description: item.description,
       imageUrl: item.image_url || null,
-      link: `https://biznepal.com/dashboard/${type}s` // Fallback URL
+      link: `https://biznity.com/dashboard/${type}s` // Fallback URL
     }
 
     // 4. Create In-App Notification
@@ -67,7 +67,7 @@ export async function triggerNewPostWebhook(type: 'job' | 'event' | 'product' | 
       await supabaseAdmin.from('notifications').insert({
         user_id: ownerId,
         title: `New ${typeLabel} Published!`,
-        message: `Your ${type} "${n8nPayload.title}" is now live on BizNepal.`,
+        message: `Your ${type} "${n8nPayload.title}" is now live on Biznity.`,
         type: type,
         link: `/dashboard/${type}s`,
       })

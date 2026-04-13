@@ -13,7 +13,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     // Log the error to an error reporting service like Sentry or console
-    console.error('BizNepal Application Error:', error)
+    console.error('Biznity Application Error:', error)
   }, [error])
 
   return (

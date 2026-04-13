@@ -109,7 +109,7 @@ export default function ApplicationsClient({ initialJobs }: any) {
        
        await Promise.all(downloadPromises)
        const content = await zip.generateAsync({ type: 'blob' })
-       saveAs(content, `BizNepal_CVs_${selectedJob.title}.zip`)
+       saveAs(content, `Biznity_CVs_${selectedJob.title}.zip`)
        toast.success('ZIP Downloaded!', { id: toastId })
      } catch (err) {
        toast.error('Failed to download CVs', { id: toastId })
@@ -327,7 +327,7 @@ export default function ApplicationsClient({ initialJobs }: any) {
                                      <a href={app.cv_url} target="_blank" rel="noopener noreferrer" className="flex-1 bg-purple-50 hover:bg-purple-100 text-purple-700 text-center py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition">
                                         <Download className="w-4 h-4"/> Get CV
                                      </a>
-                                     <a href={`https://wa.me/977${app.applicant_phone}?text=${encodeURIComponent(`Hi ${app.applicant_name}, regarding your BizNepal application for ${selectedJob.title}: `)}`} target="_blank" rel="noopener noreferrer" className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 text-center py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition">
+                                     <a href={`https://wa.me/977${app.applicant_phone}?text=${encodeURIComponent(`Hi ${app.applicant_name}, regarding your Biznity application for ${selectedJob.title}: `)}`} target="_blank" rel="noopener noreferrer" className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 text-center py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition">
                                         <MessageCircle className="w-4 h-4"/> WhatsApp
                                      </a>
                                    </div>

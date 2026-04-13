@@ -1,5 +1,5 @@
 /**
- * Nepal-specific utility functions for BizNepal
+ * Nepal-specific utility functions for Biznity
  */
 import { formatDistanceToNow, differenceInDays, isSameDay } from 'date-fns'
 

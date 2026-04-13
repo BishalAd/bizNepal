@@ -4,8 +4,8 @@ import { Metadata } from 'next'
 import FavouritesClient from './FavouritesClient'
 
 export const metadata: Metadata = {
-  title: 'My Favourites — Saved Products | BizNepal',
-  description: 'View and manage your favourite products saved on BizNepal. Buy directly or contact businesses via WhatsApp.',
+  title: 'My Favourites — Saved Products | Biznity',
+  description: 'View and manage your favourite products saved on Biznity. Buy directly or contact businesses via WhatsApp.',
   robots: { index: false, follow: false },
 }
 

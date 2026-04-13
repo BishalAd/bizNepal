@@ -292,7 +292,7 @@ export default function ProfileClient({ business, categories, districts, userId 
                            <ImageUpload 
                              label="Brand Logo" 
                              aspectRatio="square"
-                             bucket="biznepal-images" 
+                             bucket="biznity-images" 
                              folder={userId}
                              currentImageUrl={formData.logo_url}
                              onUploadSuccess={url => setFormData({...formData, logo_url: url})} 
@@ -311,7 +311,7 @@ export default function ProfileClient({ business, categories, districts, userId 
                          </div>
                        </InputGroup>
 
-                       <InputGroup label="Business Vanity URL (Slug)" description="Your public link: biznepal.com/business/[your-slug]">
+                       <InputGroup label="Business Vanity URL (Slug)" description="Your public link: biznity.com/business/[your-slug]">
                          <div className="relative flex items-center">
                            <div className="absolute left-4 text-gray-400 font-bold text-sm pointer-events-none">.../business/</div>
                            <input 
@@ -605,7 +605,7 @@ export default function ProfileClient({ business, categories, districts, userId 
                             {tgStatus === 'connected' ? (
                               <div className="flex flex-wrap gap-4">
                                 <a 
-                                  href="https://t.me/BizNepalNotifyBot" 
+                                  href="https://t.me/BiznityNotifyBot" 
                                   target="_blank" 
                                   rel="noreferrer" 
                                   className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold transition flex items-center shadow-sm"
@@ -613,7 +613,7 @@ export default function ProfileClient({ business, categories, districts, userId 
                                   Open Notification Bot
                                 </a>
                                 <a 
-                                  href="https://t.me/postOnBizNepal_bot" 
+                                  href="https://t.me/postOnBiznity_bot" 
                                   target="_blank" 
                                   rel="noreferrer" 
                                   className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 px-6 py-3 rounded-xl font-bold transition shadow-sm"
@@ -659,8 +659,8 @@ export default function ProfileClient({ business, categories, districts, userId 
                               </div>
                             )}
                             <p className="text-xs text-blue-700 mt-3 font-medium">
-                               Note: Notifications are sent via t.me/BizNepalNotifyBot.<br/>
-                               For posting products via chat, use t.me/postOnBizNepal_bot.
+                               Note: Notifications are sent via t.me/BiznityNotifyBot.<br/>
+                               For posting products via chat, use t.me/postOnBiznity_bot.
                             </p>
                           </div>
                         </div>

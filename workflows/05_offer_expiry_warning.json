@@ -1,5 +1,5 @@
 {
-  "name": "BizNepal: Offer Expiry Warning",
+  "name": "Biznity: Offer Expiry Warning",
   "nodes": [
     {
       "parameters": {
@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "url": "https://biz-nepal.vercel.app/api/bot/expiring-offers",
+        "url": "https://biznity.vercel.app/api/bot/expiring-offers",
         "authentication": "headerAuth",
         "options": {}
       },
@@ -37,7 +37,7 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "name": "BizNepal Webhook Secret"
+          "name": "Biznity Webhook Secret"
         }
       }
     },
@@ -97,7 +97,7 @@
     {
       "parameters": {
         "chatId": "={{ $json.telegram_chat_id }}",
-        "text": "=⏰ *Offer Expiring Soon!*\n\n🏷 *Offer:* {{ $json.title }}\n⌚ Expires in less than *2 hours*\n👥 *Grabbed so far:* {{ $json.grabbed_count }} customers\n\n➡️ Extend or edit your offer:\nhttps://biz-nepal.vercel.app/dashboard/offers",
+        "text": "=⏰ *Offer Expiring Soon!*\n\n🏷 *Offer:* {{ $json.title }}\n⌚ Expires in less than *2 hours*\n👥 *Grabbed so far:* {{ $json.grabbed_count }} customers\n\n➡️ Extend or edit your offer:\nhttps://biznity.vercel.app/dashboard/offers",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -112,7 +112,7 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     }

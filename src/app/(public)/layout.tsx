@@ -170,7 +170,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                         </Link>
                       )}
                       {profile?.role === 'admin' && (
-                        <a href="https://admin.biznepal.com" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors">
+                        <a href="https://admin.biznity.com" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors">
                           <ShieldCheck className="w-4 h-4" />
                           Admin Panel
                         </a>
@@ -290,14 +290,14 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <div>
               <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Contact</h4>
               <ul className="space-y-2.5 text-sm">
-                <li className="flex items-center gap-2"><span>📧</span> <a href="mailto:hello@biz-nepal.vercel.app" className="hover:text-white transition-colors">hello@biznepal.com.np</a></li>
+                <li className="flex items-center gap-2"><span>📧</span> <a href="mailto:hello@biznity.vercel.app" className="hover:text-white transition-colors">hello@biznity.com.np</a></li>
                 <li className="flex items-center gap-2"><span>📍</span> Kathmandu, Nepal</li>
               </ul>
             </div>
           </div>
 
           <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-gray-500">
-            <p>© {new Date().getFullYear()} BizNepal. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Biznity. All rights reserved.</p>
             <div className="flex gap-4">
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>

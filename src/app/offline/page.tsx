@@ -9,7 +9,7 @@ export default function OfflinePage() {
 
   useEffect(() => {
     try {
-      const KEY = 'biznepal_recent_pages'
+      const KEY = 'biznity_recent_pages'
       const existing = localStorage.getItem(KEY)
       if (existing) {
         setRecentPages(JSON.parse(existing))
@@ -29,7 +29,7 @@ export default function OfflinePage() {
          </h2>
          
          <p className="font-medium text-gray-500 mb-8 leading-relaxed text-sm">
-           Please check your internet connection to access the latest products, events, and jobs on BizNepal.
+           Please check your internet connection to access the latest products, events, and jobs on Biznity.
          </p>
 
          <div className="space-y-3">
@@ -49,7 +49,7 @@ export default function OfflinePage() {
              <div className="space-y-2">
                {recentPages.slice(0, 3).map((page, idx) => (
                  <Link key={idx} href={page.url} className="block bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition flex items-center justify-between group">
-                   <span className="text-sm font-semibold text-gray-700 truncate mr-2">{page.title.replace(' | BizNepal', '')}</span>
+                   <span className="text-sm font-semibold text-gray-700 truncate mr-2">{page.title.replace(' | Biznity', '')}</span>
                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-red-500 flex-shrink-0" />
                  </Link>
                ))}

@@ -134,7 +134,7 @@ export default async function HomePage() {
                       <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
                       {biz.rating.toFixed(1)} ({biz.review_count})
                     </div>
-                    <Link href={`/businesses/${biz.slug}`} className="text-sm font-semibold text-red-600 hover:text-red-700">
+                    <Link href={`/${biz.slug}`} className="text-sm font-semibold text-red-600 hover:text-red-700">
                       View Profile
                     </Link>
                   </div>

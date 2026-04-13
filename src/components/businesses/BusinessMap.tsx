@@ -175,7 +175,7 @@ export default function BusinessMap({ businesses, districts, onBoundsChange }: a
                      <p className="text-xs text-gray-600 flex items-center gap-1 mb-3 truncate"><MapPin className="w-3 h-3 text-red-500"/> {business.city || 'Nepal'}</p>
                      
                      <Link 
-                        href={`/businesses/${business.slug}`} 
+                        href={`/${business.slug}`} 
                         className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2.5 rounded-xl font-bold text-sm transition shadow-sm"
                         onClick={(e) => {
                           window.location.href = `/businesses/${business.slug}`;

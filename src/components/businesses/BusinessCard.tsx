@@ -40,7 +40,7 @@ export default function BusinessCard({ business }: { business: any }) {
 
         <div className="flex-1">
            <div className="flex items-start justify-between gap-2 mb-1">
-             <Link href={`/businesses/${business.slug}`} className="block">
+             <Link href={`/${business.slug}`} className="block">
                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition truncate-multiline">{business.name}</h3>
              </Link>
              {business.is_verified && <BadgeCheck className="w-5 h-5 text-blue-500 flex-shrink-0 mt-1" />}
@@ -66,7 +66,7 @@ export default function BusinessCard({ business }: { business: any }) {
         </div>
 
         <div className="pt-4 mt-4 border-t border-gray-100 flex gap-2">
-           <Link href={`/businesses/${business.slug}`} className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200 font-bold py-2 rounded-xl text-center text-sm transition transition">
+           <Link href={`/${business.slug}`} className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200 font-bold py-2 rounded-xl text-center text-sm transition transition">
              View Profile
            </Link>
            {business.whatsapp && (

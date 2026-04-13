@@ -14,7 +14,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="relative z-10 p-12 flex flex-col h-full justify-between">
           <div>
             <Link href="/" className="text-3xl font-bold tracking-tight inline-flex items-center gap-2">
-              <span className="text-white">BizNepal</span>
+              <span className="text-white">Biznity</span>
               <span className="w-2 h-2 rounded-full bg-red-500 mt-1"></span>
             </Link>
             <h1 className="mt-12 text-5xl font-extrabold tracking-tight leading-tight">
@@ -28,7 +28,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
             <blockquote className="text-lg italic text-red-50">
-              "BizNepal helped my small handicraft store in Patan reach customers all over the country. The platform is incredibly easy to use."
+              "Biznity helped my small handicraft store in Patan reach customers all over the country. The platform is incredibly easy to use."
             </blockquote>
             <div className="mt-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-red-300 flex items-center justify-center text-red-800 font-bold">
@@ -49,7 +49,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           {/* Mobile Logo */}
           <div className="lg:hidden mb-8 text-center">
             <Link href="/" className="text-3xl font-bold tracking-tight inline-flex items-center gap-2 text-gray-900">
-              BizNepal
+              Biznity
               <span className="w-2 h-2 rounded-full bg-red-600 mt-1"></span>
             </Link>
           </div>

@@ -355,7 +355,7 @@ export default function OrdersClient({ initialOrders, business }: any) {
                            </div>
 
                            <div className="mt-16 text-center text-sm font-bold text-gray-400">
-                             Thank you for your business! Powered by BizNepal.
+                             Thank you for your business! Powered by Biznity.
                            </div>
                         </div>
                       </div>

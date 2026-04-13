@@ -1,5 +1,5 @@
 {
-  "name": "BizNepal: Telegram /start Handler",
+  "name": "Biznity: Telegram /start Handler",
   "nodes": [
     {
       "parameters": {
@@ -18,7 +18,7 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     },
@@ -110,7 +110,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://biz-nepal.vercel.app/api/bot/link-telegram",
+        "url": "https://biznity.vercel.app/api/bot/link-telegram",
         "authentication": "headerAuth",
         "sendBody": true,
         "specifyBody": "json",
@@ -127,7 +127,7 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "name": "BizNepal Webhook Secret"
+          "name": "Biznity Webhook Secret"
         }
       }
     },
@@ -159,7 +159,7 @@
     {
       "parameters": {
         "chatId": "={{ $('Extract Token and ChatId').item.json.chatId }}",
-        "text": "=✅ *Telegram Connected Successfully!*\n\nHello {{ $('Extract Token and ChatId').item.json.firstName }}! 🙏\n\nYour BizNepal business account *{{ $json.businessName }}* is now linked to this Telegram.\n\nYou will now receive instant notifications for:\n🛍️ New orders\n👔 Job applications\n🎟 Event bookings\n⭐ Customer reviews\n📊 Business summaries\n\nType /menu to manage your business via chat!\n🔗 https://biz-nepal.vercel.app/dashboard",
+        "text": "=✅ *Telegram Connected Successfully!*\n\nHello {{ $('Extract Token and ChatId').item.json.firstName }}! 🙏\n\nYour Biznity business account *{{ $json.businessName }}* is now linked to this Telegram.\n\nYou will now receive instant notifications for:\n🛍️ New orders\n👔 Job applications\n🎟 Event bookings\n⭐ Customer reviews\n📊 Business summaries\n\nType /menu to manage your business via chat!\n🔗 https://biznity.vercel.app/dashboard",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -174,14 +174,14 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     },
     {
       "parameters": {
         "chatId": "={{ $('Extract Token and ChatId').item.json.chatId }}",
-        "text": "=❌ *Link Expired or Invalid*\n\nThis connection link has expired or already been used.\n\nPlease go back to your BizNepal dashboard and click *Connect Telegram* again to get a new link.\n\n🔗 https://biz-nepal.vercel.app/dashboard/notification-settings",
+        "text": "=❌ *Link Expired or Invalid*\n\nThis connection link has expired or already been used.\n\nPlease go back to your Biznity dashboard and click *Connect Telegram* again to get a new link.\n\n🔗 https://biznity.vercel.app/dashboard/notification-settings",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -196,14 +196,14 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     },
     {
       "parameters": {
         "chatId": "={{ $('Extract Token and ChatId').item.json.chatId }}",
-        "text": "=👋 *Namaste! Welcome to BizNepal Bot!*\n\nI send real-time notifications for your business:\n🛍️ New orders\n👔 Job applications\n🎟 Event bookings\n⭐ Customer reviews\n\nTo connect your account:\n1️⃣ Go to your BizNepal dashboard\n2️⃣ Click *Notification Settings*\n3️⃣ Click *Connect Telegram*\n4️⃣ Press the link that appears\n\n🔗 https://biz-nepal.vercel.app/dashboard/notification-settings",
+        "text": "=👋 *Namaste! Welcome to Biznity Bot!*\n\nI send real-time notifications for your business:\n🛍️ New orders\n👔 Job applications\n🎟 Event bookings\n⭐ Customer reviews\n\nTo connect your account:\n1️⃣ Go to your Biznity dashboard\n2️⃣ Click *Notification Settings*\n3️⃣ Click *Connect Telegram*\n4️⃣ Press the link that appears\n\n🔗 https://biznity.vercel.app/dashboard/notification-settings",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -218,14 +218,14 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     },
     {
       "parameters": {
         "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
-        "text": "=ℹ️ I only respond to the */start* command.\n\nTo connect your BizNepal account, visit:\nhttps://biz-nepal.vercel.app/dashboard/notification-settings",
+        "text": "=ℹ️ I only respond to the */start* command.\n\nTo connect your Biznity account, visit:\nhttps://biznity.vercel.app/dashboard/notification-settings",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -240,7 +240,7 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     }

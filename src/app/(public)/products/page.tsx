@@ -7,8 +7,8 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const categoryId = typeof resolvedParams.category === 'string' ? resolvedParams.category : undefined
   const districtId = typeof resolvedParams.district === 'string' ? resolvedParams.district : undefined
 
-  let title = 'Products in Nepal — Buy from Local Businesses | BizNepal'
-  let description = 'Browse the best products from verified businesses across Nepal. Shop local, find deals, and discover unique products on BizNepal.'
+  let title = 'Products in Nepal — Buy from Local Businesses | Biznity'
+  let description = 'Browse the best products from verified businesses across Nepal. Shop local, find deals, and discover unique products on Biznity.'
 
   if (categoryId || districtId) {
     const supabase = await createClient()
@@ -23,17 +23,17 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
     parts.push('Products')
     if (distName) parts.push(`in ${distName}`)
     parts.push('Nepal')
-    title = `${parts.join(' ')} | BizNepal`
-    description = `Shop ${ catName ?? 'all' } products${ distName ? ` in ${distName}` : ' across Nepal' } from verified local businesses. BizNepal.`
+    title = `${parts.join(' ')} | Biznity`
+    description = `Shop ${ catName ?? 'all' } products${ distName ? ` in ${distName}` : ' across Nepal' } from verified local businesses. Biznity.`
   }
 
-  const url = 'https://biz-nepal.vercel.app/products'
+  const url = 'https://biznity.vercel.app/products'
   return {
     title,
     description,
-    keywords: ['nepal products', 'buy nepal', 'shop nepal', 'nepal online shopping', 'local products nepal', 'biznepal products'],
+    keywords: ['nepal products', 'buy nepal', 'shop nepal', 'nepal online shopping', 'local products nepal', 'biznity products'],
     alternates: { canonical: url },
-    openGraph: { title, description, url, siteName: 'BizNepal', type: 'website' },
+    openGraph: { title, description, url, siteName: 'Biznity', type: 'website' },
     twitter: { card: 'summary', title, description },
   }
 }
@@ -55,8 +55,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biz-nepal.vercel.app' },
-      { '@type': 'ListItem', position: 2, name: 'Products in Nepal', item: 'https://biz-nepal.vercel.app/products' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biznity.vercel.app' },
+      { '@type': 'ListItem', position: 2, name: 'Products in Nepal', item: 'https://biznity.vercel.app/products' },
     ],
   }
 

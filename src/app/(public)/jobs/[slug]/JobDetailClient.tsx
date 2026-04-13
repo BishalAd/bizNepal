@@ -60,14 +60,14 @@ export default function JobDetailClient({ job, companyJobs, relatedJobs }: any) 
       const filePath = `cvs/${fileName}`
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('biznepal-cvs')
+        .from('biznity-cvs')
         .upload(filePath, cvFile, { cacheControl: '3600', upsert: false })
 
       if (uploadError) {
          // Create bucket if it doesn't exist just in case (Normally done via migrations)
          if (uploadError.message.includes("Bucket not found")) {
-            await supabase.storage.createBucket('biznepal-cvs', { public: false })
-            const { error: retryError } = await supabase.storage.from('biznepal-cvs').upload(filePath, cvFile)
+            await supabase.storage.createBucket('biznity-cvs', { public: false })
+            const { error: retryError } = await supabase.storage.from('biznity-cvs').upload(filePath, cvFile)
             if (retryError) throw retryError
          } else {
             throw uploadError
@@ -76,7 +76,7 @@ export default function JobDetailClient({ job, companyJobs, relatedJobs }: any) 
 
       // Get public URL or just store the path (since it might be private)
       // Actually let's assume it's private and we use signed URLs later, but for this demo:
-      const cvUrl = supabase.storage.from('biznepal-cvs').getPublicUrl(filePath).data.publicUrl
+      const cvUrl = supabase.storage.from('biznity-cvs').getPublicUrl(filePath).data.publicUrl
 
       // 2. Insert Application
       const applicationPayload = {
@@ -159,7 +159,7 @@ export default function JobDetailClient({ job, companyJobs, relatedJobs }: any) 
                 <div>
                    <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">{job.title}</h1>
                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-gray-600 font-medium mb-4">
-                     <Link href={`/businesses/${job.business?.slug}`} className="flex items-center text-blue-600 hover:text-blue-800"><Building2 className="w-4 h-4 mr-1.5"/> {job.business?.name}</Link>
+                     <Link href={`/${job.business?.slug}`} className="flex items-center text-blue-600 hover:text-blue-800"><Building2 className="w-4 h-4 mr-1.5"/> {job.business?.name}</Link>
                      <span className="flex items-center"><MapPin className="w-4 h-4 mr-1.5 text-gray-400"/> {job.business?.city || 'Nepal'}</span>
                      {job.business?.website && <a href={job.business.website} target="_blank" rel="noreferrer" className="flex items-center hover:text-gray-900"><Globe className="w-4 h-4 mr-1.5 text-gray-400"/> Website</a>}
                    </div>
@@ -359,7 +359,7 @@ export default function JobDetailClient({ job, companyJobs, relatedJobs }: any) 
                   <div>
                     <label className="flex items-start gap-3 cursor-pointer mt-2 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
                       <input required type="checkbox" checked={formData.confirmAccurate} onChange={e=>setFormData({...formData, confirmAccurate: e.target.checked})} className="mt-1 w-5 h-5 text-blue-600 focus:ring-blue-500 rounded border-gray-300" />
-                      <span className="text-sm font-medium text-gray-900 leading-tight">By completing this application, I confirm this information is accurate and I agree to BizNepal's Terms of Service and Privacy Policy.</span>
+                      <span className="text-sm font-medium text-gray-900 leading-tight">By completing this application, I confirm this information is accurate and I agree to Biznity's Terms of Service and Privacy Policy.</span>
                     </label>
                   </div>
                 </div>

@@ -17,10 +17,10 @@ export async function POST(request: Request) {
       website_url: appUrl,
       amount: Math.round(amount * 100), // convert NPR to paisa
       purchase_order_id: orderId,
-      purchase_order_name: purchaseOrderName || 'BizNepal Purchase',
+      purchase_order_name: purchaseOrderName || 'Biznity Purchase',
       customer_info: {
         name: customerName,
-        email: customerEmail || 'noemail@biznepal.com',
+        email: customerEmail || 'noemail@biznity.com',
         phone: customerPhone // Needs to be typical Nepal format if possible 98XXXXXXXX
       }
     }

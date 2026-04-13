@@ -267,7 +267,7 @@ export default function SettingsClient({ business }: any) {
                 <div className="space-y-4">
                   {!botUrl ? (
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <p className="text-sm text-gray-600 max-w-md">Connect your personal or business Telegram account to get notified the second anything happens on BizNepal.</p>
+                      <p className="text-sm text-gray-600 max-w-md">Connect your personal or business Telegram account to get notified the second anything happens on Biznity.</p>
                       <button 
                         onClick={handleConnectTelegram}
                         disabled={isLinking}
@@ -302,7 +302,7 @@ export default function SettingsClient({ business }: any) {
                             rel="noopener noreferrer"
                             className="bg-[#0088cc] hover:bg-[#0077b5] text-white px-6 py-3 rounded-xl font-bold transition flex items-center justify-center shadow-lg hover:scale-[1.02] active:scale-95"
                           >
-                             Open @{process.env.NEXT_PUBLIC_NOTIFY_BOT_USERNAME || 'BizNepalNotifyBot'} <ExternalLink className="w-4 h-4 ml-2" />
+                             Open @{process.env.NEXT_PUBLIC_NOTIFY_BOT_USERNAME || 'BiznityNotifyBot'} <ExternalLink className="w-4 h-4 ml-2" />
                           </a>
                           <button 
                             onClick={() => { setBotUrl(null); setIsPolling(false); }}
@@ -361,11 +361,11 @@ export default function SettingsClient({ business }: any) {
               <div className="p-6">
                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div>
-                       <p className="text-sm text-gray-600 max-w-md">Open <strong>@BizNepalPostBot</strong> in Telegram, send <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">/start</code>, and follow the prompts to publish content instantly.</p>
+                       <p className="text-sm text-gray-600 max-w-md">Open <strong>@BiznityPostBot</strong> in Telegram, send <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">/start</code>, and follow the prompts to publish content instantly.</p>
                        <p className="text-xs text-gray-400 mt-1.5">Your account is already linked — no separate connection needed.</p>
                     </div>
                     <a
-                       href={`https://t.me/${process.env.NEXT_PUBLIC_POSTING_BOT_USERNAME || 'BizNepalPostBot'}`}
+                       href={`https://t.me/${process.env.NEXT_PUBLIC_POSTING_BOT_USERNAME || 'BiznityPostBot'}`}
                        target="_blank"
                        rel="noopener noreferrer"
                        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-bold transition flex items-center shadow-sm shrink-0"

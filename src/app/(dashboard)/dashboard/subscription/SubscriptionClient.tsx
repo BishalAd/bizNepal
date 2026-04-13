@@ -103,7 +103,7 @@ export default function SubscriptionClient({ business, usage }: any) {
     },
     {
       id: 'pro',
-      name: 'BizNepal Pro',
+      name: 'Biznity Pro',
       price: 2499,
       period: 'per month',
       popular: true,

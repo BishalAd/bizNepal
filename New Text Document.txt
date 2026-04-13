@@ -1,4 +1,4 @@
-Update our BizNepal Next.js webhook routes and bot API endpoints 
+Update our Biznity Next.js webhook routes and bot API endpoints 
 to work correctly with our new n8n workflows.
 
 Here is the complete list of every change needed:
@@ -207,7 +207,7 @@ Logic:
    { token, business_id, expires_at: NOW() + 15 minutes }
 6. Return: { 
      token, 
-     botUrl: "https://t.me/BizNepalNotifyBot?start=" + token 
+     botUrl: "https://t.me/BiznityNotifyBot?start=" + token 
    }
 
 Use SUPABASE_SERVICE_ROLE_KEY.

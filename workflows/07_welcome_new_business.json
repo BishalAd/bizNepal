@@ -1,5 +1,5 @@
 {
-  "name": "BizNepal: Welcome New Business",
+  "name": "Biznity: Welcome New Business",
   "nodes": [
     {
       "parameters": {
@@ -73,10 +73,10 @@
     },
     {
       "parameters": {
-        "fromEmail": "welcome@biznepal.com.np",
+        "fromEmail": "welcome@biznity.com.np",
         "toEmail": "={{ $('Webhook: New Signup').item.json.body.userEmail }}",
-        "subject": "🎉 Welcome to BizNepal — {{ $('Webhook: New Signup').item.json.body.businessName }}!",
-        "html": "<div style='font-family:Arial,sans-serif;max-width:600px'><div style='background:#0D7377;padding:24px;text-align:center'><h1 style='color:white;margin:0'>Welcome to BizNepal! 🙏</h1></div><div style='padding:24px'><p>Namaste <strong>{{ $('Webhook: New Signup').item.json.body.userName }}</strong>!</p><p>Your business <strong>{{ $('Webhook: New Signup').item.json.body.businessName }}</strong> is now registered on Nepal's #1 business platform.</p><h3>Next steps to get started:</h3><ol><li>Complete your business profile</li><li>Add your first product or service</li><li>Connect Telegram for instant notifications</li><li>Share your profile link with customers</li></ol><p style='text-align:center'><a href='https://biz-nepal.vercel.app/dashboard' style='background:#0D7377;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;display:inline-block'>Go to Dashboard</a></p><p style='color:#888;font-size:13px'>Need help? Email us: support@biznepal.com.np</p></div></div>",
+        "subject": "🎉 Welcome to Biznity — {{ $('Webhook: New Signup').item.json.body.businessName }}!",
+        "html": "<div style='font-family:Arial,sans-serif;max-width:600px'><div style='background:#0D7377;padding:24px;text-align:center'><h1 style='color:white;margin:0'>Welcome to Biznity! 🙏</h1></div><div style='padding:24px'><p>Namaste <strong>{{ $('Webhook: New Signup').item.json.body.userName }}</strong>!</p><p>Your business <strong>{{ $('Webhook: New Signup').item.json.body.businessName }}</strong> is now registered on Nepal's #1 business platform.</p><h3>Next steps to get started:</h3><ol><li>Complete your business profile</li><li>Add your first product or service</li><li>Connect Telegram for instant notifications</li><li>Share your profile link with customers</li></ol><p style='text-align:center'><a href='https://biznity.vercel.app/dashboard' style='background:#0D7377;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;display:inline-block'>Go to Dashboard</a></p><p style='color:#888;font-size:13px'>Need help? Email us: support@biznity.com.np</p></div></div>",
         "options": {}
       },
       "id": "n7-email-welcome",

@@ -27,7 +27,7 @@ async function seed() {
 
   // Create Events
   const sampleEvents = [
-    { business_id: bizId, title: 'BizNepal Grand Opening', slug: 'biznepal-grand-opening', venue_name: 'Virtual', starts_at: new Date(Date.now() + 86400000*30).toISOString(), is_free: true, status: 'active', category_id: catId, district_id: districtId },
+    { business_id: bizId, title: 'Biznity Grand Opening', slug: 'biznity-grand-opening', venue_name: 'Virtual', starts_at: new Date(Date.now() + 86400000*30).toISOString(), is_free: true, status: 'active', category_id: catId, district_id: districtId },
   ]
   await supabase.from('events').upsert(sampleEvents, { onConflict: 'slug' })
 

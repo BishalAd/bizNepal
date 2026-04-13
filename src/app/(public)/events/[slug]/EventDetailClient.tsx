@@ -86,7 +86,7 @@ export default function EventDetailClient({ event, similarEvents }: { event: any
           const msg = `New registration for *${event.title}*\nUser: ${profile?.full_name || user.email}\nEmail: ${user.email}`
           const waUrl = buildWhatsAppUrl(business.whatsapp, msg)
           // Open silently — use fetch or just log; don't interrupt UX
-          console.info('[BizNepal] Notify business:', waUrl)
+          console.info('[Biznity] Notify business:', waUrl)
         }
       }
     } catch (err: any) {

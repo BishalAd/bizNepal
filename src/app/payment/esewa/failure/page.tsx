@@ -1,7 +1,7 @@
 import { AlertTriangle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
-export const metadata = { title: 'Payment Failed | BizNepal' }
+export const metadata = { title: 'Payment Failed | Biznity' }
 
 export default function EsewaFailurePage() {
   return (

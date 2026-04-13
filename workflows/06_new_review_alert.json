@@ -1,5 +1,5 @@
 {
-  "name": "BizNepal: New Review Alert",
+  "name": "Biznity: New Review Alert",
   "nodes": [
     {
       "parameters": {
@@ -60,7 +60,7 @@
     {
       "parameters": {
         "chatId": "={{ $('Webhook: New Review').item.json.body.businessTelegramChatId }}",
-        "text": "=⚠️ *Urgent: Low Rating Review!*\n\n👤 *From:* {{ $('Webhook: New Review').item.json.body.reviewerName }}\n⭐ *Rating:* {{ $('Webhook: New Review').item.json.body.rating }}/5\n💬 _\"{{ $('Webhook: New Review').item.json.body.content }}\"_\n\nPlease respond quickly to protect your reputation.\n\n🔗 https://biz-nepal.vercel.app/dashboard/reviews",
+        "text": "=⚠️ *Urgent: Low Rating Review!*\n\n👤 *From:* {{ $('Webhook: New Review').item.json.body.reviewerName }}\n⭐ *Rating:* {{ $('Webhook: New Review').item.json.body.rating }}/5\n💬 _\"{{ $('Webhook: New Review').item.json.body.content }}\"_\n\nPlease respond quickly to protect your reputation.\n\n🔗 https://biznity.vercel.app/dashboard/reviews",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -75,14 +75,14 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     },
     {
       "parameters": {
         "chatId": "={{ $('Webhook: New Review').item.json.body.businessTelegramChatId }}",
-        "text": "=🌟 *New Positive Review!*\n\n👤 *From:* {{ $('Webhook: New Review').item.json.body.reviewerName }}\n⭐ *Rating:* {{ $('Webhook: New Review').item.json.body.rating }}/5\n💬 _\"{{ $('Webhook: New Review').item.json.body.content }}\"_\n\nConsider replying to thank them!\n\n🔗 https://biz-nepal.vercel.app/dashboard/reviews",
+        "text": "=🌟 *New Positive Review!*\n\n👤 *From:* {{ $('Webhook: New Review').item.json.body.reviewerName }}\n⭐ *Rating:* {{ $('Webhook: New Review').item.json.body.rating }}/5\n💬 _\"{{ $('Webhook: New Review').item.json.body.content }}\"_\n\nConsider replying to thank them!\n\n🔗 https://biznity.vercel.app/dashboard/reviews",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -97,7 +97,7 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     }

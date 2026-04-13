@@ -8,8 +8,8 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   const { category: categoryId, district: districtId } = await searchParams
   const isFiltered = !!(categoryId || districtId)
 
-  let title = 'Business Directory Nepal — Find Local Businesses | BizNepal'
-  let description = 'Find verified businesses, services, and places across Nepal. Browse by category, district, and rating on BizNepal.'
+  let title = 'Business Directory Nepal — Find Local Businesses | Biznity'
+  let description = 'Find verified businesses, services, and places across Nepal. Browse by category, district, and rating on Biznity.'
 
   if (isFiltered) {
     const supabase = await createClient()
@@ -26,11 +26,11 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
     if (districtName) parts.push(districtName)
     parts.push('Nepal')
 
-    title = `${parts.join(' ')} | BizNepal`
-    description = `Browse ${categoryName ?? 'all'} businesses${districtName ? ` in ${districtName}` : ' across Nepal'}. Find verified local businesses on BizNepal.`
+    title = `${parts.join(' ')} | Biznity`
+    description = `Browse ${categoryName ?? 'all'} businesses${districtName ? ` in ${districtName}` : ' across Nepal'}. Find verified local businesses on Biznity.`
   }
 
-  const canonicalParts = ['https://biz-nepal.vercel.app/businesses']
+  const canonicalParts = ['https://biznity.vercel.app/businesses']
   const paramParts: string[] = []
   if (categoryId) paramParts.push(`category=${categoryId}`)
   if (districtId) paramParts.push(`district=${districtId}`)
@@ -44,7 +44,7 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
       title,
       description,
       url: canonicalUrl,
-      siteName: 'BizNepal',
+      siteName: 'Biznity',
       type: 'website',
     },
     twitter: {
@@ -81,13 +81,13 @@ export default async function BusinessDirectoryPage() {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://biz-nepal.vercel.app',
+        item: 'https://biznity.vercel.app',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Business Directory',
-        item: 'https://biz-nepal.vercel.app/businesses',
+        item: 'https://biznity.vercel.app/businesses',
       },
     ],
   }

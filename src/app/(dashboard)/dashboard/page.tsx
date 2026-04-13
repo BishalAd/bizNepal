@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
-export const metadata = { title: 'Dashboard | BizNepal' }
+export const metadata = { title: 'Dashboard | Biznity' }
 
 export default async function DashboardOverviewPage() {
   const supabase = await createClient()

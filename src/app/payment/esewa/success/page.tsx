@@ -4,7 +4,7 @@ import { triggerNewOrderWebhook } from '@/app/_actions/orderWebhooks'
 import { CheckCircle, ArrowRight, XCircle } from 'lucide-react'
 import Link from 'next/link'
 
-export const metadata = { title: 'Payment Success | BizNepal' }
+export const metadata = { title: 'Payment Success | Biznity' }
 
 export default async function EsewaSuccessPage({ searchParams }: { searchParams: { data?: string } }) {
   const data = searchParams.data

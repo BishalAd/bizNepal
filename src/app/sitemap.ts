@@ -5,7 +5,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
 
 // Production URL — set NEXT_PUBLIC_APP_URL in Vercel env vars
-const BASE_URL = 'https://biz-nepal.vercel.app'
+const BASE_URL = 'https://biznity.vercel.app'
 
 // NOTE: When entity counts exceed 1000, implement paginated sitemaps:
 // export async function generateSitemaps() { return [{ id: 0 }, { id: 1 }] }

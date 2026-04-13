@@ -10,12 +10,12 @@ export default function PageTracker() {
     if (typeof window === 'undefined') return
 
     try {
-      const KEY = 'biznepal_recent_pages'
+      const KEY = 'biznity_recent_pages'
       const existing = localStorage.getItem(KEY)
       let pages = existing ? JSON.parse(existing) : []
       
       const newPage = {
-        title: document.title || 'BizNepal Page',
+        title: document.title || 'Biznity Page',
         url: window.location.pathname + window.location.search,
         timestamp: Date.now()
       }

@@ -1,5 +1,5 @@
 {
-  "name": "BizNepal: Event Booking Confirmation",
+  "name": "Biznity: Event Booking Confirmation",
   "nodes": [
     {
       "parameters": {
@@ -75,7 +75,7 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     },
@@ -107,7 +107,7 @@
     {
       "parameters": {
         "chatId": "={{ $('Webhook: Event Booking').item.json.body.organizerTelegramChatId }}",
-        "text": "=✅ *New Event Booking!*\n\n🎪 *{{ $('Webhook: Event Booking').item.json.body.eventTitle }}*\n👤 *Attendee:* {{ $('Webhook: Event Booking').item.json.body.attendeeName }}\n📞 *Phone:* {{ $('Webhook: Event Booking').item.json.body.attendeePhone }}\n🎫 *Seats:* {{ $('Webhook: Event Booking').item.json.body.seats }}\n💰 *Amount:* ₨ {{ $('Webhook: Event Booking').item.json.body.totalAmount }}\n\n🔗 https://biz-nepal.vercel.app/dashboard/events",
+        "text": "=✅ *New Event Booking!*\n\n🎪 *{{ $('Webhook: Event Booking').item.json.body.eventTitle }}*\n👤 *Attendee:* {{ $('Webhook: Event Booking').item.json.body.attendeeName }}\n📞 *Phone:* {{ $('Webhook: Event Booking').item.json.body.attendeePhone }}\n🎫 *Seats:* {{ $('Webhook: Event Booking').item.json.body.seats }}\n💰 *Amount:* ₨ {{ $('Webhook: Event Booking').item.json.body.totalAmount }}\n\n🔗 https://biznity.vercel.app/dashboard/events",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -122,7 +122,7 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     }

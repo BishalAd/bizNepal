@@ -1,6 +1,6 @@
 ```json
 {
-  "name": "BizNepal Telegram Signup (Router Limits Fixed)",
+  "name": "Biznity Telegram Signup (Router Limits Fixed)",
   "nodes": [
     {
       "parameters": {
@@ -20,7 +20,7 @@
       "id": "node-telegram-trigger",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -54,7 +54,7 @@
     {
       "parameters": {
         "chatId": "={{ $json.userId }}",
-        "text": "Welcome to BizNepal \ud83d\ude80\nHow would you like to sign up?",
+        "text": "Welcome to Biznity \ud83d\ude80\nHow would you like to sign up?",
         "replyMarkup": "inlineKeyboard",
         "inlineKeyboard": {
           "rows": [
@@ -90,7 +90,7 @@
       "id": "node-welcome",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -131,7 +131,7 @@
     {
       "parameters": {
         "chatId": "={{ $json.userId }}",
-        "text": "Sign up on our site: https://biz-nepal.vercel.app/register\n(Type /start anytime to restart)",
+        "text": "Sign up on our site: https://biznity.vercel.app/register\n(Type /start anytime to restart)",
         "additionalFields": {}
       },
       "name": "Send Manual Link",
@@ -144,7 +144,7 @@
       "id": "node-manual-link",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -178,7 +178,7 @@
       "id": "node-ask-name",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -212,7 +212,7 @@
       "id": "node-ask-phone",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -246,7 +246,7 @@
       "id": "node-ask-email",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -280,7 +280,7 @@
       "id": "node-ask-pass",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -337,7 +337,7 @@
       "id": "node-ask-terms",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -394,7 +394,7 @@
       "id": "node-ask-role",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -448,7 +448,7 @@
       "id": "node-ask-biz",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -507,7 +507,7 @@
       "id": "node-send-preview",
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -660,7 +660,7 @@
     {
       "parameters": {
         "chatId": "={{ $node[\"Session Manager\"].json.userId }}",
-        "text": "\ud83c\udf89 Success! Your account is perfectly created via Telegram.\nVisit https://biz-nepal.vercel.app/login to login securely.",
+        "text": "\ud83c\udf89 Success! Your account is perfectly created via Telegram.\nVisit https://biznity.vercel.app/login to login securely.",
         "additionalFields": {}
       },
       "name": "Send Success",

@@ -1,8 +1,8 @@
 import React from 'react'
 
 export const metadata = {
-  title: 'Privacy Policy | BizNepal',
-  description: 'Privacy Policy and Data Handling for BizNepal.',
+  title: 'Privacy Policy | Biznity',
+  description: 'Privacy Policy and Data Handling for Biznity.',
 }
 
 export default function PrivacyPage() {
@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         
         <div className="prose prose-red max-w-none text-gray-600">
           <p>
-            At BizNepal, we take your privacy seriously. This Privacy Policy explains how we collect, use, and protect your personal information when you use our platform.
+            At Biznity, we take your privacy seriously. This Privacy Policy explains how we collect, use, and protect your personal information when you use our platform.
           </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">1. Information We Collect</h2>

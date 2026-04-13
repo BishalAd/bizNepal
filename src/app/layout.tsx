@@ -17,41 +17,41 @@ const notoDevanagari = Noto_Sans_Devanagari({
 
 export const metadata: Metadata = {
   title: {
-    default: 'BizNepal — Nepal\'s Business Directory',
-    template: '%s | BizNepal',
+    default: 'Biznity — Nepal\'s Business Directory',
+    template: '%s | Biznity',
   },
   description: 'Discover Nepal\'s best businesses, products, jobs, events, and deals — all in one place. Browse verified local businesses across Nepal.',
   keywords: [
     'nepal business directory', 'businesses in nepal', 'nepal jobs', 'nepal events',
-    'nepal products', 'kathmandu business', 'nepal deals', 'biznepal',
+    'nepal products', 'kathmandu business', 'nepal deals', 'biznity',
   ],
-  authors: [{ name: 'BizNepal' }],
+  authors: [{ name: 'Biznity' }],
   robots: { index: true, follow: true },
   openGraph: {
-    title: 'BizNepal — Nepal\'s Business Directory',
+    title: 'Biznity — Nepal\'s Business Directory',
     description: 'Discover Nepal\'s best businesses, products, jobs, events, and offers.',
-    url: 'https://biz-nepal.vercel.app',
-    siteName: 'BizNepal',
+    url: 'https://biznity.vercel.app',
+    siteName: 'Biznity',
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'BizNepal — Nepal\'s Business Directory',
+    title: 'Biznity — Nepal\'s Business Directory',
     description: 'Nepal\'s Business Platform',
   },
-  metadataBase: new URL('https://biz-nepal.vercel.app'),
-  applicationName: 'BizNepal',
+  metadataBase: new URL('https://biznity.vercel.app'),
+  applicationName: 'Biznity',
   formatDetection: { telephone: false },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'BizNepal',
+    title: 'Biznity',
   },
   other: {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': 'BizNepal',
+    'apple-mobile-web-app-title': 'Biznity',
     'mobile-web-app-capable': 'yes',
   }
 }
@@ -75,7 +75,7 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="BizNepal" />
+        <meta name="apple-mobile-web-app-title" content="Biznity" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body className="min-h-full flex flex-col antialiased font-sans bg-gray-50">

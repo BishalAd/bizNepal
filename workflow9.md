@@ -6,7 +6,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
 
 ```json
 {
-  "name": "BizNepal Telegram Chatbot Signup (Fixed)",
+  "name": "Biznity Telegram Chatbot Signup (Fixed)",
   "nodes": [
     {
       "parameters": {
@@ -18,7 +18,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 0, 300 ],
       "id": "node-telegram-trigger",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -59,7 +59,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
     {
       "parameters": {
         "chatId": "={{ $json.userId }}",
-        "text": "Welcome to BizNepal 🚀\nHow would you like to sign up?",
+        "text": "Welcome to Biznity 🚀\nHow would you like to sign up?",
         "replyMarkup": "inlineKeyboard",
         "inlineKeyboard": {
           "rows": [
@@ -73,7 +73,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 600, -100 ],
       "id": "node-welcome",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -98,7 +98,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
     {
       "parameters": {
         "chatId": "={{ $json.userId }}",
-        "text": "Sign up on our site: https://biz-nepal.vercel.app/register\n(Type /start anytime to restart)",
+        "text": "Sign up on our site: https://biznity.vercel.app/register\n(Type /start anytime to restart)",
         "additionalFields": {}
       },
       "name": "Send Manual Link",
@@ -106,7 +106,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 800, 0 ],
       "id": "node-manual-link",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -129,7 +129,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 800, 200 ],
       "id": "node-ask-name",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -162,7 +162,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 800, 350 ],
       "id": "node-ask-phone",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -185,7 +185,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 800, 500 ],
       "id": "node-ask-email",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -208,7 +208,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 800, 650 ],
       "id": "node-ask-pass",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -237,7 +237,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 800, 800 ],
       "id": "node-ask-terms",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -266,7 +266,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 800, 950 ],
       "id": "node-ask-role",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -299,7 +299,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 1000, 1050 ],
       "id": "node-ask-biz",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -328,7 +328,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
       "typeVersion": 1,
       "position": [ 800, 1250 ],
       "id": "node-send-preview",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -404,7 +404,7 @@ This workflow is perfectly state-managed. It intercepts both messages and button
     {
       "parameters": {
         "chatId": "={{ $('Session Manager').item.json.userId }}",
-        "text": "🎉 Success! Your account is created via Telegram.\nVisit https://biz-nepal.vercel.app/login to login securely.",
+        "text": "🎉 Success! Your account is created via Telegram.\nVisit https://biznity.vercel.app/login to login securely.",
         "additionalFields": {}
       },
       "name": "Send Success",

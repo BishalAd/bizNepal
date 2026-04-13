@@ -42,7 +42,7 @@ export default function RegisterPage() {
       <div className="text-center mb-10">
         <h2 className="text-3xl font-bold tracking-tight text-gray-900">Create your account</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Join BizNepal to discover local deals or grow your business.
+          Join Biznity to discover local deals or grow your business.
         </p>
       </div>
 

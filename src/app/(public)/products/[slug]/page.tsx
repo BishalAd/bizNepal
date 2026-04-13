@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .eq('slug', slug)
     .single()
 
-  if (!data) return { title: 'Product Not Found | BizNepal' }
+  if (!data) return { title: 'Product Not Found | Biznity' }
 
   const bizName = (data.business as any)?.name
   const category = (data.category as any)?.name_en
@@ -21,10 +21,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const title = `${data.name}${ bizName ? ` by ${bizName}` : '' }${ category ? ` — ${category}` : '' } in Nepal`
   const description = data.description
     ? data.description.substring(0, 157) + (data.description.length > 157 ? '…' : '')
-    : `Buy ${data.name}${ bizName ? ` from ${bizName}` : '' }${ city ? ` in ${city}` : '' }, Nepal.${ price ? ` Starting at NPR ${price}.` : '' } Shop on BizNepal.`
+    : `Buy ${data.name}${ bizName ? ` from ${bizName}` : '' }${ city ? ` in ${city}` : '' }, Nepal.${ price ? ` Starting at NPR ${price}.` : '' } Shop on Biznity.`
   const imageKeys: string[] = Array.isArray(data.image_keys) ? data.image_keys : []
-  const image = imageKeys[0] || 'https://biz-nepal.vercel.app/og-default.png'
-  const url = `https://biz-nepal.vercel.app/products/${slug}`
+  const image = imageKeys[0] || 'https://biznity.vercel.app/og-default.png'
+  const url = `https://biznity.vercel.app/products/${slug}`
 
   return {
     title,
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title,
       description,
       url,
-      siteName: 'BizNepal',
+      siteName: 'Biznity',
       images: [{ url: image, width: 1200, height: 630, alt: data.name }],
       type: 'website',
     },
@@ -92,7 +92,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     .eq('businesses.is_active', true)
     .limit(4)
 
-  const canonicalUrl = `https://biz-nepal.vercel.app/products/${slug}`
+  const canonicalUrl = `https://biznity.vercel.app/products/${slug}`
   const bizName = (product.business as any)?.name
   const bizSlug = (product.business as any)?.slug
   const imageKeys: string[] = Array.isArray(product.image_keys) ? product.image_keys : []
@@ -137,9 +137,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biz-nepal.vercel.app' },
-      { '@type': 'ListItem', position: 2, name: 'Products', item: 'https://biz-nepal.vercel.app/products' },
-      ...(bizSlug ? [{ '@type': 'ListItem', position: 3, name: bizName, item: `https://biz-nepal.vercel.app/businesses/${bizSlug}` }] : []),
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biznity.vercel.app' },
+      { '@type': 'ListItem', position: 2, name: 'Products', item: 'https://biznity.vercel.app/products' },
+      ...(bizSlug ? [{ '@type': 'ListItem', position: 3, name: bizName, item: `https://biznity.vercel.app/businesses/${bizSlug}` }] : []),
       { '@type': 'ListItem', position: bizSlug ? 4 : 3, name: product.name, item: canonicalUrl },
     ],
   }

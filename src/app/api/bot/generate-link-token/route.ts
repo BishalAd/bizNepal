@@ -48,7 +48,7 @@ export async function POST() {
 
     // 6. Return response
     // Use the public username which doesn't have the '@' for the URL
-    const botUsername = process.env.NEXT_PUBLIC_NOTIFY_BOT_USERNAME || 'BizNepalNotifyBot'
+    const botUsername = process.env.NEXT_PUBLIC_NOTIFY_BOT_USERNAME || 'BiznityNotifyBot'
     return NextResponse.json({
       token,
       botUrl: `https://t.me/${botUsername}?start=${token}`

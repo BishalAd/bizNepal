@@ -65,7 +65,7 @@ export default function OfferDetailClient({ offer, similarOffers }: { offer: any
       await supabase.rpc('increment_offer_grab', { row_id: offer.id })
 
       toast.success('Generated code!', { id: tid })
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://biz-nepal.vercel.app'
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://biznity.vercel.app'
       const msg = `Hi, I want to claim this offer:\n*${offer.title}*\nPrice: NPR ${offer.offer_price?.toLocaleString()} (was NPR ${offer.original_price?.toLocaleString()})\nMy Code: *${code}*\nLink: ${appUrl}/offers/${offer.id}`
       window.open(buildWhatsAppUrl(business.whatsapp, msg), '_blank')
       router.refresh()
@@ -133,7 +133,7 @@ export default function OfferDetailClient({ offer, similarOffers }: { offer: any
               </div>
               <h1 className="text-4xl md:text-7xl font-black text-white leading-[1.1] mb-6 tracking-tight drop-shadow-2xl">{offer.title}</h1>
               <div className="flex items-center gap-6">
-                <Link href={`/businesses/${business.slug}`} className="group flex items-center bg-white/5 backdrop-blur-sm border border-white/10 pl-2 pr-5 py-2 rounded-2xl hover:bg-white/10 transition-all">
+                <Link href={`/${business.slug}`} className="group flex items-center bg-white/5 backdrop-blur-sm border border-white/10 pl-2 pr-5 py-2 rounded-2xl hover:bg-white/10 transition-all">
                   <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden mr-3">
                     {business.logo_url ? <img src={business.logo_url} alt="" className="w-full h-full object-cover"/> : <Store className="w-5 h-5 text-gray-900" />}
                   </div>

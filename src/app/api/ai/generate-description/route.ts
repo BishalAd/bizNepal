@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     // Mock response simulating a Claude output due to key unavailability
     const responseJson = {
-       english: `${productName} by ${businessName} is the definitive choice for your ${category} needs in Nepal. Crafted with exceptional quality and built to deliver supreme reliability. Get it today on BizNepal.`,
+       english: `${productName} by ${businessName} is the definitive choice for your ${category} needs in Nepal. Crafted with exceptional quality and built to deliver supreme reliability. Get it today on Biznity.`,
        nepali: `${businessName} ले प्रस्तुत गर्दैछ उत्कृष्ट ${productName}। ${category} को लागि यो नेपालमै सबैभन्दा भरपर्दो विकल्प हो। उत्कृष्ट गुणस्तर र लामो टिकाउपनका साथ, आजै अर्डर गर्नुहोस्।`
     }
 

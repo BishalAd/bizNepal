@@ -31,7 +31,7 @@ export default function ProductCard({
     }
   }
 
-  const mainImage = product.image_keys?.[0] || product.images?.[0] || 'https://placehold.co/600x400?text=BizNepal'
+  const mainImage = product.image_keys?.[0] || product.images?.[0] || 'https://placehold.co/600x400?text=Biznity'
 
   return (
     <Link href={`/products/${product.slug}`} className="group block bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col h-full">

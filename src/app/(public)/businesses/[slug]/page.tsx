@@ -12,16 +12,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .eq('slug', slug)
     .single()
 
-  if (!data) return { title: 'Business Not Found | BizNepal' }
+  if (!data) return { title: 'Business Not Found | Biznity' }
 
   const category = (data.category as any)?.name_en ?? 'Business'
   const district = (data.district_info as any)?.name_en ?? 'Nepal'
   const title = `${data.name} — ${category} in ${district}, Nepal`
   const description = data.description
     ? data.description.substring(0, 157) + (data.description.length > 157 ? '…' : '')
-    : `Explore ${data.name}, a ${category} located in ${district}, Nepal. View contact details, reviews, offers, and more on BizNepal.`
-  const image = data.logo_url || data.cover_url || 'https://biz-nepal.vercel.app/og-default.png'
-  const url = `https://biz-nepal.vercel.app/businesses/${slug}`
+    : `Explore ${data.name}, a ${category} located in ${district}, Nepal. View contact details, reviews, offers, and more on Biznity.`
+  const image = data.logo_url || data.cover_url || 'https://biznity.vercel.app/og-default.png'
+  const url = `https://biznity.vercel.app/businesses/${slug}`
 
   return {
     title,
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title,
       description,
       url,
-      siteName: 'BizNepal',
+      siteName: 'Biznity',
       images: [{ url: image, width: 1200, height: 630, alt: data.name }],
       type: 'website',
       locale: 'en_US',
@@ -108,7 +108,7 @@ export default async function BusinessProfilePage({ params }: { params: Promise<
   const productItems = (products || []).filter((p: any) => p.category?.type !== 'service')
   const serviceItems = (services || []).filter((p: any) => p.category?.type === 'service')
 
-  const canonicalUrl = `https://biz-nepal.vercel.app/businesses/${slug}`
+  const canonicalUrl = `https://biznity.vercel.app/businesses/${slug}`
   const businessCategory = (business.category as any)?.name_en ?? 'LocalBusiness'
   const districtName = (business.district_info as any)?.name_en ?? ''
   const businessImage = business.logo_url || business.cover_url
@@ -173,13 +173,13 @@ export default async function BusinessProfilePage({ params }: { params: Promise<
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://biz-nepal.vercel.app',
+        item: 'https://biznity.vercel.app',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Business Directory',
-        item: 'https://biz-nepal.vercel.app/businesses',
+        item: 'https://biznity.vercel.app/businesses',
       },
       {
         '@type': 'ListItem',

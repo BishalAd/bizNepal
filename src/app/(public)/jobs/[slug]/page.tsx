@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .eq('slug', slug)
     .single()
 
-  if (!data) return { title: 'Job Not Found | BizNepal' }
+  if (!data) return { title: 'Job Not Found | Biznity' }
 
   const bizName = (data.business as any)?.name
   const district = (data.district as any)?.name_en
@@ -22,12 +22,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const salarySnippet = data.show_salary && data.salary_min
     ? ` — NPR ${data.salary_min.toLocaleString()}${data.salary_max ? `–${data.salary_max.toLocaleString()}` : '+'}`
     : ''
-  const title = `${data.title} at ${bizName || 'BizNepal'} | ${jobType ? jobType + ' ' : ''}Job in ${locType}`
+  const title = `${data.title} at ${bizName || 'Biznity'} | ${jobType ? jobType + ' ' : ''}Job in ${locType}`
   const description = data.description
     ? data.description.substring(0, 157) + (data.description.length > 157 ? '…' : '')
-    : `Hiring: ${data.title} at ${bizName || 'BizNepal'} in ${locType}, Nepal.${salarySnippet} Apply now on BizNepal Job Board.`
-  const image = (data.business as any)?.logo_url || 'https://biz-nepal.vercel.app/og-default.png'
-  const url = `https://biz-nepal.vercel.app/jobs/${slug}`
+    : `Hiring: ${data.title} at ${bizName || 'Biznity'} in ${locType}, Nepal.${salarySnippet} Apply now on Biznity Job Board.`
+  const image = (data.business as any)?.logo_url || 'https://biznity.vercel.app/og-default.png'
+  const url = `https://biznity.vercel.app/jobs/${slug}`
 
   return {
     title,
@@ -40,8 +40,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title,
       description,
       url,
-      siteName: 'BizNepal',
-      images: [{ url: image, width: 1200, height: 630, alt: `${data.title} — BizNepal Jobs` }],
+      siteName: 'Biznity',
+      images: [{ url: image, width: 1200, height: 630, alt: `${data.title} — Biznity Jobs` }],
       type: 'website',
     },
     twitter: {
@@ -90,7 +90,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
     .neq('business_id', job.business_id) // don't repeat company jobs
     .limit(3)
 
-  const canonicalUrl = `https://biz-nepal.vercel.app/jobs/${slug}`
+  const canonicalUrl = `https://biznity.vercel.app/jobs/${slug}`
   const bizName = (job.business as any)?.name
   const bizCity = (job.business as any)?.city
   const districtName = job.district?.name_en
@@ -107,15 +107,15 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
     '@type': 'JobPosting',
     title: job.title,
     description: job.description ?? undefined,
-    identifier: { '@type': 'PropertyValue', name: bizName || 'BizNepal', value: job.id },
+    identifier: { '@type': 'PropertyValue', name: bizName || 'Biznity', value: job.id },
     datePosted: job.created_at ? new Date(job.created_at).toISOString().split('T')[0] : undefined,
     validThrough: job.expires_at ? new Date(job.expires_at).toISOString().split('T')[0] : undefined,
     employmentType: employmentTypeMap[job.job_type] ?? 'OTHER',
     hiringOrganization: {
       '@type': 'Organization',
-      name: bizName || 'BizNepal',
+      name: bizName || 'Biznity',
       ...(bizLogo ? { logo: bizLogo } : {}),
-      sameAs: `https://biz-nepal.vercel.app/businesses/${(job.business as any)?.slug ?? ''}`,
+      sameAs: `https://biznity.vercel.app/businesses/${(job.business as any)?.slug ?? ''}`,
     },
     jobLocation: job.location_type === 'remote'
       ? { '@type': 'Place', address: { '@type': 'PostalAddress', addressCountry: 'NP' } }
@@ -147,8 +147,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biz-nepal.vercel.app' },
-      { '@type': 'ListItem', position: 2, name: 'Jobs', item: 'https://biz-nepal.vercel.app/jobs' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biznity.vercel.app' },
+      { '@type': 'ListItem', position: 2, name: 'Jobs', item: 'https://biznity.vercel.app/jobs' },
       { '@type': 'ListItem', position: 3, name: job.title, item: canonicalUrl },
     ],
   }

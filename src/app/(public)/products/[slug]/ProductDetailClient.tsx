@@ -57,7 +57,7 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
   const { user } = useAuth()
   const supabase = createClient()
   
-  const placeholder = 'https://placehold.co/600x400?text=BizNepal'
+  const placeholder = 'https://placehold.co/600x400?text=Biznity'
   const [activeImage, setActiveImage] = useState((product.image_keys && product.image_keys[0]) || placeholder)
   const [quantity, setQuantity] = useState(1)
   const [isFavourited, setIsFavourited] = useState(false)
@@ -145,7 +145,7 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
       await supabase.rpc('decrement_product_stock', { row_id: product.id, qty: quantity })
 
       toast.success('Generated code!', { id: tid })
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://biz-nepal.vercel.app'
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://biznity.vercel.app'
       const msg = `Hi, I'm interested in buying:\n*${product.name}* — NPR ${effectivePrice.toLocaleString()}\nQty: ${quantity}\nMy Purchase Code: *${code}*\nLink: ${appUrl}/products/${product.slug}`
       window.open(buildWhatsAppUrl(business.whatsapp, msg), '_blank')
       setQuantity(1)
@@ -303,7 +303,7 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">{product.name}</h1>
                 
                 <div className="flex items-center gap-4 mb-6">
-                  <Link href={`/businesses/${business.slug}`} className="flex items-center text-sm font-medium text-red-600 hover:text-red-700">
+                  <Link href={`/${business.slug}`} className="flex items-center text-sm font-medium text-red-600 hover:text-red-700">
                     <Store className="w-4 h-4 mr-1.5" />
                     {business.name}
                   </Link>
@@ -411,7 +411,7 @@ export default function ProductDetailClient({ product, reviews, relatedProducts 
                 <MessageCircle className="w-5 h-5" /> WhatsApp
               </a>
             )}
-            <Link href={`/businesses/${business.slug}`} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition">
+            <Link href={`/${business.slug}`} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition">
               Store
             </Link>
           </div>

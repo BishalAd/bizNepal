@@ -1,8 +1,8 @@
 import React from 'react'
 
 export const metadata = {
-  title: 'Terms of Service | BizNepal',
-  description: 'Terms of Service and User Agreement for BizNepal.',
+  title: 'Terms of Service | Biznity',
+  description: 'Terms of Service and User Agreement for Biznity.',
 }
 
 export default function TermsPage() {
@@ -14,13 +14,13 @@ export default function TermsPage() {
         
         <div className="prose prose-red max-w-none text-gray-600">
           <p>
-            Welcome to BizNepal. By accessing or using our platform, you agree to be bound by these Terms of Service. 
+            Welcome to Biznity. By accessing or using our platform, you agree to be bound by these Terms of Service. 
             Please read them carefully before using our services.
           </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">1. Acceptance of Terms</h2>
           <p>
-            By registering an account, listing a business, or simply browsing the BizNepal platform, you agree to comply with and be bound by these Terms. 
+            By registering an account, listing a business, or simply browsing the Biznity platform, you agree to comply with and be bound by these Terms. 
             If you do not agree to these Terms, please refrain from using our services.
           </p>
 
@@ -28,12 +28,12 @@ export default function TermsPage() {
           <ul className="list-disc pl-5 space-y-2 mb-6">
             <li>You must provide accurate and complete information when creating an account or business listing.</li>
             <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
-            <li>BizNepal reserves the right to suspend or terminate accounts that violate our policies or provide false information.</li>
+            <li>Biznity reserves the right to suspend or terminate accounts that violate our policies or provide false information.</li>
           </ul>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">3. Content & Intellectual Property</h2>
           <p>
-            When you upload content (images, descriptions, reviews) to BizNepal, you grant us a non-exclusive, worldwide, royalty-free license to use, display, and distribute that content to promote your business and the platform. 
+            When you upload content (images, descriptions, reviews) to Biznity, you grant us a non-exclusive, worldwide, royalty-free license to use, display, and distribute that content to promote your business and the platform. 
             You retain all ownership rights to your original content.
           </p>
 
@@ -44,7 +44,7 @@ export default function TermsPage() {
 
           <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">5. Limitation of Liability</h2>
           <p>
-            BizNepal acts as a directory and connection platform. We do not guarantee the quality, safety, or legality of any products, services, or events listed by third-party businesses. Any transactions or disputes are strictly between the user and the business.
+            Biznity acts as a directory and connection platform. We do not guarantee the quality, safety, or legality of any products, services, or events listed by third-party businesses. Any transactions or disputes are strictly between the user and the business.
           </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">6. Changes to Terms</h2>

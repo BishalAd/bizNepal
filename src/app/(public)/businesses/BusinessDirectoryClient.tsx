@@ -213,7 +213,7 @@ export default function BusinessDirectoryClient({ categories, districts, initial
                               {b.logo_url ? <img src={b.logo_url} className="w-full h-full object-cover"/> : <Store className="w-5 h-5 text-gray-400"/>}
                            </div>
                            <div className="flex-1 min-w-0 overflow-hidden">
-                             <a href={`/businesses/${b.slug}`} target="_blank" rel="noreferrer" className="font-bold text-gray-900 text-sm group-hover:text-blue-600 truncate block">{b.name}</a>
+                             <a href={`/${b.slug}`} target="_blank" rel="noreferrer" className="font-bold text-gray-900 text-sm group-hover:text-blue-600 truncate block">{b.name}</a>
                              <div className="flex items-center text-xs text-gray-500 mt-1">
                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-500 mr-1"/> {b.rating || '0.0'} ({b.review_count || 0})
                              </div>

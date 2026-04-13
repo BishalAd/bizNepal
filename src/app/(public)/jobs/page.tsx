@@ -8,8 +8,8 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   const { category: cat, district: dist, type: jobType } = await searchParams
   const isFiltered = !!(cat || dist || jobType)
 
-  let title = 'Jobs in Nepal — Find Your Dream Job | BizNepal'
-  let description = 'Browse verified job listings in Nepal. Find full-time, part-time, remote, and internship opportunities across all industries on BizNepal.'
+  let title = 'Jobs in Nepal — Find Your Dream Job | Biznity'
+  let description = 'Browse verified job listings in Nepal. Find full-time, part-time, remote, and internship opportunities across all industries on Biznity.'
 
   if (isFiltered) {
     const supabase = await createClient()
@@ -27,17 +27,17 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
     parts.push('Jobs')
     if (distName) parts.push(`in ${distName}`)
     parts.push('Nepal')
-    title = `${parts.join(' ')} | BizNepal`
-    description = `Find ${ catName ?? 'all' }${ typeName ? ' ' + typeName : '' } jobs${ distName ? ` in ${distName}` : ' across Nepal' }. Apply today on BizNepal.`
+    title = `${parts.join(' ')} | Biznity`
+    description = `Find ${ catName ?? 'all' }${ typeName ? ' ' + typeName : '' } jobs${ distName ? ` in ${distName}` : ' across Nepal' }. Apply today on Biznity.`
   }
 
-  const url = 'https://biz-nepal.vercel.app/jobs'
+  const url = 'https://biznity.vercel.app/jobs'
   return {
     title,
     description,
-    keywords: ['nepal jobs', 'jobs in nepal', 'nepal hiring', 'kathmandu jobs', 'remote jobs nepal', 'biznepal jobs'],
+    keywords: ['nepal jobs', 'jobs in nepal', 'nepal hiring', 'kathmandu jobs', 'remote jobs nepal', 'biznity jobs'],
     alternates: { canonical: url },
-    openGraph: { title, description, url, siteName: 'BizNepal', type: 'website' },
+    openGraph: { title, description, url, siteName: 'Biznity', type: 'website' },
     twitter: { card: 'summary', title, description },
   }
 }
@@ -58,8 +58,8 @@ export default async function JobsPage() {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biz-nepal.vercel.app' },
-      { '@type': 'ListItem', position: 2, name: 'Jobs in Nepal', item: 'https://biz-nepal.vercel.app/jobs' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biznity.vercel.app' },
+      { '@type': 'ListItem', position: 2, name: 'Jobs in Nepal', item: 'https://biznity.vercel.app/jobs' },
     ],
   }
 

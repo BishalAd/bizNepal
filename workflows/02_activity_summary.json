@@ -1,5 +1,5 @@
 {
-  "name": "BizNepal: Activity Summary (Every 2 Hours)",
+  "name": "Biznity: Activity Summary (Every 2 Hours)",
   "nodes": [
     {
       "parameters": {
@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "url": "https://biz-nepal.vercel.app/api/bot/get-subscribed-businesses",
+        "url": "https://biznity.vercel.app/api/bot/get-subscribed-businesses",
         "authentication": "headerAuth",
         "options": {}
       },
@@ -37,7 +37,7 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "name": "BizNepal Webhook Secret"
+          "name": "Biznity Webhook Secret"
         }
       }
     },
@@ -72,7 +72,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://biz-nepal.vercel.app/api/activity-summary",
+        "url": "https://biznity.vercel.app/api/activity-summary",
         "authentication": "headerAuth",
         "sendBody": true,
         "specifyBody": "json",
@@ -89,7 +89,7 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "name": "BizNepal Webhook Secret"
+          "name": "Biznity Webhook Secret"
         }
       }
     },
@@ -121,7 +121,7 @@
     {
       "parameters": {
         "chatId": "={{ $('Split In Batches').item.json.telegram_chat_id }}",
-        "text": "=📊 *BizNepal Summary — Last 2 Hours*\n🏢 {{ $('Split In Batches').item.json.name }}\n\n💰 Orders: *{{ $json.orders || 0 }}* (₨ {{ $json.revenue || 0 }})\n👔 New Applications: *{{ $json.applications || 0 }}*\n🎟 Event Bookings: *{{ $json.bookings || 0 }}*\n⭐ New Reviews: *{{ $json.reviews || 0 }}*\n\n🔗 https://biz-nepal.vercel.app/dashboard",
+        "text": "=📊 *Biznity Summary — Last 2 Hours*\n🏢 {{ $('Split In Batches').item.json.name }}\n\n💰 Orders: *{{ $json.orders || 0 }}* (₨ {{ $json.revenue || 0 }})\n👔 New Applications: *{{ $json.applications || 0 }}*\n🎟 Event Bookings: *{{ $json.bookings || 0 }}*\n⭐ New Reviews: *{{ $json.reviews || 0 }}*\n\n🔗 https://biznity.vercel.app/dashboard",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -136,7 +136,7 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     }

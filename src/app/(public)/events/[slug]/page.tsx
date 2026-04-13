@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .eq('slug', slug)
     .single()
 
-  if (!data) return { title: 'Event Not Found | BizNepal' }
+  if (!data) return { title: 'Event Not Found | Biznity' }
 
   const district = (data.district_info as any)?.name_en
   const eventDate = data.starts_at
@@ -24,9 +24,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const title = `${data.title} — ${eventType} in ${venue}${ eventDate ? ` | ${eventDate}` : '' }`
   const description = data.description
     ? data.description.substring(0, 157) + (data.description.length > 157 ? '…' : '')
-    : `Join ${data.title} — a ${eventType} ${ data.is_online ? 'online' : `in ${venue}` }${ eventDate ? ` on ${eventDate}` : '' }. ${ priceSnippet }. Register on BizNepal.`
-  const image = data.banner_url || 'https://biz-nepal.vercel.app/og-default.png'
-  const url = `https://biz-nepal.vercel.app/events/${slug}`
+    : `Join ${data.title} — a ${eventType} ${ data.is_online ? 'online' : `in ${venue}` }${ eventDate ? ` on ${eventDate}` : '' }. ${ priceSnippet }. Register on Biznity.`
+  const image = data.banner_url || 'https://biznity.vercel.app/og-default.png'
+  const url = `https://biznity.vercel.app/events/${slug}`
 
   return {
     title,
@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title,
       description,
       url,
-      siteName: 'BizNepal',
+      siteName: 'Biznity',
       images: [{ url: image, width: 1200, height: 630, alt: data.title }],
       type: 'website',
     },
@@ -79,7 +79,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
     .neq('id', event.id)
     .limit(3)
 
-  const canonicalUrl = `https://biz-nepal.vercel.app/events/${slug}`
+  const canonicalUrl = `https://biznity.vercel.app/events/${slug}`
   const organizerName = (event.organizer as any)?.full_name || (event.business as any)?.name
   const bizSlug = (event.business as any)?.slug
 
@@ -132,9 +132,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biz-nepal.vercel.app' },
-      { '@type': 'ListItem', position: 2, name: 'Events', item: 'https://biz-nepal.vercel.app/events' },
-      ...(bizSlug ? [{ '@type': 'ListItem', position: 3, name: (event.business as any)?.name, item: `https://biz-nepal.vercel.app/businesses/${bizSlug}` }] : []),
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biznity.vercel.app' },
+      { '@type': 'ListItem', position: 2, name: 'Events', item: 'https://biznity.vercel.app/events' },
+      ...(bizSlug ? [{ '@type': 'ListItem', position: 3, name: (event.business as any)?.name, item: `https://biznity.vercel.app/businesses/${bizSlug}` }] : []),
       { '@type': 'ListItem', position: bizSlug ? 4 : 3, name: event.title, item: canonicalUrl },
     ],
   }

@@ -1,5 +1,5 @@
 {
-  "name": "BizNepal: New Order Notification",
+  "name": "Biznity: New Order Notification",
   "nodes": [
     {
       "parameters": {
@@ -63,7 +63,7 @@
     {
       "parameters": {
         "chatId": "={{ $json.body.businessTelegramChatId }}",
-        "text": "=🛍️ *New COD Order!*\n\n📦 *Product:* {{ $json.body.items[0].name }}\n💰 *Amount:* ₨ {{ $json.body.total }}\n👤 *Customer:* {{ $json.body.customerName }}\n📞 *Phone:* {{ $json.body.customerPhone }}\n📍 *Deliver to:* {{ $json.body.deliveryAddress }}\n\n⚠️ _Cash to be collected on delivery_\n\n🔗 https://biz-nepal.vercel.app/dashboard/orders",
+        "text": "=🛍️ *New COD Order!*\n\n📦 *Product:* {{ $json.body.items[0].name }}\n💰 *Amount:* ₨ {{ $json.body.total }}\n👤 *Customer:* {{ $json.body.customerName }}\n📞 *Phone:* {{ $json.body.customerPhone }}\n📍 *Deliver to:* {{ $json.body.deliveryAddress }}\n\n⚠️ _Cash to be collected on delivery_\n\n🔗 https://biznity.vercel.app/dashboard/orders",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -78,14 +78,14 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     },
     {
       "parameters": {
         "chatId": "={{ $json.body.businessTelegramChatId }}",
-        "text": "=✅ *New Paid Order!*\n\n📦 *Product:* {{ $json.body.items[0].name }}\n💰 *Amount:* ₨ {{ $json.body.total }}\n💳 *Payment:* {{ $json.body.paymentMethod }} _(Confirmed)_\n👤 *Customer:* {{ $json.body.customerName }}\n📞 *Phone:* {{ $json.body.customerPhone }}\n\n🔗 https://biz-nepal.vercel.app/dashboard/orders",
+        "text": "=✅ *New Paid Order!*\n\n📦 *Product:* {{ $json.body.items[0].name }}\n💰 *Amount:* ₨ {{ $json.body.total }}\n💳 *Payment:* {{ $json.body.paymentMethod }} _(Confirmed)_\n👤 *Customer:* {{ $json.body.customerName }}\n📞 *Phone:* {{ $json.body.customerPhone }}\n\n🔗 https://biznity.vercel.app/dashboard/orders",
         "additionalFields": {
           "parseMode": "Markdown"
         }
@@ -100,7 +100,7 @@
       ],
       "credentials": {
         "telegramApi": {
-          "name": "BizNepal Bot"
+          "name": "Biznity Bot"
         }
       }
     },
@@ -131,10 +131,10 @@
     },
     {
       "parameters": {
-        "fromEmail": "orders@biznepal.com.np",
+        "fromEmail": "orders@biznity.com.np",
         "toEmail": "={{ $('Webhook: New Order').item.json.body.customerEmail }}",
-        "subject": "✅ Order Confirmed — BizNepal",
-        "html": "<h2>Order Confirmed!</h2><p>Hello {{ $('Webhook: New Order').item.json.body.customerName }},</p><p>Your order has been placed successfully!</p><p><strong>Total: ₨ {{ $('Webhook: New Order').item.json.body.total }}</strong></p><p>Payment: {{ $('Webhook: New Order').item.json.body.paymentMethod }}</p><p>Thank you for shopping on BizNepal!</p>",
+        "subject": "✅ Order Confirmed — Biznity",
+        "html": "<h2>Order Confirmed!</h2><p>Hello {{ $('Webhook: New Order').item.json.body.customerName }},</p><p>Your order has been placed successfully!</p><p><strong>Total: ₨ {{ $('Webhook: New Order').item.json.body.total }}</strong></p><p>Payment: {{ $('Webhook: New Order').item.json.body.paymentMethod }}</p><p>Thank you for shopping on Biznity!</p>",
         "options": {}
       },
       "id": "n1-email",

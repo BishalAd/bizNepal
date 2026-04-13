@@ -88,7 +88,7 @@ function KhaltiSuccessContent() {
                </div>
 
                <p className="text-sm font-medium text-gray-600 leading-relaxed">
-                 Thank you for choosing BizNepal! The business owner has received your order instantly.
+                 Thank you for choosing Biznity! The business owner has received your order instantly.
                </p>
 
                <div className="pt-4">

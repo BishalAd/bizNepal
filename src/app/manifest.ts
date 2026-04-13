@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "BizNepal",
-    short_name: "BizNepal",
+    name: "Biznity",
+    short_name: "Biznity",
     description: "Nepal's Business Directory — Find local businesses, jobs, events and offers",
     start_url: "/",
     scope: "/",

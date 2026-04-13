@@ -10,7 +10,7 @@ const filesToFix = [
 ]
 
 function fixFile(relativePadding) {
-  const absolutePath = path.join('c:/BizNepal/bizNepal', relativePadding)
+  const absolutePath = path.join('c:/Biznity/bizNepal', relativePadding)
   if (!fs.existsSync(absolutePath)) {
     console.log(`File not found: ${absolutePath}`)
     return

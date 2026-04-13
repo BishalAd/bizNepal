@@ -118,7 +118,7 @@ export default function CheckoutContent() {
          <h1 className="text-3xl font-black text-gray-900 mb-2">Your Cart is Empty</h1>
          <p className="text-gray-500 font-medium mb-8">Add some amazing products to your cart before checking out.</p>
          <button onClick={()=>router.push('/')} className="px-8 py-3.5 bg-gray-900 text-white rounded-xl font-bold transition hover:bg-gray-800 shadow-xl shadow-gray-900/20">
-           Browse BizNepal
+           Browse Biznity
          </button>
       </div>
     )
@@ -211,7 +211,7 @@ export default function CheckoutContent() {
             customerName: formData.name,
             customerPhone: formData.phone,
             customerEmail: formData.email,
-            purchaseOrderName: `BizNepal Payment Ref-${referenceId.slice(0,8)}`
+            purchaseOrderName: `Biznity Payment Ref-${referenceId.slice(0,8)}`
           })
         })
         const khaltiData = await res.json()
@@ -334,7 +334,7 @@ export default function CheckoutContent() {
                  <div className="mt-8">
                     {paymentMethod === 'esewa' && (
                        <div className="animate-in slide-in-from-top-2">
-                         <EsewaButton amount={grandTotal} orderId={pendingOrderId} productName="BizNepal Cart" />
+                         <EsewaButton amount={grandTotal} orderId={pendingOrderId} productName="Biznity Cart" />
                        </div>
                     )}
                     {paymentMethod === 'khalti' && (
@@ -450,7 +450,7 @@ export default function CheckoutContent() {
                </div>
 
                <p className="text-xs text-center font-bold text-gray-400 mt-6 leading-relaxed px-4">
-                 Your transactions are fully secured. By placing an order, you agree to BizNepal's <a href="#" className="underline hover:text-gray-600">Terms of Service</a> and <a href="#" className="underline hover:text-gray-600">Privacy Policy</a>.
+                 Your transactions are fully secured. By placing an order, you agree to Biznity's <a href="#" className="underline hover:text-gray-600">Terms of Service</a> and <a href="#" className="underline hover:text-gray-600">Privacy Policy</a>.
                </p>
             </div>
 

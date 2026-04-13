@@ -28,7 +28,7 @@ export default function BusinessProfileClient({ business, tabsData }: any) {
       try {
         await navigator.share({
           title: business.name,
-          text: `Check out ${business.name} on BizNepal!`,
+          text: `Check out ${business.name} on Biznity!`,
           url: window.location.href,
         })
       } catch (err) {

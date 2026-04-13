@@ -1,4 +1,4 @@
-# BizNepal n8n Workflow Instructions
+# Biznity n8n Workflow Instructions
 
 Here are the complete JSON configurations for the 7 requested n8n workflows.
 
@@ -14,7 +14,7 @@ Here are the complete JSON configurations for the 7 requested n8n workflows.
 The workflows below depend on internal API endpoints. If you encounter issues (e.g., 404 errors), please verify the following:
 
 ### 1. Project Structure & API Paths
-All API routes are located in the `biznepal/src/app/api/` directory. When deploying to Vercel, ensure the `biznepal` folder is the root of your deployment for the URLs below to work
+All API routes are located in the `biznity/src/app/api/` directory. When deploying to Vercel, ensure the `biznity` folder is the root of your deployment for the URLs below to work
 
 - **Businesses Route:** `/api/bot/get-subscribed-businesses`
   - *Internal Path:* `src/app/api/bot/get-subscribed-businesses/route.ts`
@@ -40,7 +40,7 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
 
 ```json
 {
-  "name": "BizNepal: New Order Alerts (Complete)",
+  "name": "Biznity: New Order Alerts (Complete)",
   "nodes": [
     {
       "parameters": {
@@ -105,7 +105,7 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
       "position": [850, 180],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -125,17 +125,17 @@ This workflow listens for new checkout transactions. If it's a Cash on Delivery 
       "position": [850, 420],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
     },
     {
       "parameters": {
-        "fromEmail": "orders@biznepal.com",
+        "fromEmail": "orders@biznity.com",
         "toEmail": "={{$json.body.customerEmail}}",
-        "subject": "Order Confirmed - BizNepal",
-        "text": "Hello {{$json.body.customerName}},\n\nYour order has been successfully placed.\n\n🧾 Order ID: {{$json.body.orderId}}\n💰 Total: Rs {{$json.body.total}}\n\nWe will contact you soon.\n\nThank you for using BizNepal!"
+        "subject": "Order Confirmed - Biznity",
+        "text": "Hello {{$json.body.customerName}},\n\nYour order has been successfully placed.\n\n🧾 Order ID: {{$json.body.orderId}}\n💰 Total: Rs {{$json.body.total}}\n\nWe will contact you soon.\n\nThank you for using Biznity!"
       },
       "id": "6-email",
       "name": "Send Email",
@@ -222,7 +222,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
 
 ```json
 {
-  "name": "BizNepal: Bi-Hourly Activity Summary",
+  "name": "Biznity: Bi-Hourly Activity Summary",
   "nodes": [
     {
       "parameters": {
@@ -243,7 +243,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     },
     {
       "parameters": {
-        "url": "https://biz-nepal.vercel.app/api/bot/get-subscribed-businesses",
+        "url": "https://biznity.vercel.app/api/bot/get-subscribed-businesses",
         "authentication": "headerAuth",
         "options": {}
       },
@@ -272,7 +272,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     {
       "parameters": {
         "method": "POST",
-        "url": "https://biz-nepal.vercel.app/api/activity-summary",
+        "url": "https://biznity.vercel.app/api/activity-summary",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"businessId\": \"{{ $json.id }}\",\n  \"period\": \"2h\"\n}",
@@ -311,7 +311,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     {
       "parameters": {
         "chatId": "={{ $node[\"Split In Batches\"].json[\"telegram_chat_id\"] }}",
-        "text": "=📊 *BizNepal Summary (Last 2 hours)*\n\n💰 *Orders:* {{ $json.orders || 0 }} (₨ {{ $json.revenue || 0 }})\n👔 *Applications:* {{ $json.applications || 0 }}\n🎟 *Bookings:* {{ $json.bookings || 0 }}\n⭐️ *Reviews:* {{ $json.reviews || 0 }}",
+        "text": "=📊 *Biznity Summary (Last 2 hours)*\n\n💰 *Orders:* {{ $json.orders || 0 }} (₨ {{ $json.revenue || 0 }})\n👔 *Applications:* {{ $json.applications || 0 }}\n🎟 *Bookings:* {{ $json.bookings || 0 }}\n⭐️ *Reviews:* {{ $json.reviews || 0 }}",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -323,7 +323,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "position": [1300, 200],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -413,7 +413,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
 
 ```json
 {
-  "name": "BizNepal: Job Application",
+  "name": "Biznity: Job Application",
   "nodes": [
     {
       "parameters": {
@@ -442,14 +442,14 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "position": [440, 200],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
     },
     {
       "parameters": {
-        "fromEmail": "jobs@biznepal.com",
+        "fromEmail": "jobs@biznity.com",
         "toEmail": "={{$json.body.businessEmail}}",
         "subject": "New Applicant: {{$json.body.applicantName}}",
         "text": "A new applicant has applied to {{$json.body.jobTitle}}. View their CV here: {{$json.body.cvUrl}}",
@@ -476,7 +476,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "position": [880, 200],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -526,7 +526,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
 
 ```json
 {
-  "name": "BizNepal: Event Booking",
+  "name": "Biznity: Event Booking",
   "nodes": [
     {
       "parameters": {
@@ -566,7 +566,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "position": [640, 260],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -586,7 +586,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "position": [860, 260],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -612,7 +612,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
 
 ```json
 {
-  "name": "BizNepal: Offer Expiry Warning",
+  "name": "Biznity: Offer Expiry Warning",
   "nodes": [
     {
       "parameters": {
@@ -628,7 +628,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     },
     {
       "parameters": {
-        "url": "https://biz-nepal.vercel.app/api/webhooks/offer-expiry",
+        "url": "https://biznity.vercel.app/api/webhooks/offer-expiry",
         "method": "POST",
         "options": {}
       },
@@ -661,7 +661,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "position": [860, 300],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -682,7 +682,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
 
 ```json
 {
-  "name": "BizNepal: New Review Logic",
+  "name": "Biznity: New Review Logic",
   "nodes": [
     {
       "parameters": {
@@ -729,7 +729,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "position": [640, 200],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -749,7 +749,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "position": [640, 400],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -773,7 +773,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
 
 ```json
 {
-  "name": "BizNepal: Onboarding Sequence",
+  "name": "Biznity: Onboarding Sequence",
   "nodes": [
     {
       "parameters": {
@@ -818,7 +818,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
     {
       "parameters": {
         "chatId": "={{$node[\"Webhook Trigger\"].json.body.telegramChatId}}",
-        "text": "=👋 *Welcome to BizNepal!*\n\nStart by completing your business profile to attract customers to your dashboard. Need help? Message us right here!\n\n🔗 [Open Dashboard](https://biz-nepal.vercel.app/dashboard)",
+        "text": "=👋 *Welcome to Biznity!*\n\nStart by completing your business profile to attract customers to your dashboard. Need help? Message us right here!\n\n🔗 [Open Dashboard](https://biznity.vercel.app/dashboard)",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -830,7 +830,7 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
       "position": [880, 280],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -848,11 +848,11 @@ Runs every 2 hours, fetching businesses via an HTTP array request, mapping throu
 
 ### Workflow 8: Telegram /start Handler
 
-This workflow handles the `/start TOKEN` command from the bot. It extracts the token, calls the BizNepal API to link the chat ID, and sends a confirmation message.
+This workflow handles the `/start TOKEN` command from the bot. It extracts the token, calls the Biznity API to link the chat ID, and sends a confirmation message.
 
 ```json
 {
-  "name": "BizNepal: Telegram /start Handler",
+  "name": "Biznity: Telegram /start Handler",
   "nodes": [
     {
       "parameters": {
@@ -868,7 +868,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
       "position": [200, 300],
       "credentials": {
         "telegramApi": {
-          "id": "BizNepal Bot",
+          "id": "Biznity Bot",
           "name": "Telegram API"
         }
       }
@@ -916,7 +916,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
     {
       "parameters": {
         "method": "POST",
-        "url": "https://biz-nepal.vercel.app/api/bot/link-telegram",
+        "url": "https://biznity.vercel.app/api/bot/link-telegram",
         "authentication": "headerAuth",
         "sendBody": true,
         "specifyBody": "json",
@@ -938,7 +938,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
     {
       "parameters": {
         "chatId": "={{$node[\"Telegram Trigger\"].json.message.chat.id}}",
-        "text": "=✅ *Connection Successful!*\n\nYour Telegram account is now linked to *{{$json.businessName}}* on BizNepal. You will receive real-time notifications for orders, jobs, and reviews right here.",
+        "text": "=✅ *Connection Successful!*\n\nYour Telegram account is now linked to *{{$json.businessName}}* on Biznity. You will receive real-time notifications for orders, jobs, and reviews right here.",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -952,7 +952,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
     {
       "parameters": {
         "chatId": "={{$json.message.chat.id}}",
-        "text": "👋 *Welcome to BizNepal Notifications!*\n\nTo connect your business account, please visit your dashboard and click **'Connect Telegram'**.\n\n🔗 [Open Dashboard](https://biz-nepal.vercel.app/dashboard/notification-settings)",
+        "text": "👋 *Welcome to Biznity Notifications!*\n\nTo connect your business account, please visit your dashboard and click **'Connect Telegram'**.\n\n🔗 [Open Dashboard](https://biznity.vercel.app/dashboard/notification-settings)",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -1049,7 +1049,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
 
 `json
 {
-  "name": "BizNepal Telegram Signup (Dispatcher Architecture)",
+  "name": "Biznity Telegram Signup (Dispatcher Architecture)",
   "nodes": [
     {
       "parameters": {
@@ -1061,11 +1061,11 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
       "typeVersion": 1,
       "position": [0, 300],
       "id": "trigger",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
-        "jsCode": "// ─── DISPATCHER: Single source of truth for all routing ───\nconst staticData = $getWorkflowStaticData('global');\nstaticData.sessions = staticData.sessions || {};\n\n// ── 1. Extract userId and user input reliably ──\nlet userId, text, firstName;\nif ($json.callback_query) {\n  userId = String($json.callback_query.from.id);\n  text = $json.callback_query.data || '';\n  firstName = $json.callback_query.from.first_name || 'there';\n} else if ($json.message) {\n  userId = String($json.message.from.id);\n  text = $json.message.text || '';\n  firstName = $json.message.from.first_name || 'there';\n} else {\n  return { json: { action: 'noop' } };\n}\n\nif (!userId) return { json: { action: 'noop' } };\n\n// ── 2. Session init / reset ──\nconst isReset = (text === '/start' || text === '/restart' || !staticData.sessions[userId]);\nif (isReset) {\n  staticData.sessions[userId] = { step: 'start', data: {} };\n}\n\nconst session = staticData.sessions[userId];\nconst step = session.step;\nconst data = session.data;\n\n// ── Helper: build inline keyboard ──\nfunction kbd(rows) {\n  return { inline_keyboard: rows };\n}\n\n// ─────────────────────────────────────────────\n// STEP MACHINE\n// ─────────────────────────────────────────────\n\n// /link command: link manually-registered account to Telegram\nif (text.startsWith('/link')) {\n  const parts = text.trim().split(/\\s+/);\n  if (parts.length < 3) {\n    return { json: {\n      action: 'send',\n      userId,\n      msg: '🔗 To link your account type:\\n/link your@email.com YourPassword'\n    }};\n  }\n  const linkEmail = parts[1];\n  const linkPass = parts[2];\n  return { json: {\n    action: 'link_account',\n    userId,\n    linkEmail,\n    linkPass,\n    msg: '🔄 Checking your account...'\n  }};\n}\n\n// START step\nif (step === 'start') {\n  session.step = 'ask_manual_or_chat';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: `👋 Welcome to BizNepal, ${firstName}! 🚀\\nHow would you like to sign up?`,\n    buttons: kbd([[{ text: '📋 Manual Signup', callback_data: 'manual' }, { text: '💬 Chat Signup', callback_data: 'chat' }]])\n  }};\n}\n\n// CHOICE: manual or chat\nif (step === 'ask_manual_or_chat') {\n  if (text === 'manual') {\n    session.step = 'ask_link_or_done';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: '🌐 Register at: https://biz-nepal.vercel.app/register\\n\\nOnce done, type:\\n/link your@email.com YourPassword\\n\\nThis will connect your account to this Telegram.',\n    }};\n  }\n  if (text === 'chat') {\n    session.step = 'ask_name';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: '✍️ Please enter your *Full Name*:',\n      parseMode: 'Markdown'\n    }};\n  }\n  // Any other input while waiting for choice\n  return { json: {\n    action: 'send',\n    userId,\n    msg: 'Please tap a button above 👆',\n    buttons: kbd([[{ text: '📋 Manual Signup', callback_data: 'manual' }, { text: '💬 Chat Signup', callback_data: 'chat' }]])\n  }};\n}\n\n// ASK NAME\nif (step === 'ask_name') {\n  if (text.length < 2 || text.startsWith('/')) {\n    return { json: { action: 'send', userId, msg: '❌ Please enter a valid full name (at least 2 characters).' }};\n  }\n  data.fullname = text;\n  session.step = 'ask_phone';\n  return { json: { action: 'send', userId, msg: '📱 Please enter your *Phone Number*:', parseMode: 'Markdown' }};\n}\n\n// ASK PHONE\nif (step === 'ask_phone') {\n  if (text.length < 7) {\n    return { json: { action: 'send', userId, msg: '❌ Please enter a valid phone number.' }};\n  }\n  data.phone = text;\n  session.step = 'ask_email';\n  return { json: { action: 'send', userId, msg: '📧 Please enter your *Email Address*:', parseMode: 'Markdown' }};\n}\n\n// ASK EMAIL\nif (step === 'ask_email') {\n  const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n  if (!emailRegex.test(text)) {\n    return { json: { action: 'send', userId, msg: '❌ That doesn\\'t look like a valid email. Please try again:' }};\n  }\n  data.email = text;\n  session.step = 'ask_password';\n  return { json: { action: 'send', userId, msg: '🔒 Please enter your *Password* (min 6 characters):', parseMode: 'Markdown' }};\n}\n\n// ASK PASSWORD\nif (step === 'ask_password') {\n  if (text.length < 6) {\n    return { json: { action: 'send', userId, msg: '❌ Password must be at least 6 characters. Try again:' }};\n  }\n  data.password = text;\n  session.step = 'ask_terms';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: '📜 Do you accept our *Terms of Service*?\\nhttps://biz-nepal.vercel.app/terms',\n    parseMode: 'Markdown',\n    buttons: kbd([[{ text: '✅ Yes, I Accept', callback_data: 'Yes' }, { text: '❌ No', callback_data: 'No' }]])\n  }};\n}\n\n// ASK TERMS\nif (step === 'ask_terms') {\n  if (text === 'No') {\n    delete staticData.sessions[userId];\n    return { json: { action: 'send', userId, msg: '👋 No problem! Type /start anytime to try again.' }};\n  }\n  if (text !== 'Yes') {\n    return { json: {\n      action: 'send',\n      userId,\n      msg: 'Please use the buttons below to accept or decline:',\n      buttons: kbd([[{ text: '✅ Yes, I Accept', callback_data: 'Yes' }, { text: '❌ No', callback_data: 'No' }]])\n    }};\n  }\n  session.step = 'ask_role';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: '👤 Are you signing up as a *User* or a *Business Owner*?',\n    parseMode: 'Markdown',\n    buttons: kbd([[{ text: '🙋 User', callback_data: 'user' }, { text: '🏢 Business Owner', callback_data: 'business' }]])\n  }};\n}\n\n// ASK ROLE\nif (step === 'ask_role') {\n  if (text !== 'user' && text !== 'business') {\n    return { json: {\n      action: 'send',\n      userId,\n      msg: 'Please tap a button to choose your role:',\n      buttons: kbd([[{ text: '🙋 User', callback_data: 'user' }, { text: '🏢 Business Owner', callback_data: 'business' }]])\n    }};\n  }\n  data.role = text;\n  if (text === 'business') {\n    session.step = 'ask_biz_name';\n    return { json: { action: 'send', userId, msg: '🏪 Please enter your *Business Name*:', parseMode: 'Markdown' }};\n  } else {\n    session.step = 'preview';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: `📋 *Review your details:*\\n\\n👤 Name: ${data.fullname}\\n📧 Email: ${data.email}\\n📱 Phone: ${data.phone}\\n🎭 Role: User\\n\\nLooks good?`,\n      parseMode: 'Markdown',\n      buttons: kbd([[{ text: '✅ Submit', callback_data: 'submit' }, { text: '✏️ Start Over', callback_data: '/start' }]])\n    }};\n  }\n}\n\n// ASK BIZ NAME\nif (step === 'ask_biz_name') {\n  if (text.length < 2) {\n    return { json: { action: 'send', userId, msg: '❌ Please enter a valid business name.' }};\n  }\n  data.bizName = text;\n  session.step = 'preview';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: `📋 *Review your details:*\\n\\n👤 Name: ${data.fullname}\\n📧 Email: ${data.email}\\n📱 Phone: ${data.phone}\\n🎭 Role: Business Owner\\n🏪 Business: ${data.bizName}\\n\\nLooks good?`,\n    parseMode: 'Markdown',\n    buttons: kbd([[{ text: '✅ Submit', callback_data: 'submit' }, { text: '✏️ Start Over', callback_data: '/start' }]])\n  }};\n}\n\n// PREVIEW / SUBMIT\nif (step === 'preview') {\n  if (text !== 'submit') {\n    const isBiz = data.role === 'business';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: `📋 *Review your details:*\\n\\n👤 Name: ${data.fullname}\\n📧 Email: ${data.email}\\n📱 Phone: ${data.phone}\\n🎭 Role: ${isBiz ? 'Business Owner' : 'User'}${isBiz ? `\\n🏪 Business: ${data.bizName}` : ''}\\n\\nLooks good?`,\n      parseMode: 'Markdown',\n      buttons: kbd([[{ text: '✅ Submit', callback_data: 'submit' }, { text: '✏️ Start Over', callback_data: '/start' }]])\n    }};\n  }\n  // Submit! Hand off to Supabase nodes\n  session.step = 'submitting';\n  return { json: {\n    action: 'signup',\n    userId,\n    signupData: { ...data, telegramChatId: userId }\n  }};\n}\n\n// FALLBACK\nreturn { json: {\n  action: 'send',\n  userId,\n  msg: 'Type /start to begin or /link email password to connect an existing account.'\n}};"
+        "jsCode": "// ─── DISPATCHER: Single source of truth for all routing ───\nconst staticData = $getWorkflowStaticData('global');\nstaticData.sessions = staticData.sessions || {};\n\n// ── 1. Extract userId and user input reliably ──\nlet userId, text, firstName;\nif ($json.callback_query) {\n  userId = String($json.callback_query.from.id);\n  text = $json.callback_query.data || '';\n  firstName = $json.callback_query.from.first_name || 'there';\n} else if ($json.message) {\n  userId = String($json.message.from.id);\n  text = $json.message.text || '';\n  firstName = $json.message.from.first_name || 'there';\n} else {\n  return { json: { action: 'noop' } };\n}\n\nif (!userId) return { json: { action: 'noop' } };\n\n// ── 2. Session init / reset ──\nconst isReset = (text === '/start' || text === '/restart' || !staticData.sessions[userId]);\nif (isReset) {\n  staticData.sessions[userId] = { step: 'start', data: {} };\n}\n\nconst session = staticData.sessions[userId];\nconst step = session.step;\nconst data = session.data;\n\n// ── Helper: build inline keyboard ──\nfunction kbd(rows) {\n  return { inline_keyboard: rows };\n}\n\n// ─────────────────────────────────────────────\n// STEP MACHINE\n// ─────────────────────────────────────────────\n\n// /link command: link manually-registered account to Telegram\nif (text.startsWith('/link')) {\n  const parts = text.trim().split(/\\s+/);\n  if (parts.length < 3) {\n    return { json: {\n      action: 'send',\n      userId,\n      msg: '🔗 To link your account type:\\n/link your@email.com YourPassword'\n    }};\n  }\n  const linkEmail = parts[1];\n  const linkPass = parts[2];\n  return { json: {\n    action: 'link_account',\n    userId,\n    linkEmail,\n    linkPass,\n    msg: '🔄 Checking your account...'\n  }};\n}\n\n// START step\nif (step === 'start') {\n  session.step = 'ask_manual_or_chat';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: `👋 Welcome to Biznity, ${firstName}! 🚀\\nHow would you like to sign up?`,\n    buttons: kbd([[{ text: '📋 Manual Signup', callback_data: 'manual' }, { text: '💬 Chat Signup', callback_data: 'chat' }]])\n  }};\n}\n\n// CHOICE: manual or chat\nif (step === 'ask_manual_or_chat') {\n  if (text === 'manual') {\n    session.step = 'ask_link_or_done';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: '🌐 Register at: https://biznity.vercel.app/register\\n\\nOnce done, type:\\n/link your@email.com YourPassword\\n\\nThis will connect your account to this Telegram.',\n    }};\n  }\n  if (text === 'chat') {\n    session.step = 'ask_name';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: '✍️ Please enter your *Full Name*:',\n      parseMode: 'Markdown'\n    }};\n  }\n  // Any other input while waiting for choice\n  return { json: {\n    action: 'send',\n    userId,\n    msg: 'Please tap a button above 👆',\n    buttons: kbd([[{ text: '📋 Manual Signup', callback_data: 'manual' }, { text: '💬 Chat Signup', callback_data: 'chat' }]])\n  }};\n}\n\n// ASK NAME\nif (step === 'ask_name') {\n  if (text.length < 2 || text.startsWith('/')) {\n    return { json: { action: 'send', userId, msg: '❌ Please enter a valid full name (at least 2 characters).' }};\n  }\n  data.fullname = text;\n  session.step = 'ask_phone';\n  return { json: { action: 'send', userId, msg: '📱 Please enter your *Phone Number*:', parseMode: 'Markdown' }};\n}\n\n// ASK PHONE\nif (step === 'ask_phone') {\n  if (text.length < 7) {\n    return { json: { action: 'send', userId, msg: '❌ Please enter a valid phone number.' }};\n  }\n  data.phone = text;\n  session.step = 'ask_email';\n  return { json: { action: 'send', userId, msg: '📧 Please enter your *Email Address*:', parseMode: 'Markdown' }};\n}\n\n// ASK EMAIL\nif (step === 'ask_email') {\n  const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n  if (!emailRegex.test(text)) {\n    return { json: { action: 'send', userId, msg: '❌ That doesn\\'t look like a valid email. Please try again:' }};\n  }\n  data.email = text;\n  session.step = 'ask_password';\n  return { json: { action: 'send', userId, msg: '🔒 Please enter your *Password* (min 6 characters):', parseMode: 'Markdown' }};\n}\n\n// ASK PASSWORD\nif (step === 'ask_password') {\n  if (text.length < 6) {\n    return { json: { action: 'send', userId, msg: '❌ Password must be at least 6 characters. Try again:' }};\n  }\n  data.password = text;\n  session.step = 'ask_terms';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: '📜 Do you accept our *Terms of Service*?\\nhttps://biznity.vercel.app/terms',\n    parseMode: 'Markdown',\n    buttons: kbd([[{ text: '✅ Yes, I Accept', callback_data: 'Yes' }, { text: '❌ No', callback_data: 'No' }]])\n  }};\n}\n\n// ASK TERMS\nif (step === 'ask_terms') {\n  if (text === 'No') {\n    delete staticData.sessions[userId];\n    return { json: { action: 'send', userId, msg: '👋 No problem! Type /start anytime to try again.' }};\n  }\n  if (text !== 'Yes') {\n    return { json: {\n      action: 'send',\n      userId,\n      msg: 'Please use the buttons below to accept or decline:',\n      buttons: kbd([[{ text: '✅ Yes, I Accept', callback_data: 'Yes' }, { text: '❌ No', callback_data: 'No' }]])\n    }};\n  }\n  session.step = 'ask_role';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: '👤 Are you signing up as a *User* or a *Business Owner*?',\n    parseMode: 'Markdown',\n    buttons: kbd([[{ text: '🙋 User', callback_data: 'user' }, { text: '🏢 Business Owner', callback_data: 'business' }]])\n  }};\n}\n\n// ASK ROLE\nif (step === 'ask_role') {\n  if (text !== 'user' && text !== 'business') {\n    return { json: {\n      action: 'send',\n      userId,\n      msg: 'Please tap a button to choose your role:',\n      buttons: kbd([[{ text: '🙋 User', callback_data: 'user' }, { text: '🏢 Business Owner', callback_data: 'business' }]])\n    }};\n  }\n  data.role = text;\n  if (text === 'business') {\n    session.step = 'ask_biz_name';\n    return { json: { action: 'send', userId, msg: '🏪 Please enter your *Business Name*:', parseMode: 'Markdown' }};\n  } else {\n    session.step = 'preview';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: `📋 *Review your details:*\\n\\n👤 Name: ${data.fullname}\\n📧 Email: ${data.email}\\n📱 Phone: ${data.phone}\\n🎭 Role: User\\n\\nLooks good?`,\n      parseMode: 'Markdown',\n      buttons: kbd([[{ text: '✅ Submit', callback_data: 'submit' }, { text: '✏️ Start Over', callback_data: '/start' }]])\n    }};\n  }\n}\n\n// ASK BIZ NAME\nif (step === 'ask_biz_name') {\n  if (text.length < 2) {\n    return { json: { action: 'send', userId, msg: '❌ Please enter a valid business name.' }};\n  }\n  data.bizName = text;\n  session.step = 'preview';\n  return { json: {\n    action: 'send',\n    userId,\n    msg: `📋 *Review your details:*\\n\\n👤 Name: ${data.fullname}\\n📧 Email: ${data.email}\\n📱 Phone: ${data.phone}\\n🎭 Role: Business Owner\\n🏪 Business: ${data.bizName}\\n\\nLooks good?`,\n    parseMode: 'Markdown',\n    buttons: kbd([[{ text: '✅ Submit', callback_data: 'submit' }, { text: '✏️ Start Over', callback_data: '/start' }]])\n  }};\n}\n\n// PREVIEW / SUBMIT\nif (step === 'preview') {\n  if (text !== 'submit') {\n    const isBiz = data.role === 'business';\n    return { json: {\n      action: 'send',\n      userId,\n      msg: `📋 *Review your details:*\\n\\n👤 Name: ${data.fullname}\\n📧 Email: ${data.email}\\n📱 Phone: ${data.phone}\\n🎭 Role: ${isBiz ? 'Business Owner' : 'User'}${isBiz ? `\\n🏪 Business: ${data.bizName}` : ''}\\n\\nLooks good?`,\n      parseMode: 'Markdown',\n      buttons: kbd([[{ text: '✅ Submit', callback_data: 'submit' }, { text: '✏️ Start Over', callback_data: '/start' }]])\n    }};\n  }\n  // Submit! Hand off to Supabase nodes\n  session.step = 'submitting';\n  return { json: {\n    action: 'signup',\n    userId,\n    signupData: { ...data, telegramChatId: userId }\n  }};\n}\n\n// FALLBACK\nreturn { json: {\n  action: 'send',\n  userId,\n  msg: 'Type /start to begin or /link email password to connect an existing account.'\n}};"
       },
       "name": "Dispatcher",
       "type": "n8n-nodes-base.code",
@@ -1107,7 +1107,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
       "typeVersion": 1,
       "position": [700, 150],
       "id": "tg-send",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -1199,7 +1199,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
     {
       "parameters": {
         "chatId": "={{ $node[\"Dispatcher\"].json.signupData.telegramChatId }}",
-        "text": "=🎉 *Account Created Successfully!*\n\nWelcome to BizNepal, {{ $node[\"Dispatcher\"].json.signupData.fullname }}!\n\n✅ Email: {{ $node[\"Dispatcher\"].json.signupData.email }}\n✅ Role: {{ $node[\"Dispatcher\"].json.signupData.role === 'business' ? 'Business Owner' : 'User' }}\n\n👉 [Login to your dashboard](https://biz-nepal.vercel.app/login)\n\n_Your Telegram is now linked to your BizNepal account!_",
+        "text": "=🎉 *Account Created Successfully!*\n\nWelcome to Biznity, {{ $node[\"Dispatcher\"].json.signupData.fullname }}!\n\n✅ Email: {{ $node[\"Dispatcher\"].json.signupData.email }}\n✅ Role: {{ $node[\"Dispatcher\"].json.signupData.role === 'business' ? 'Business Owner' : 'User' }}\n\n👉 [Login to your dashboard](https://biznity.vercel.app/login)\n\n_Your Telegram is now linked to your Biznity account!_",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -1209,7 +1209,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
       "typeVersion": 1,
       "position": [1700, 350],
       "id": "signup-success",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -1269,7 +1269,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
     {
       "parameters": {
         "chatId": "={{ $node['Dispatcher'].json.userId }}",
-        "text": "=✅ *Account Linked!*\n\nWelcome back, {{ $node['Supabase Login (Link)'].json.user.user_metadata.full_name || $node['Supabase Login (Link)'].json.user.email }}!\n\nYour Telegram is now connected to your BizNepal account.\n\n👉 [Go to Dashboard](https://biz-nepal.vercel.app/dashboard)\n\nType /start anytime to manage your account.",
+        "text": "=✅ *Account Linked!*\n\nWelcome back, {{ $node['Supabase Login (Link)'].json.user.user_metadata.full_name || $node['Supabase Login (Link)'].json.user.email }}!\n\nYour Telegram is now connected to your Biznity account.\n\n👉 [Go to Dashboard](https://biznity.vercel.app/dashboard)\n\nType /start anytime to manage your account.",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -1279,7 +1279,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
       "typeVersion": 1,
       "position": [1200, 500],
       "id": "link-success",
-      "credentials": { "telegramApi": { "id": "BizNepal Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Bot", "name": "Telegram API" } }
     }
   ],
   "connections": {
@@ -1329,7 +1329,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
 
 ### Workflow 10: Interactive Posting Bot (Content Publisher via Telegram Chat)
 
-> **Bot:** `@BizNepalPostBot` (Bot 2 — POSTING_BOT_TOKEN)
+> **Bot:** `@BiznityPostBot` (Bot 2 — POSTING_BOT_TOKEN)
 > **Purpose:** Allow verified business owners to post Jobs, Events, Products, and Offers directly through a step-by-step Telegram conversation, including optional image upload to Supabase Storage.
 >
 > **Architecture Notes:**
@@ -1339,12 +1339,12 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
 > - Content is finalized via POST to `/api/bot/post-content`.
 >
 > **Required credentials in n8n:**
-> - `Telegram API` → Add the `POSTING_BOT_TOKEN` as a separate credential named `BizNepal Posting Bot`
+> - `Telegram API` → Add the `POSTING_BOT_TOKEN` as a separate credential named `Biznity Posting Bot`
 > - `Header Auth` → Same `WEBHOOK_SECRET` header auth used in other workflows
 
 ```json
 {
-  "name": "BizNepal: Interactive Posting Bot",
+  "name": "Biznity: Interactive Posting Bot",
   "nodes": [
     {
       "parameters": {
@@ -1356,7 +1356,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
       "typeVersion": 1,
       "position": [0, 300],
       "id": "tg-trigger",
-      "credentials": { "telegramApi": { "id": "BizNepal Posting Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Posting Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -1390,7 +1390,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
     },
     {
       "parameters": {
-        "jsCode": "// ═══════════════════════════════════════════════\n// STEP MACHINE — Processes current state and returns next action\n// ═══════════════════════════════════════════════\nconst prev = $node['Dispatcher — Extract Input'].json;\nconst userId = prev.userId;\nconst text = prev.text;\nconst msgType = prev.messageType;\nconst fileId = prev.fileId;\nconst mimeType = prev.mimeType;\nconst isRestart = prev.isRestart;\n\n// Get state from Supabase response\nconst stateRows = $input.all()[0]?.json;\nconst stateRow = Array.isArray(stateRows) ? stateRows[0] : null;\nlet state = isRestart ? 'IDLE' : (stateRow?.state || 'IDLE');\nlet ctx = isRestart ? {} : (stateRow?.context || {});\n\nfunction kbd(rows) {\n  return JSON.stringify({ inline_keyboard: rows });\n}\n\nfunction send(msg, buttons) {\n  return {\n    action: 'send_message',\n    userId,\n    msg,\n    buttons: buttons || null,\n    newState: null,\n    newContext: null,\n  };\n}\n\nfunction sendAndTransition(msg, newState, newContext, buttons) {\n  return {\n    action: 'send_and_save',\n    userId,\n    msg,\n    buttons: buttons || null,\n    newState,\n    newContext: newContext || ctx,\n  };\n}\n\n// ── IDLE / START ──────────────────────────────\nif (state === 'IDLE') {\n  return { json: sendAndTransition(\n    '👋 *Welcome to BizNepal Post Bot!*\\n\\nWhat would you like to post today?',\n    'CHOOSING_TYPE',\n    {},\n    kbd([\n      [{ text: '📋 Post a Job', callback_data: 'type_job' }],\n      [{ text: '🎉 Post an Event', callback_data: 'type_event' }],\n      [{ text: '📦 Post a Product', callback_data: 'type_product' }],\n      [{ text: '🔥 Post an Offer', callback_data: 'type_offer' }]\n    ])\n  ) };\n}\n\n// ── CHOOSING TYPE ─────────────────────────────\nif (state === 'CHOOSING_TYPE') {\n  const typeMap = { type_job: 'job', type_event: 'event', type_product: 'product', type_offer: 'offer' };\n  const chosen = typeMap[text];\n  if (!chosen) return { json: send('Please tap one of the buttons above 👆') };\n  ctx = { type: chosen };\n  return { json: sendAndTransition(`Great! Let\\'s post a *${chosen}*.\\n\\n✏️ Enter the *Title*:`, `ASK_${chosen.toUpperCase()}_TITLE`, ctx) };\n}\n\n// ── JOB FLOW ─────────────────────────────────\nif (state === 'ASK_JOB_TITLE') {\n  if (text.length < 3) return { json: send('❌ Title too short. Please enter at least 3 characters.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📂 Enter the *Job Category* (e.g., IT, Healthcare, Finance):', 'ASK_JOB_CATEGORY', ctx) };\n}\nif (state === 'ASK_JOB_CATEGORY') {\n  ctx.category = text;\n  return { json: sendAndTransition('📝 Enter a *Job Description*:', 'ASK_JOB_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_JOB_DESCRIPTION') {\n  if (text.length < 10) return { json: send('❌ Description is too short. Please add more detail.') };\n  ctx.description = text;\n  return { json: sendAndTransition('💰 Enter the *Salary* (e.g., 50000 or \\'Negotiable\\'):', 'ASK_JOB_SALARY', ctx) };\n}\nif (state === 'ASK_JOB_SALARY') {\n  ctx.salary = text;\n  return { json: sendAndTransition('📅 Enter the *Application Deadline* (YYYY-MM-DD) or type \\'Open\\':', 'ASK_JOB_DEADLINE', ctx) };\n}\nif (state === 'ASK_JOB_DEADLINE') {\n  ctx.deadline = text === 'Open' ? null : text;\n  return { json: sendAndTransition('📍 Enter the *Location* (e.g., Kathmandu, Remote):', 'ASK_JOB_LOCATION', ctx) };\n}\nif (state === 'ASK_JOB_LOCATION') {\n  ctx.location = text;\n  return { json: sendAndTransition('🖼️ Send an *image* for this job listing (or type \\'skip\\' to skip):', 'ASK_JOB_IMAGE', ctx) };\n}\nif (state === 'ASK_JOB_IMAGE') {\n  if (msgType === 'photo') {\n    ctx.pendingFileId = fileId;\n    ctx.pendingMime = mimeType;\n  }\n  const preview = `📋 *Review Job Details:*\\n\\n*Title:* ${ctx.title}\\n*Category:* ${ctx.category}\\n*Salary:* ${ctx.salary}\\n*Deadline:* ${ctx.deadline || 'Open'}\\n*Location:* ${ctx.location}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}\\n\\nLooks good?`;\n  return { json: sendAndTransition(preview, 'CONFIRM_JOB', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_JOB') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'job', ctx } };\n}\n\n// ── EVENT FLOW ────────────────────────────────\nif (state === 'ASK_EVENT_TITLE') {\n  if (text.length < 3) return { json: send('❌ Title too short.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📂 Enter the *Event Category* (e.g., Concert, Sports, Workshop):', 'ASK_EVENT_CATEGORY', ctx) };\n}\nif (state === 'ASK_EVENT_CATEGORY') {\n  ctx.category = text;\n  return { json: sendAndTransition('📝 Enter the *Event Description*:', 'ASK_EVENT_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_EVENT_DESCRIPTION') {\n  ctx.description = text;\n  return { json: sendAndTransition('📅 Enter the *Event Date & Time* (YYYY-MM-DD HH:MM):', 'ASK_EVENT_DATE', ctx) };\n}\nif (state === 'ASK_EVENT_DATE') {\n  ctx.event_date = text;\n  return { json: sendAndTransition('📍 Enter the *Venue Name*:', 'ASK_EVENT_VENUE', ctx) };\n}\nif (state === 'ASK_EVENT_VENUE') {\n  ctx.venue = text;\n  return { json: sendAndTransition('🎟️ Enter *Ticket Price* (0 for free):', 'ASK_EVENT_PRICE', ctx) };\n}\nif (state === 'ASK_EVENT_PRICE') {\n  ctx.ticket_price = text;\n  return { json: sendAndTransition('💺 Enter *Total Seats Available*:', 'ASK_EVENT_SEATS', ctx) };\n}\nif (state === 'ASK_EVENT_SEATS') {\n  ctx.total_seats = text;\n  return { json: sendAndTransition('🖼️ Send an *image* (or type \\'skip\\'):', 'ASK_EVENT_IMAGE', ctx) };\n}\nif (state === 'ASK_EVENT_IMAGE') {\n  if (msgType === 'photo') { ctx.pendingFileId = fileId; ctx.pendingMime = mimeType; }\n  const preview = `📋 *Review Event Details:*\\n\\n*Title:* ${ctx.title}\\n*Date:* ${ctx.event_date}\\n*Venue:* ${ctx.venue}\\n*Ticket:* ₨${ctx.ticket_price}\\n*Seats:* ${ctx.total_seats}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}`;\n  return { json: sendAndTransition(preview, 'CONFIRM_EVENT', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_EVENT') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'event', ctx } };\n}\n\n// ── PRODUCT FLOW ──────────────────────────────\nif (state === 'ASK_PRODUCT_TITLE') {\n  if (text.length < 2) return { json: send('❌ Name too short.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📝 Enter a *Product Description*:', 'ASK_PRODUCT_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_PRODUCT_DESCRIPTION') {\n  ctx.description = text;\n  return { json: sendAndTransition('💰 Enter the *Price* (e.g., 1500):', 'ASK_PRODUCT_PRICE', ctx) };\n}\nif (state === 'ASK_PRODUCT_PRICE') {\n  ctx.price = text;\n  return { json: sendAndTransition('📦 Enter the *Stock Quantity*:', 'ASK_PRODUCT_STOCK', ctx) };\n}\nif (state === 'ASK_PRODUCT_STOCK') {\n  ctx.stock = text;\n  return { json: sendAndTransition('🖼️ Send an *image* (or type \\'skip\\'):', 'ASK_PRODUCT_IMAGE', ctx) };\n}\nif (state === 'ASK_PRODUCT_IMAGE') {\n  if (msgType === 'photo') { ctx.pendingFileId = fileId; ctx.pendingMime = mimeType; }\n  const preview = `📋 *Review Product:*\\n\\n*Name:* ${ctx.title}\\n*Price:* ₨${ctx.price}\\n*Stock:* ${ctx.stock}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}`;\n  return { json: sendAndTransition(preview, 'CONFIRM_PRODUCT', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_PRODUCT') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'product', ctx } };\n}\n\n// ── OFFER FLOW ────────────────────────────────\nif (state === 'ASK_OFFER_TITLE') {\n  if (text.length < 3) return { json: send('❌ Title too short.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📝 Describe this *Offer*:', 'ASK_OFFER_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_OFFER_DESCRIPTION') {\n  ctx.description = text;\n  return { json: sendAndTransition('🏷️ What is the *Original Price* (₨)?', 'ASK_OFFER_ORIGINAL_PRICE', ctx) };\n}\nif (state === 'ASK_OFFER_ORIGINAL_PRICE') {\n  ctx.original_price = text;\n  return { json: sendAndTransition('🔖 What is the *Discount %* (e.g., 20)?', 'ASK_OFFER_DISCOUNT', ctx) };\n}\nif (state === 'ASK_OFFER_DISCOUNT') {\n  ctx.discount_percentage = text;\n  return { json: sendAndTransition('📅 When does this offer *expire*? (YYYY-MM-DD):', 'ASK_OFFER_EXPIRY', ctx) };\n}\nif (state === 'ASK_OFFER_EXPIRY') {\n  ctx.expires_at = text;\n  return { json: sendAndTransition('🖼️ Send an *image* (or type \\'skip\\'):', 'ASK_OFFER_IMAGE', ctx) };\n}\nif (state === 'ASK_OFFER_IMAGE') {\n  if (msgType === 'photo') { ctx.pendingFileId = fileId; ctx.pendingMime = mimeType; }\n  const discountedPrice = (parseFloat(ctx.original_price) * (1 - parseFloat(ctx.discount_percentage) / 100)).toFixed(0);\n  const preview = `📋 *Review Offer:*\\n\\n*Title:* ${ctx.title}\\n*Original Price:* ₨${ctx.original_price}\\n*Discount:* ${ctx.discount_percentage}% → ₨${discountedPrice}\\n*Expires:* ${ctx.expires_at}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}`;\n  return { json: sendAndTransition(preview, 'CONFIRM_OFFER', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_OFFER') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'offer', ctx } };\n}\n\n// ── FALLBACK ──────────────────────────────────\nreturn { json: send('Type /start to begin posting content to your BizNepal business 🚀') };"
+        "jsCode": "// ═══════════════════════════════════════════════\n// STEP MACHINE — Processes current state and returns next action\n// ═══════════════════════════════════════════════\nconst prev = $node['Dispatcher — Extract Input'].json;\nconst userId = prev.userId;\nconst text = prev.text;\nconst msgType = prev.messageType;\nconst fileId = prev.fileId;\nconst mimeType = prev.mimeType;\nconst isRestart = prev.isRestart;\n\n// Get state from Supabase response\nconst stateRows = $input.all()[0]?.json;\nconst stateRow = Array.isArray(stateRows) ? stateRows[0] : null;\nlet state = isRestart ? 'IDLE' : (stateRow?.state || 'IDLE');\nlet ctx = isRestart ? {} : (stateRow?.context || {});\n\nfunction kbd(rows) {\n  return JSON.stringify({ inline_keyboard: rows });\n}\n\nfunction send(msg, buttons) {\n  return {\n    action: 'send_message',\n    userId,\n    msg,\n    buttons: buttons || null,\n    newState: null,\n    newContext: null,\n  };\n}\n\nfunction sendAndTransition(msg, newState, newContext, buttons) {\n  return {\n    action: 'send_and_save',\n    userId,\n    msg,\n    buttons: buttons || null,\n    newState,\n    newContext: newContext || ctx,\n  };\n}\n\n// ── IDLE / START ──────────────────────────────\nif (state === 'IDLE') {\n  return { json: sendAndTransition(\n    '👋 *Welcome to Biznity Post Bot!*\\n\\nWhat would you like to post today?',\n    'CHOOSING_TYPE',\n    {},\n    kbd([\n      [{ text: '📋 Post a Job', callback_data: 'type_job' }],\n      [{ text: '🎉 Post an Event', callback_data: 'type_event' }],\n      [{ text: '📦 Post a Product', callback_data: 'type_product' }],\n      [{ text: '🔥 Post an Offer', callback_data: 'type_offer' }]\n    ])\n  ) };\n}\n\n// ── CHOOSING TYPE ─────────────────────────────\nif (state === 'CHOOSING_TYPE') {\n  const typeMap = { type_job: 'job', type_event: 'event', type_product: 'product', type_offer: 'offer' };\n  const chosen = typeMap[text];\n  if (!chosen) return { json: send('Please tap one of the buttons above 👆') };\n  ctx = { type: chosen };\n  return { json: sendAndTransition(`Great! Let\\'s post a *${chosen}*.\\n\\n✏️ Enter the *Title*:`, `ASK_${chosen.toUpperCase()}_TITLE`, ctx) };\n}\n\n// ── JOB FLOW ─────────────────────────────────\nif (state === 'ASK_JOB_TITLE') {\n  if (text.length < 3) return { json: send('❌ Title too short. Please enter at least 3 characters.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📂 Enter the *Job Category* (e.g., IT, Healthcare, Finance):', 'ASK_JOB_CATEGORY', ctx) };\n}\nif (state === 'ASK_JOB_CATEGORY') {\n  ctx.category = text;\n  return { json: sendAndTransition('📝 Enter a *Job Description*:', 'ASK_JOB_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_JOB_DESCRIPTION') {\n  if (text.length < 10) return { json: send('❌ Description is too short. Please add more detail.') };\n  ctx.description = text;\n  return { json: sendAndTransition('💰 Enter the *Salary* (e.g., 50000 or \\'Negotiable\\'):', 'ASK_JOB_SALARY', ctx) };\n}\nif (state === 'ASK_JOB_SALARY') {\n  ctx.salary = text;\n  return { json: sendAndTransition('📅 Enter the *Application Deadline* (YYYY-MM-DD) or type \\'Open\\':', 'ASK_JOB_DEADLINE', ctx) };\n}\nif (state === 'ASK_JOB_DEADLINE') {\n  ctx.deadline = text === 'Open' ? null : text;\n  return { json: sendAndTransition('📍 Enter the *Location* (e.g., Kathmandu, Remote):', 'ASK_JOB_LOCATION', ctx) };\n}\nif (state === 'ASK_JOB_LOCATION') {\n  ctx.location = text;\n  return { json: sendAndTransition('🖼️ Send an *image* for this job listing (or type \\'skip\\' to skip):', 'ASK_JOB_IMAGE', ctx) };\n}\nif (state === 'ASK_JOB_IMAGE') {\n  if (msgType === 'photo') {\n    ctx.pendingFileId = fileId;\n    ctx.pendingMime = mimeType;\n  }\n  const preview = `📋 *Review Job Details:*\\n\\n*Title:* ${ctx.title}\\n*Category:* ${ctx.category}\\n*Salary:* ${ctx.salary}\\n*Deadline:* ${ctx.deadline || 'Open'}\\n*Location:* ${ctx.location}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}\\n\\nLooks good?`;\n  return { json: sendAndTransition(preview, 'CONFIRM_JOB', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_JOB') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'job', ctx } };\n}\n\n// ── EVENT FLOW ────────────────────────────────\nif (state === 'ASK_EVENT_TITLE') {\n  if (text.length < 3) return { json: send('❌ Title too short.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📂 Enter the *Event Category* (e.g., Concert, Sports, Workshop):', 'ASK_EVENT_CATEGORY', ctx) };\n}\nif (state === 'ASK_EVENT_CATEGORY') {\n  ctx.category = text;\n  return { json: sendAndTransition('📝 Enter the *Event Description*:', 'ASK_EVENT_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_EVENT_DESCRIPTION') {\n  ctx.description = text;\n  return { json: sendAndTransition('📅 Enter the *Event Date & Time* (YYYY-MM-DD HH:MM):', 'ASK_EVENT_DATE', ctx) };\n}\nif (state === 'ASK_EVENT_DATE') {\n  ctx.event_date = text;\n  return { json: sendAndTransition('📍 Enter the *Venue Name*:', 'ASK_EVENT_VENUE', ctx) };\n}\nif (state === 'ASK_EVENT_VENUE') {\n  ctx.venue = text;\n  return { json: sendAndTransition('🎟️ Enter *Ticket Price* (0 for free):', 'ASK_EVENT_PRICE', ctx) };\n}\nif (state === 'ASK_EVENT_PRICE') {\n  ctx.ticket_price = text;\n  return { json: sendAndTransition('💺 Enter *Total Seats Available*:', 'ASK_EVENT_SEATS', ctx) };\n}\nif (state === 'ASK_EVENT_SEATS') {\n  ctx.total_seats = text;\n  return { json: sendAndTransition('🖼️ Send an *image* (or type \\'skip\\'):', 'ASK_EVENT_IMAGE', ctx) };\n}\nif (state === 'ASK_EVENT_IMAGE') {\n  if (msgType === 'photo') { ctx.pendingFileId = fileId; ctx.pendingMime = mimeType; }\n  const preview = `📋 *Review Event Details:*\\n\\n*Title:* ${ctx.title}\\n*Date:* ${ctx.event_date}\\n*Venue:* ${ctx.venue}\\n*Ticket:* ₨${ctx.ticket_price}\\n*Seats:* ${ctx.total_seats}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}`;\n  return { json: sendAndTransition(preview, 'CONFIRM_EVENT', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_EVENT') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'event', ctx } };\n}\n\n// ── PRODUCT FLOW ──────────────────────────────\nif (state === 'ASK_PRODUCT_TITLE') {\n  if (text.length < 2) return { json: send('❌ Name too short.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📝 Enter a *Product Description*:', 'ASK_PRODUCT_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_PRODUCT_DESCRIPTION') {\n  ctx.description = text;\n  return { json: sendAndTransition('💰 Enter the *Price* (e.g., 1500):', 'ASK_PRODUCT_PRICE', ctx) };\n}\nif (state === 'ASK_PRODUCT_PRICE') {\n  ctx.price = text;\n  return { json: sendAndTransition('📦 Enter the *Stock Quantity*:', 'ASK_PRODUCT_STOCK', ctx) };\n}\nif (state === 'ASK_PRODUCT_STOCK') {\n  ctx.stock = text;\n  return { json: sendAndTransition('🖼️ Send an *image* (or type \\'skip\\'):', 'ASK_PRODUCT_IMAGE', ctx) };\n}\nif (state === 'ASK_PRODUCT_IMAGE') {\n  if (msgType === 'photo') { ctx.pendingFileId = fileId; ctx.pendingMime = mimeType; }\n  const preview = `📋 *Review Product:*\\n\\n*Name:* ${ctx.title}\\n*Price:* ₨${ctx.price}\\n*Stock:* ${ctx.stock}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}`;\n  return { json: sendAndTransition(preview, 'CONFIRM_PRODUCT', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_PRODUCT') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'product', ctx } };\n}\n\n// ── OFFER FLOW ────────────────────────────────\nif (state === 'ASK_OFFER_TITLE') {\n  if (text.length < 3) return { json: send('❌ Title too short.') };\n  ctx.title = text;\n  return { json: sendAndTransition('📝 Describe this *Offer*:', 'ASK_OFFER_DESCRIPTION', ctx) };\n}\nif (state === 'ASK_OFFER_DESCRIPTION') {\n  ctx.description = text;\n  return { json: sendAndTransition('🏷️ What is the *Original Price* (₨)?', 'ASK_OFFER_ORIGINAL_PRICE', ctx) };\n}\nif (state === 'ASK_OFFER_ORIGINAL_PRICE') {\n  ctx.original_price = text;\n  return { json: sendAndTransition('🔖 What is the *Discount %* (e.g., 20)?', 'ASK_OFFER_DISCOUNT', ctx) };\n}\nif (state === 'ASK_OFFER_DISCOUNT') {\n  ctx.discount_percentage = text;\n  return { json: sendAndTransition('📅 When does this offer *expire*? (YYYY-MM-DD):', 'ASK_OFFER_EXPIRY', ctx) };\n}\nif (state === 'ASK_OFFER_EXPIRY') {\n  ctx.expires_at = text;\n  return { json: sendAndTransition('🖼️ Send an *image* (or type \\'skip\\'):', 'ASK_OFFER_IMAGE', ctx) };\n}\nif (state === 'ASK_OFFER_IMAGE') {\n  if (msgType === 'photo') { ctx.pendingFileId = fileId; ctx.pendingMime = mimeType; }\n  const discountedPrice = (parseFloat(ctx.original_price) * (1 - parseFloat(ctx.discount_percentage) / 100)).toFixed(0);\n  const preview = `📋 *Review Offer:*\\n\\n*Title:* ${ctx.title}\\n*Original Price:* ₨${ctx.original_price}\\n*Discount:* ${ctx.discount_percentage}% → ₨${discountedPrice}\\n*Expires:* ${ctx.expires_at}\\n*Image:* ${ctx.pendingFileId ? 'Attached ✅' : 'None'}`;\n  return { json: sendAndTransition(preview, 'CONFIRM_OFFER', ctx, kbd([[{ text: '✅ Post Now', callback_data: 'confirm_post' }, { text: '🔄 Start Over', callback_data: '/start' }]])) };\n}\nif (state === 'CONFIRM_OFFER') {\n  if (text !== 'confirm_post') return { json: send('Please tap a button 👆') };\n  return { json: { action: 'submit_content', userId, contentType: 'offer', ctx } };\n}\n\n// ── FALLBACK ──────────────────────────────────\nreturn { json: send('Type /start to begin posting content to your Biznity business 🚀') };"
       },
       "name": "Step Machine — Process State",
       "type": "n8n-nodes-base.code",
@@ -1431,7 +1431,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
       "typeVersion": 1,
       "position": [1250, 100],
       "id": "tg-send-only",
-      "credentials": { "telegramApi": { "id": "BizNepal Posting Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Posting Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -1470,7 +1470,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
       "typeVersion": 1,
       "position": [1500, 300],
       "id": "tg-send-after-save",
-      "credentials": { "telegramApi": { "id": "BizNepal Posting Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Posting Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -1561,7 +1561,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
         "jsonBody": "={\"telegram_user_id\": \"{{ $json.userId || $node['Check For Image'].json.userId }}\", \"content_type\": \"{{ $json.contentType || $node['Check For Image'].json.contentType }}\", \"data\": {{ JSON.stringify($json.ctx || $node['Check For Image'].json.ctx) }}, \"image_url\": {{ JSON.stringify($json.url || null) }}}",
         "options": {}
       },
-      "name": "Submit Content to BizNepal",
+      "name": "Submit Content to Biznity",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [2750, 450],
@@ -1570,7 +1570,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
     },
     {
       "parameters": {
-        "jsCode": "// Send final success/failure message\nconst result = $json;\nconst userId = $node['Check For Image'].json.userId || $node['Step Machine — Process State'].json.userId;\nconst contentType = result.content_type || 'content';\nconst id = result.id;\nconst appUrl = $env.NEXT_PUBLIC_APP_URL || 'https://biz-nepal.vercel.app';\n\nconst typeToPath = { job: 'jobs', event: 'events', product: 'products', offer: 'offers' };\nconst path = typeToPath[contentType] || contentType + 's';\n\nif (result.success) {\n  return { json: {\n    action: 'send_success',\n    userId,\n    msg: `✅ *${contentType.charAt(0).toUpperCase() + contentType.slice(1)} Posted Successfully!*\\n\\nYour listing is now live on BizNepal.\\n\\n👉 [View in Dashboard](${appUrl}/dashboard/${path})`,\n    clearState: true,\n  } };\n} else {\n  return { json: {\n    action: 'send_error',\n    userId,\n    msg: `❌ *Failed to post:* ${result.error || 'Unknown error'}\\n\\nPlease try again or contact support.`,\n    clearState: false,\n  } };\n}"
+        "jsCode": "// Send final success/failure message\nconst result = $json;\nconst userId = $node['Check For Image'].json.userId || $node['Step Machine — Process State'].json.userId;\nconst contentType = result.content_type || 'content';\nconst id = result.id;\nconst appUrl = $env.NEXT_PUBLIC_APP_URL || 'https://biznity.vercel.app';\n\nconst typeToPath = { job: 'jobs', event: 'events', product: 'products', offer: 'offers' };\nconst path = typeToPath[contentType] || contentType + 's';\n\nif (result.success) {\n  return { json: {\n    action: 'send_success',\n    userId,\n    msg: `✅ *${contentType.charAt(0).toUpperCase() + contentType.slice(1)} Posted Successfully!*\\n\\nYour listing is now live on Biznity.\\n\\n👉 [View in Dashboard](${appUrl}/dashboard/${path})`,\n    clearState: true,\n  } };\n} else {\n  return { json: {\n    action: 'send_error',\n    userId,\n    msg: `❌ *Failed to post:* ${result.error || 'Unknown error'}\\n\\nPlease try again or contact support.`,\n    clearState: false,\n  } };\n}"
       },
       "name": "Build Confirmation Message",
       "type": "n8n-nodes-base.code",
@@ -1589,7 +1589,7 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
       "typeVersion": 1,
       "position": [3250, 350],
       "id": "tg-confirm",
-      "credentials": { "telegramApi": { "id": "BizNepal Posting Bot", "name": "Telegram API" } }
+      "credentials": { "telegramApi": { "id": "Biznity Posting Bot", "name": "Telegram API" } }
     },
     {
       "parameters": {
@@ -1628,14 +1628,14 @@ This workflow handles the `/start TOKEN` command from the bot. It extracts the t
     "Has Image?": {
       "main": [
         [{ "node": "Get Telegram File Path", "type": "main", "index": 0 }],
-        [{ "node": "Submit Content to BizNepal", "type": "main", "index": 0 }]
+        [{ "node": "Submit Content to Biznity", "type": "main", "index": 0 }]
       ]
     },
     "Get Telegram File Path": { "main": [[{ "node": "Download Telegram File", "type": "main", "index": 0 }]] },
     "Download Telegram File": { "main": [[{ "node": "Prepare Base64 Upload", "type": "main", "index": 0 }]] },
     "Prepare Base64 Upload": { "main": [[{ "node": "Upload Image to Supabase", "type": "main", "index": 0 }]] },
-    "Upload Image to Supabase": { "main": [[{ "node": "Submit Content to BizNepal", "type": "main", "index": 0 }]] },
-    "Submit Content to BizNepal": { "main": [[{ "node": "Build Confirmation Message", "type": "main", "index": 0 }]] },
+    "Upload Image to Supabase": { "main": [[{ "node": "Submit Content to Biznity", "type": "main", "index": 0 }]] },
+    "Submit Content to Biznity": { "main": [[{ "node": "Build Confirmation Message", "type": "main", "index": 0 }]] },
     "Build Confirmation Message": {
       "main": [[
         { "node": "Send Final Confirmation", "type": "main", "index": 0 },

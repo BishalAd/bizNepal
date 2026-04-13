@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .eq('id', id)
     .single()
 
-  if (!data) return { title: 'Offer Not Found | BizNepal' }
+  if (!data) return { title: 'Offer Not Found | Biznity' }
 
   const bizName = (data.business as any)?.name
   const city = (data.business as any)?.city
@@ -22,22 +22,22 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const originalSnippet = data.original_price ? ` (was NPR ${data.original_price})` : ''
   const description = data.description
     ? data.description.substring(0, 157) + (data.description.length > 157 ? '…' : '')
-    : `${ discount ? discount + ' on ' : '' }${data.title}${ bizName ? ` from ${bizName}` : '' }${ city ? ` in ${city}` : '' }, Nepal. ${ priceSnippet }${ originalSnippet }. Grab this deal on BizNepal!`
-  const image = data.banner_url || 'https://biz-nepal.vercel.app/og-default.png'
-  const url = `https://biz-nepal.vercel.app/offers/${id}`
+    : `${ discount ? discount + ' on ' : '' }${data.title}${ bizName ? ` from ${bizName}` : '' }${ city ? ` in ${city}` : '' }, Nepal. ${ priceSnippet }${ originalSnippet }. Grab this deal on Biznity!`
+  const image = data.banner_url || 'https://biznity.vercel.app/og-default.png'
+  const url = `https://biznity.vercel.app/offers/${id}`
 
   return {
     title,
     description,
     keywords: [
-      data.title, bizName, city, discount, 'nepal deals', 'nepal offers', 'nepal discounts', 'biznepal deals',
+      data.title, bizName, city, discount, 'nepal deals', 'nepal offers', 'nepal discounts', 'biznity deals',
     ].filter(Boolean) as string[],
     alternates: { canonical: url },
     openGraph: {
       title,
       description,
       url,
-      siteName: 'BizNepal',
+      siteName: 'Biznity',
       images: [{ url: image, width: 1200, height: 630, alt: data.title }],
       type: 'website',
     },
@@ -77,7 +77,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
     .neq('id', offer.id)
     .limit(3)
 
-  const canonicalUrl = `https://biz-nepal.vercel.app/offers/${id}`
+  const canonicalUrl = `https://biznity.vercel.app/offers/${id}`
   const bizName = (offer.business as any)?.name
   const bizSlug = (offer.business as any)?.slug
 
@@ -90,7 +90,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
     expires: offer.ends_at ? new Date(offer.ends_at).toISOString() : undefined,
     url: canonicalUrl,
     ...(offer.banner_url ? { image: offer.banner_url } : {}),
-    announcementLocation: { '@type': 'LocalBusiness', name: bizName || 'BizNepal' },
+    announcementLocation: { '@type': 'LocalBusiness', name: bizName || 'Biznity' },
   }
 
   const productOfferJsonLd = offer.offer_price ? {
@@ -111,9 +111,9 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biz-nepal.vercel.app' },
-      { '@type': 'ListItem', position: 2, name: 'Deals & Offers', item: 'https://biz-nepal.vercel.app/offers' },
-      ...(bizSlug ? [{ '@type': 'ListItem', position: 3, name: bizName, item: `https://biz-nepal.vercel.app/businesses/${bizSlug}` }] : []),
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biznity.vercel.app' },
+      { '@type': 'ListItem', position: 2, name: 'Deals & Offers', item: 'https://biznity.vercel.app/offers' },
+      ...(bizSlug ? [{ '@type': 'ListItem', position: 3, name: bizName, item: `https://biznity.vercel.app/businesses/${bizSlug}` }] : []),
       { '@type': 'ListItem', position: bizSlug ? 4 : 3, name: offer.title, item: canonicalUrl },
     ],
   }
