@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     ? data.description.substring(0, 157) + (data.description.length > 157 ? '…' : '')
     : `Explore ${data.name}, a ${category} located in ${district}, Nepal. View contact details, reviews, offers, and more on Biznity.`
   const image = data.logo_url || data.cover_url || 'https://biznity.vercel.app/og-default.png'
-  const url = `https://biznity.vercel.app/businesses/${slug}`
+  const url = `https://biznity.vercel.app/${slug}`
 
   return {
     title,
@@ -108,7 +108,7 @@ export default async function BusinessProfilePage({ params }: { params: Promise<
   const productItems = (products || []).filter((p: any) => p.category?.type !== 'service')
   const serviceItems = (services || []).filter((p: any) => p.category?.type === 'service')
 
-  const canonicalUrl = `https://biznity.vercel.app/businesses/${slug}`
+  const canonicalUrl = `https://biznity.vercel.app/${slug}`
   const businessCategory = (business.category as any)?.name_en ?? 'LocalBusiness'
   const districtName = (business.district_info as any)?.name_en ?? ''
   const businessImage = business.logo_url || business.cover_url

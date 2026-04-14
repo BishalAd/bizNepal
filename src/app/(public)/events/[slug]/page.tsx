@@ -134,7 +134,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biznity.vercel.app' },
       { '@type': 'ListItem', position: 2, name: 'Events', item: 'https://biznity.vercel.app/events' },
-      ...(bizSlug ? [{ '@type': 'ListItem', position: 3, name: (event.business as any)?.name, item: `https://biznity.vercel.app/businesses/${bizSlug}` }] : []),
+      ...(bizSlug ? [{ '@type': 'ListItem', position: 3, name: (event.business as any)?.name, item: `https://biznity.vercel.app/${bizSlug}` }] : []),
       { '@type': 'ListItem', position: bizSlug ? 4 : 3, name: event.title, item: canonicalUrl },
     ],
   }

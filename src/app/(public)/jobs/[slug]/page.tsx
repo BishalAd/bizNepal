@@ -115,7 +115,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
       '@type': 'Organization',
       name: bizName || 'Biznity',
       ...(bizLogo ? { logo: bizLogo } : {}),
-      sameAs: `https://biznity.vercel.app/businesses/${(job.business as any)?.slug ?? ''}`,
+      sameAs: `https://biznity.vercel.app/${(job.business as any)?.slug ?? ''}`,
     },
     jobLocation: job.location_type === 'remote'
       ? { '@type': 'Place', address: { '@type': 'PostalAddress', addressCountry: 'NP' } }

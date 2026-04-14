@@ -134,7 +134,7 @@ export default function RegisterPage() {
                 className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
               />
               <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-                I agree to the <Link href="/terms" className="text-red-600 hover:text-red-500">Terms of Service</Link> and <Link href="/privacy" className="text-red-600 hover:text-red-500">Privacy Policy</Link>
+                I agree to the <Link href="/terms-of-service" className="text-red-600 hover:text-red-500">Terms of Service</Link> and <Link href="/privacy-policy" className="text-red-600 hover:text-red-500">Privacy Policy</Link>
               </label>
             </div>
 

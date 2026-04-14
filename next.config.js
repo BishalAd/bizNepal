@@ -49,6 +49,16 @@ const nextConfig = {
       }
     ],
   },
+  async redirects() {
+    return [
+      // 301 permanent redirect: old /businesses/[slug] → new /[slug]
+      {
+        source: '/businesses/:slug',
+        destination: '/:slug',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 module.exports = withPWA(nextConfig)

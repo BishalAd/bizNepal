@@ -46,7 +46,7 @@ export default function InstallPrompt() {
         </button>
 
         <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-red-100 overflow-hidden">
-           <span className="font-extrabold tracking-tighter text-sm"><span className="text-red-600">Biz</span><span className="text-gray-900">Nepal</span></span>
+           <span className="font-extrabold tracking-tighter text-sm"><span className="text-red-600">Biz</span><span className="text-gray-900">nity</span></span>
         </div>
 
         <div className="flex-1 min-w-0">

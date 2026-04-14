@@ -82,7 +82,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <div className="flex items-center gap-8">
               <Link href="/" className="text-2xl font-extrabold tracking-tight inline-flex items-center gap-1.5">
                 <span className="text-red-600">Biz</span>
-                <span className="text-gray-900">Nepal</span>
+                <span className="text-gray-900">nity</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600 mb-3"></span>
               </Link>
 
@@ -169,23 +169,20 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                           Business Dashboard
                         </Link>
                       )}
-                      {profile?.role === 'admin' && (
-                        <a href="https://admin.biznity.com" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors">
-                          <ShieldCheck className="w-4 h-4" />
-                          Admin Panel
-                        </a>
+                      
+                      {profile?.role === 'user' && (
+                        <Link href="/setup-profile" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors">
+                          <LayoutDashboard className="w-4 h-4" />
+                          Create Business Account
+                        </Link>
                       )}
                       <Link href="/favourites" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                         <Heart className="w-4 h-4" />
                         My Favourites{favCount > 0 && <span className="ml-auto text-xs font-bold text-red-600">{favCount}</span>}
                       </Link>
-                      <Link href="/dashboard/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                        <Bell className="w-4 h-4" />
-                        My Orders
-                      </Link>
-                      <Link href="/dashboard/profile" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                      <Link href="/settings" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                         <Settings className="w-4 h-4" />
-                        Settings
+                        Profile Settings
                       </Link>
                       <div className="border-t border-gray-100 mt-1 pt-1">
                         <button onClick={handleSignOut} className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
@@ -256,7 +253,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
             <div className="col-span-2 sm:col-span-1">
               <Link href="/" className="text-xl font-extrabold inline-flex items-center gap-1.5 text-white mb-3">
-                <span className="text-red-500">Biz</span>Nepal
+                <span className="text-red-500">Biz</span>nity
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 mb-2.5"></span>
               </Link>
               <p className="text-sm text-gray-400 leading-relaxed">Discover Nepal&apos;s best businesses, products, and opportunities. नेपालको उत्कृष्ट व्यापारहरू।</p>
@@ -299,8 +296,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-gray-500">
             <p>© {new Date().getFullYear()} Biznity. All rights reserved.</p>
             <div className="flex gap-4">
-              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+              <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link href="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>
             </div>
           </div>
         </div>

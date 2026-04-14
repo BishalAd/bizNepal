@@ -3,6 +3,65 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { MapPin, Star, Flame, Briefcase, Calendar, ChevronRight, Store } from 'lucide-react'
 import HeroSearch from '@/components/public/HeroSearch'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Biznity — Nepal\'s #1 Business Directory | Find Businesses, Jobs & Deals',
+  description: 'Discover Nepal\'s best businesses, buy products, find jobs, attend events, and grab exclusive offers — all in one place. Verified local businesses across all 77 districts.',
+  keywords: [
+    'nepal business directory', 'businesses in nepal', 'nepal jobs', 'nepal events',
+    'nepal products', 'nepal deals', 'kathmandu business', 'biznity', 'nepal shopping',
+    'nepal services', 'nepal market', 'local business nepal', 'find business nepal'
+  ],
+  alternates: { canonical: 'https://biznity.vercel.app' },
+  openGraph: {
+    title: 'Biznity — Nepal\'s #1 Business Directory',
+    description: 'Find verified businesses, jobs, events, products and exclusive deals from across Nepal.',
+    url: 'https://biznity.vercel.app',
+    siteName: 'Biznity',
+    images: [{ url: 'https://biznity.vercel.app/og-default.png', width: 1200, height: 630, alt: 'Biznity — Nepal Business Directory' }],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Biznity — Nepal\'s #1 Business Directory',
+    description: 'Find verified businesses, jobs, events, products and deals across Nepal.',
+    images: ['https://biznity.vercel.app/og-default.png'],
+  },
+}
+
+// JSON-LD for the homepage
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Biznity',
+  url: 'https://biznity.vercel.app',
+  description: 'Nepal\'s #1 Business Directory — Find businesses, products, jobs, events, and offers.',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://biznity.vercel.app/businesses?search={search_term_string}'
+    },
+    'query-input': 'required name=search_term_string'
+  }
+}
+
+const orgJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Biznity',
+  url: 'https://biznity.vercel.app',
+  logo: 'https://biznity.vercel.app/icon-512x512.png',
+  sameAs: [],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    email: 'hello@biznepal.com.np',
+    availableLanguage: ['English', 'Nepali']
+  }
+}
 
 // Next.js config to revalidate this page every 1 hour (3600 seconds)
 export const revalidate = 3600 
@@ -39,6 +98,10 @@ export default async function HomePage() {
 
   return (
     <div>
+      {/* JSON-LD Structured Data */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
+
       {/* HERO SECTION */}
       <section className="relative bg-gradient-to-br from-red-900 via-red-800 to-red-950 text-white overflow-hidden pb-20 pt-20">
         {/* Decorative blobs */}

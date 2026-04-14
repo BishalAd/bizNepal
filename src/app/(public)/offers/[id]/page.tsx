@@ -113,7 +113,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://biznity.vercel.app' },
       { '@type': 'ListItem', position: 2, name: 'Deals & Offers', item: 'https://biznity.vercel.app/offers' },
-      ...(bizSlug ? [{ '@type': 'ListItem', position: 3, name: bizName, item: `https://biznity.vercel.app/businesses/${bizSlug}` }] : []),
+      ...(bizSlug ? [{ '@type': 'ListItem', position: 3, name: bizName, item: `https://biznity.vercel.app/${bizSlug}` }] : []),
       { '@type': 'ListItem', position: bizSlug ? 4 : 3, name: offer.title, item: canonicalUrl },
     ],
   }

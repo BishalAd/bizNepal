@@ -126,7 +126,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Brand */}
       <div className="p-5 border-b border-gray-100 bg-white">
         <Link href="/" className="flex items-center gap-2 mb-4">
-          <span className="text-xl font-extrabold tracking-tighter italic"><span className="text-red-600">Biz</span><span className="text-gray-900">Nepal</span></span>
+          <span className="text-xl font-extrabold tracking-tighter italic"><span className="text-red-600">Biz</span><span className="text-gray-900">nity</span></span>
           <span className="bg-red-50 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded uppercase border border-red-100">Pro</span>
         </Link>
         <div className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3 border border-gray-100">

@@ -116,7 +116,7 @@ export default function OfferDetailClient({ offer, similarOffers }: { offer: any
         {offer.banner_url ? (
           <Image src={offer.banner_url} alt={offer.title} fill sizes="100vw" className="object-cover opacity-60 scale-105" priority />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-white/10 text-4xl font-black tracking-tighter">BIZNEPAL DEALS</div>
+          <div className="w-full h-full flex items-center justify-center text-white/10 text-4xl font-black tracking-tighter">BIZNITY DEALS</div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-gray-950/80 via-transparent to-transparent"></div>

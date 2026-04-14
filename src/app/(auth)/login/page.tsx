@@ -2,25 +2,40 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { signIn, signInWithGoogle } from '@/lib/auth/actions'
-import { Loader2 } from 'lucide-react'
+import { signIn, signInWithGoogle, resendConfirmation } from '@/lib/auth/actions'
+import { Loader2, MailWarning } from 'lucide-react'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [lastEmail, setLastEmail] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+    setSuccessMsg(null)
 
     const formData = new FormData(e.currentTarget)
+    setLastEmail(formData.get('email') as string)
     const result = await signIn(formData)
     
     if (result?.error) {
       setError(result.error)
       setIsLoading(false)
     }
+  }
+
+  const handleResend = async () => {
+    if (!lastEmail) return;
+    setIsLoading(true)
+    setError(null)
+    setSuccessMsg(null)
+    const res = await resendConfirmation(lastEmail)
+    if (res.error) setError(res.error)
+    if (res.success) setSuccessMsg(res.success)
+    setIsLoading(false)
   }
 
   return (
@@ -37,7 +52,22 @@ export default function LoginPage() {
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-                {error}
+                <p className="font-semibold">{error}</p>
+                {error.toLowerCase().includes('confirm') && (
+                  <button 
+                    type="button" 
+                    onClick={handleResend}
+                    className="mt-2 flex items-center gap-1 text-xs font-bold bg-white text-red-600 px-3 py-1.5 rounded outline-none border border-red-200 hover:bg-red-50 transition"
+                  >
+                    <MailWarning className="w-3.5 h-3.5" />
+                    Resend Confirmation Email
+                  </button>
+                )}
+              </div>
+            )}
+            {successMsg && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm font-semibold">
+                {successMsg}
               </div>
             )}
             

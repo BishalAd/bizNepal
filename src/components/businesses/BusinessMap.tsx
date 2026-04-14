@@ -177,9 +177,6 @@ export default function BusinessMap({ businesses, districts, onBoundsChange }: a
                      <Link 
                         href={`/${business.slug}`} 
                         className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2.5 rounded-xl font-bold text-sm transition shadow-sm"
-                        onClick={(e) => {
-                          window.location.href = `/businesses/${business.slug}`;
-                        }}
                       >
                        View Business Profile
                      </Link>
