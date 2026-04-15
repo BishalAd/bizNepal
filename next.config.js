@@ -51,6 +51,17 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // 301 permanent redirect: legacy short routes → professional long routes
+      {
+        source: '/privacy',
+        destination: '/privacy-policy',
+        permanent: true,
+      },
+      {
+        source: '/terms',
+        destination: '/terms-of-service',
+        permanent: true,
+      },
       // 301 permanent redirect: old /businesses/[slug] → new /[slug]
       {
         source: '/businesses/:slug',

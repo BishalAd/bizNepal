@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/dashboard/', '/api/', '/auth/'],
+        disallow: ['/dashboard/', '/api/', '/auth/', '/cart/', '/checkout/'],
       },
     ],
     sitemap: 'https://biznity.vercel.app/sitemap.xml',

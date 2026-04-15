@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Noto_Sans_Devanagari } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 
 const inter = Inter({
@@ -65,6 +66,7 @@ export const viewport = {
   viewportFit: 'cover',
 }
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -79,6 +81,19 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body className="min-h-full flex flex-col antialiased font-sans bg-gray-50">
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=G-PHNQFH4HJ6`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-PHNQFH4HJ6');
+          `}
+        </Script>
         {children}
       </body>
     </html>

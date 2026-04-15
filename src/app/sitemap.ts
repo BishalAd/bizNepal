@@ -16,17 +16,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createClient(supabaseUrl, supabaseKey)
 
   const [
-    { data: businesses },
-    { data: products },
-    { data: jobs },
-    { data: events },
     { data: offers },
+    { data: blogs },
   ] = await Promise.all([
     supabase.from('businesses').select('slug, updated_at').eq('is_active', true).limit(LIMIT),
     supabase.from('products').select('slug, updated_at').eq('status', 'active').limit(LIMIT),
     supabase.from('jobs').select('slug, updated_at').eq('status', 'active').limit(LIMIT),
     supabase.from('events').select('slug, updated_at').eq('status', 'upcoming').limit(LIMIT),
     supabase.from('offers').select('id, updated_at').eq('status', 'active').limit(LIMIT),
+    supabase.from('blogs').select('slug, updated_at').eq('status', 'published').limit(LIMIT),
   ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -36,8 +34,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/jobs`,        lastModified: new Date(), changeFrequency: 'daily',  priority: 0.8 },
     { url: `${BASE_URL}/events`,      lastModified: new Date(), changeFrequency: 'daily',  priority: 0.8 },
     { url: `${BASE_URL}/offers`,      lastModified: new Date(), changeFrequency: 'daily',  priority: 0.8 },
-    { url: `${BASE_URL}/privacy`,     lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${BASE_URL}/terms`,       lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE_URL}/blog`,        lastModified: new Date(), changeFrequency: 'daily',  priority: 0.9 },
+    { url: `${BASE_URL}/favourites`,  lastModified: new Date(), changeFrequency: 'weekly', priority: 0.5 },
+    { url: `${BASE_URL}/privacy-policy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE_URL}/terms-of-service`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
   ]
 
   const dynamicRoutes: MetadataRoute.Sitemap = [
@@ -70,6 +70,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(o.updated_at || new Date()),
       changeFrequency: 'daily' as const,
       priority: 0.6,
+    })),
+    ...(blogs ?? []).map(b => ({
+      url: `${BASE_URL}/blog/${b.slug}`,
+      lastModified: new Date(b.updated_at || new Date()),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
     })),
   ]
 
