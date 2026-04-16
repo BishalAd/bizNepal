@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const supabase = await createClient()
   const { data: blog } = await supabase
     .from('blogs')
-    .select('title, excerpt, image_url')
+    .select('title, excerpt, image_url, meta_description')
     .eq('slug', slug)
     .single()
 
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   return {
     title: `${blog.title} | Biznity Blog`,
-    description: blog.excerpt || blog.title,
+    description: blog.meta_description || blog.excerpt || blog.title,
     openGraph: {
       images: blog.image_url ? [blog.image_url] : [],
     },

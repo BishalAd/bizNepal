@@ -5,7 +5,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
 
 // Production URL — set NEXT_PUBLIC_APP_URL in Vercel env vars
-const BASE_URL = 'https://biznity.vercel.app'
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://biznity.vercel.app'
 
 // NOTE: When entity counts exceed 1000, implement paginated sitemaps:
 // export async function generateSitemaps() { return [{ id: 0 }, { id: 1 }] }
@@ -16,6 +16,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createClient(supabaseUrl, supabaseKey)
 
   const [
+    { data: businesses },
+    { data: products },
+    { data: jobs },
+    { data: events },
     { data: offers },
     { data: blogs },
   ] = await Promise.all([
@@ -41,7 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   const dynamicRoutes: MetadataRoute.Sitemap = [
-    ...(businesses ?? []).map(b => ({
+    ...(businesses ?? []).filter(b => b.slug).map(b => ({
       url: `${BASE_URL}/${b.slug}`,
       lastModified: new Date(b.updated_at || new Date()),
       changeFrequency: 'weekly' as const,
