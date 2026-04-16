@@ -38,8 +38,8 @@ export default function SettingsClient() {
         .single()
 
       if (profile) {
-        setFullName(profile.full_name || '')
-        setWhatsapp(profile.whatsapp || '')
+        setFullName(profile.full_name || user.user_metadata?.full_name || '')
+        setWhatsapp(profile.whatsapp || user.user_metadata?.phone || '')
         setCurrentAvatarUrl(profile.avatar_url || '')
       }
       setLoading(false)

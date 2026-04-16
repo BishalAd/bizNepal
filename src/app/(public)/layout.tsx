@@ -43,9 +43,23 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     }
     getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e: any, session: any) => {
-      if (!session) { setUser(null); setProfile(null); setFavCount(0) }
-      else if (session.user) loadFavCount(session.user.id)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_e: any, session: any) => {
+      if (!session) { 
+        setUser(null)
+        setProfile(null)
+        setFavCount(0) 
+      } else if (session.user) {
+        setUser(session.user)
+        // Fetch profile reactively
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url, role')
+          .eq('id', session.user.id)
+          .single()
+        
+        if (prof) setProfile(prof)
+        loadFavCount(session.user.id)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])

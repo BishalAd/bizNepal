@@ -34,21 +34,8 @@ export async function signUp(formData: FormData) {
     return { error: error.message }
   }
 
-  // Check if profile was created via trigger, if not (or we don't have triggers), we do it manually.
-  // Wait, the prompt says profiles extends auth.users. Usually trigger is used, but we can do it here.
-  // Actually, we'll let setup-profile handle complex profile setup, but we can insert the initial row:
-  if (data.user) {
-    const { error: profileError } = await supabase.from('profiles').upsert({
-      id: data.user.id,
-      full_name: fullName,
-      phone: phone,
-      role: role
-    })
-    if (profileError) {
-       console.error("Profile creation error", profileError)
-    }
-  }
-
+  // Redirect to setup profile. 
+  // The profiles table row is automatically created by a DB trigger.
   redirect('/setup-profile')
 }
 
