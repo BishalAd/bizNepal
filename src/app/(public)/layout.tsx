@@ -31,12 +31,20 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   }
 
   useEffect(() => {
+    const fetchProfile = async (uid: string) => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url, role')
+        .eq('id', uid)
+        .single()
+      if (data) setProfile(data)
+    }
+
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUser(user)
-        const { data } = await supabase.from('profiles').select('full_name, avatar_url, role').eq('id', user.id).single()
-        if (data) setProfile(data)
+        fetchProfile(user.id)
         loadFavCount(user.id)
       }
       setLoading(false)
@@ -50,18 +58,23 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         setFavCount(0) 
       } else if (session.user) {
         setUser(session.user)
-        // Fetch profile reactively
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('full_name, avatar_url, role')
-          .eq('id', session.user.id)
-          .single()
-        
-        if (prof) setProfile(prof)
+        fetchProfile(session.user.id)
         loadFavCount(session.user.id)
       }
     })
-    return () => subscription.unsubscribe()
+
+    // Listen for manual profile updates (e.g. from Settings page)
+    const handleProfileUpdate = () => {
+      const currentUserId = user?.id
+      if (currentUserId) fetchProfile(currentUserId)
+      else getUser() // Re-fetch everything if user object is missing
+    }
+    window.addEventListener('profile-updated', handleProfileUpdate)
+
+    return () => {
+      subscription.unsubscribe()
+      window.removeEventListener('profile-updated', handleProfileUpdate)
+    }
   }, [])
 
   // Close menus on route change
@@ -160,13 +173,13 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-gray-100 transition-colors"
                   >
                     <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm border-2 border-red-200 overflow-hidden">
-                      {profile?.avatar_url
-                        ? <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" />
-                        : (profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()
+                      {profile?.avatar_url || user.user_metadata?.avatar_url
+                        ? <img src={profile?.avatar_url || user.user_metadata?.avatar_url} className="w-full h-full object-cover" alt="" />
+                        : (profile?.full_name?.charAt(0) || user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()
                       }
                     </div>
                     <span className="text-sm font-medium text-gray-700 hidden sm:block max-w-24 truncate">
-                      {profile?.full_name?.split(' ')[0] || 'Account'}
+                      {profile?.full_name?.split(' ')[0] || user.user_metadata?.full_name?.split(' ')[0] || 'Account'}
                     </span>
                     <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
                   </button>
@@ -174,7 +187,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                   {userMenuOpen && (
                     <div className="absolute right-0 top-12 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 animate-in fade-in duration-200">
                       <div className="px-4 py-2.5 border-b border-gray-100">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{profile?.full_name || 'User'}</p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">{profile?.full_name || user.user_metadata?.full_name || 'User'}</p>
                         <p className="text-xs text-gray-500 truncate">{user.email}</p>
                       </div>
                       {profile?.role === 'business' && (

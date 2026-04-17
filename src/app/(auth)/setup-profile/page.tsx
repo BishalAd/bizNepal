@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, Upload, CheckCircle2, Briefcase } from 'lucide-react'
+import { 
+  Loader2, Upload, Store, User as UserIcon, 
+  ShieldCheck, CreditCard, ChevronRight, 
+  Sparkles, Phone, MapPin, Tag, ArrowRight
+} from 'lucide-react'
 import { Toaster, toast } from 'react-hot-toast'
 
 export default function SetupProfilePage() {
@@ -14,22 +18,19 @@ export default function SetupProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
-  const [step, setStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
 
-  // Step 1 Data
+  // Combined Form Data
   const [fullName, setFullName] = useState('')
-  const [whatsapp, setWhatsapp] = useState('')
+  const [personalWhatsapp, setPersonalWhatsapp] = useState('')
   const [avatar, setAvatar] = useState<File | null>(null)
-  const [selectedRole, setSelectedRole] = useState<'user' | 'business'>('user')
   
-  // Step 2 Data
   const [bizName, setBizName] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [bizPhone, setBizPhone] = useState('')
   const [bizAddress, setBizAddress] = useState('')
   const [categories, setCategories] = useState<any[]>([])
-  // Payment integration (all optional)
+  
   const [khaltiId, setKhaltiId] = useState('')
   const [esewaId, setEsewaId] = useState('')
   const [fonepayCode, setFonepayCode] = useState('')
@@ -53,26 +54,21 @@ export default function SetupProfilePage() {
       if (prof) {
         setProfile(prof)
         setFullName(prof.full_name || session.user.user_metadata?.full_name || '')
-        setWhatsapp(prof.whatsapp || session.user.user_metadata?.phone || '')
-        setSelectedRole(prof.role === 'admin' ? 'business' : (prof.role as any || 'user'))
+        setPersonalWhatsapp(prof.whatsapp || session.user.user_metadata?.phone || '')
         
-        // If business, check if business exists
-        if (prof.role === 'business') {
-          const { data: biz, error: bizError } = await supabase
-            .from('businesses')
-            .select('id')
-            .eq('owner_id', session.user.id)
-            .maybeSingle()
+        // If they already have a business, skip onboarding
+        const { data: biz } = await supabase
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', session.user.id)
+          .maybeSingle()
             
-          if (biz) {
-            router.push('/dashboard')
-            return
-          }
-          setStep(2) // Jump to business setup if role is already business but no biz record
+        if (biz) {
+          router.push('/dashboard')
+          return
         }
       }
 
-      // Load categories for business step
       const { data: cats } = await supabase.from('categories').select('*').limit(50)
       if (cats) setCategories(cats)
 
@@ -81,15 +77,14 @@ export default function SetupProfilePage() {
     loadData()
   }, [])
 
-  const handleStep1Submit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
     setError(null)
 
     try {
-      let avatarUrl = profile?.avatar_url
-      
-      // Upload avatar if exists
+      // 1. Upload avatar if exists
+      let avatarUrl = profile?.avatar_url || user.user_metadata?.avatar_url
       if (avatar) {
         const fileExt = avatar.name.split('.').pop()
         const fileName = `${user.id}-${Math.random()}.${fileExt}`
@@ -103,39 +98,22 @@ export default function SetupProfilePage() {
         }
       }
 
+      // 2. Upsert Profile
       const { error: updateError } = await supabase
         .from('profiles')
         .upsert({
-          id: user.id, // NECESSARY for upsert
+          id: user.id,
           full_name: fullName,
-          whatsapp,
+          whatsapp: personalWhatsapp,
           avatar_url: avatarUrl,
-          role: selectedRole, // SAVE THE SELECTED ROLE
+          role: 'business',
           updated_at: new Date().toISOString()
         })
 
       if (updateError) throw updateError
 
-      if (selectedRole === 'business') {
-        setStep(2)
-      } else {
-        router.push('/')
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to save profile')
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleStep2Submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
-    setError(null)
-
-    try {
+      // 3. Create Business
       const slug = bizName.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.floor(Math.random() * 1000)
-      
       const { error: bizError } = await supabase
         .from('businesses')
         .insert({
@@ -144,7 +122,7 @@ export default function SetupProfilePage() {
           slug,
           category_id: categoryId || null,
           phone: bizPhone,
-          whatsapp: whatsapp || null,
+          whatsapp: personalWhatsapp || null,
           address: bizAddress,
           khalti_merchant_id: khaltiId || null,
           esewa_merchant_id: esewaId || null,
@@ -154,12 +132,10 @@ export default function SetupProfilePage() {
 
       if (bizError) throw bizError
 
-      // Trigger n8n webhook in background
+      // 4. Trigger Webhook
       fetch('/api/webhooks/new-signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
           accountType: 'business',
@@ -168,14 +144,15 @@ export default function SetupProfilePage() {
           userEmail: user.email,
           userPhone: bizPhone
         })
-      }).catch(err => console.error('Failed to trigger n8n onboarding webhook:', err))
+      }).catch(err => console.error('Webhook error:', err))
 
-      // 3. Final Redirect
-      toast.success('Business profile created successfully!')
+      // 5. Success
+      toast.success('Business Profile Setup Complete!')
+      window.dispatchEvent(new CustomEvent('profile-updated'))
       router.push('/dashboard')
       router.refresh()
     } catch (err: any) {
-      setError(err.message || 'Failed to create business profile')
+      setError(err.message || 'Failed to complete setup')
     } finally {
       setIsSaving(false)
     }
@@ -183,190 +160,219 @@ export default function SetupProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+      <div className="flex flex-col justify-center items-center py-20 bg-white gap-6">
+        <div className="relative">
+           <div className="w-12 h-12 border-4 border-red-100 border-t-red-600 rounded-full animate-spin"></div>
+        </div>
+        <div className="text-center">
+           <p className="text-sm font-black text-gray-900 tracking-tight">Loading Onboarding...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="w-full">
+    <div className="bg-[#FDFDFF] py-8 md:py-12 px-4 overflow-x-hidden">
       <Toaster position="top-right" />
-      <div className="mb-8">
-        <div className="flex items-center justify-between text-sm font-medium mb-4">
-          <span className={`flex items-center ${step >= 1 ? 'text-red-600' : 'text-gray-400'}`}>
-            <span className={`flex items-center justify-center w-6 h-6 rounded-full border-2 mr-2 ${step >= 1 ? 'border-red-600 bg-red-50' : 'border-gray-300'}`}>1</span>
-            Personal Profile
-          </span>
-          <div className={`flex-1 mx-4 h-0.5 ${step >= 2 ? 'bg-red-600' : 'bg-gray-200'}`}></div>
-          <span className={`flex items-center ${step >= 2 ? 'text-red-600' : 'text-gray-400'}`}>
-            <span className={`flex items-center justify-center w-6 h-6 rounded-full border-2 mr-2 ${step >= 2 ? 'border-red-600 bg-red-50' : 'border-gray-300'}`}>2</span>
-            Business Setup
-          </span>
+      
+      {/* HEADER HERO - Standardized Scale */}
+      <div className="max-w-3xl mx-auto mb-10 text-center animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-100 mb-4">
+           <Sparkles className="w-3.5 h-3.5 text-red-600" />
+           <span className="text-[9px] font-black uppercase tracking-widest text-red-600">Merchant Hub Setup</span>
         </div>
+        <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter mb-3 leading-tight">
+           Welcome to the <span className="text-red-600">Biznity Network</span>
+        </h1>
+        <p className="max-w-xl mx-auto text-gray-400 font-bold text-sm md:text-base leading-relaxed">
+           Provide your professional details to establish your business listing and reach customers across Nepal.
+        </p>
       </div>
 
-      <div className="bg-white py-8 px-4 sm:rounded-lg sm:px-10 border border-gray-100 shadow-sm">
+      <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm font-bold">
+          <div className="bg-red-50 border border-red-100 text-red-600 px-6 py-4 rounded-2xl text-xs font-black flex items-center gap-3">
+            <div className="w-8 h-8 bg-red-600 text-white rounded-xl flex items-center justify-center shrink-0 font-black">!</div>
             {error}
           </div>
         )}
 
-        {step === 1 ? (
-          <form className="space-y-6" onSubmit={handleStep1Submit}>
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-black text-gray-900 tracking-tight">Complete your profile</h3>
-              <p className="text-sm font-medium text-gray-500 mt-1">Tell us a bit more about yourself before getting started.</p>
-            </div>
-
-            {/* ROLE SELECTION */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-               <button 
-                 type="button"
-                 onClick={() => setSelectedRole('user')}
-                 className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${selectedRole === 'user' ? 'border-red-600 bg-red-50' : 'border-gray-100 hover:border-gray-200 opacity-60'}`}
-               >
-                 <UserIcon className={`w-8 h-8 ${selectedRole === 'user' ? 'text-red-600' : 'text-gray-400'}`} />
-                 <span className={`text-xs font-black uppercase tracking-widest ${selectedRole === 'user' ? 'text-red-600' : 'text-gray-500'}`}>Individual</span>
-               </button>
-               <button 
-                 type="button"
-                 onClick={() => setSelectedRole('business')}
-                 className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${selectedRole === 'business' ? 'border-red-600 bg-red-50' : 'border-gray-100 hover:border-gray-200 opacity-60'}`}
-               >
-                 <Briefcase className={`w-8 h-8 ${selectedRole === 'business' ? 'text-red-600' : 'text-gray-400'}`} />
-                 <span className={`text-xs font-black uppercase tracking-widest ${selectedRole === 'business' ? 'text-red-600' : 'text-gray-500'}`}>Business</span>
-               </button>
-            </div>
-
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden">
+        {/* SECTION 1: PERSONAL REPRESENTATIVE */}
+        <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+          <div className="flex flex-col md:flex-row items-start gap-8">
+            <div className="shrink-0 flex flex-col items-center">
+              <div className="relative group/avatar">
+                <div className="w-28 h-28 rounded-[2rem] bg-gray-50 border-2 border-white shadow-md flex items-center justify-center overflow-hidden transition-all group-hover:scale-105">
                   {avatar ? (
-                    <img src={URL.createObjectURL(avatar)} alt="Avatar preview" className="w-full h-full object-cover" />
+                    <img src={URL.createObjectURL(avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : profile?.avatar_url || user.user_metadata?.avatar_url ? (
+                    <img src={profile?.avatar_url || user.user_metadata?.avatar_url} className="w-full h-full object-cover" />
                   ) : (
-                    <UserIcon className="w-10 h-10 text-gray-400" />
+                    <UserIcon className="w-10 h-10 text-gray-200" />
                   )}
                 </div>
-                <label htmlFor="avatar" className="absolute bottom-0 right-0 bg-red-600 rounded-full p-2 cursor-pointer shadow-sm hover:bg-red-700 transition">
-                  <Upload className="w-4 h-4 text-white" />
-                  <input id="avatar" type="file" accept="image/*" className="hidden" onChange={(e) => setAvatar(e.target.files?.[0] || null)} />
+                <label className="absolute -bottom-1 -right-1 bg-red-600 text-white w-9 h-9 rounded-xl cursor-pointer hover:bg-black transition-all shadow-lg border-2 border-white flex items-center justify-center">
+                  <Upload className="w-4 h-4" />
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => setAvatar(e.target.files?.[0] || null)} />
                 </label>
               </div>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-4">Identity Photo</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
-              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
-            </div>
+            <div className="flex-1 space-y-6 w-full">
+               <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                     <ShieldCheck className="w-4 h-4 text-red-600" />
+                     <h3 className="text-lg font-black text-gray-900 tracking-tight">Account Holder</h3>
+                  </div>
+               </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">WhatsApp Number</label>
-              <input type="text" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="+977" required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
+               <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 group/input">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 transition-colors group-focus-within:text-red-600">Full Name</label>
+                    <div className="relative">
+                       <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-red-600 transition-colors" />
+                       <input 
+                         type="text" required value={fullName} onChange={e => setFullName(e.target.value)}
+                         className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-red-600 transition-all outline-none font-bold text-gray-900 text-sm shadow-sm" 
+                         placeholder="Ram Bahadur"
+                       />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 group/input">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 transition-colors group-focus-within:text-red-600">WhatsApp</label>
+                    <div className="relative">
+                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-red-600 transition-colors" />
+                       <input 
+                         type="text" required value={personalWhatsapp} onChange={e => setPersonalWhatsapp(e.target.value)}
+                         className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-red-600 transition-all outline-none font-bold text-gray-900 text-sm shadow-sm" 
+                         placeholder="+977"
+                       />
+                    </div>
+                  </div>
+               </div>
             </div>
+          </div>
+        </div>
 
-            <button type="submit" disabled={isSaving}
-              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">
-              {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : 'Continue'}
-            </button>
-          </form>
-        ) : (
-          <form className="space-y-6" onSubmit={handleStep2Submit}>
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Setup Business Profile</h3>
-              <p className="text-sm text-gray-500 mt-1">Let customers know who you are.</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Business Name</label>
-              <input type="text" value={bizName} onChange={e => setBizName(e.target.value)} required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Category</label>
-              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border bg-white">
-                <option value="">Select a category</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Business Phone</label>
-              <input type="text" value={bizPhone} onChange={e => setBizPhone(e.target.value)} required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Business Address</label>
-              <input type="text" value={bizAddress} onChange={e => setBizAddress(e.target.value)} required
-                placeholder="Street name, Area, City"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
-            </div>
-
-            {/* Payment Integration — Optional */}
-            <div className="mt-6 pt-6 border-t border-gray-100">
-              <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
-                <p className="font-bold mb-1">💳 Payment Integration <span className="font-normal text-amber-700">(Optional)</span></p>
-                <p>Fill these only if you have a merchant account. If not, customers will contact you via
-                  WhatsApp to purchase your products. <strong>Paid events require at least one gateway.</strong></p>
+        {/* SECTION 2: BUSINESS PROFILE */}
+        <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+           <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                    <Store className="w-5 h-5" />
+                 </div>
+                 <div>
+                    <h3 className="text-xl font-black text-gray-900 tracking-tight">Business Profile</h3>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Visibility details for the marketplace</p>
+                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Khalti Merchant ID</label>
-                  <input type="text" value={khaltiId} onChange={e => setKhaltiId(e.target.value)}
-                    placeholder="e.g. live_public_key_..."
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">eSewa Merchant ID</label>
-                  <input type="text" value={esewaId} onChange={e => setEsewaId(e.target.value)}
-                    placeholder="e.g. EPAYTEST"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Fonepay Merchant Code</label>
-                    <input type="text" value={fonepayCode} onChange={e => setFonepayCode(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Fonepay Secret Key</label>
-                    <input type="password" value={fonepaySecret} onChange={e => setFonepaySecret(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2 border" />
-                  </div>
-                </div>
-              </div>
-            </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                 <div className="md:col-span-2 space-y-1.5 group/input">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 transition-colors group-focus-within:text-blue-600">Brand / Store Name</label>
+                    <div className="relative">
+                       <Store className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-600 transition-colors" />
+                       <input 
+                         type="text" required value={bizName} onChange={e => setBizName(e.target.value)}
+                         className="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-blue-600 transition-all outline-none font-black text-gray-900 text-base shadow-sm" 
+                         placeholder="The Coffee Hub"
+                       />
+                    </div>
+                 </div>
 
-            <div className="flex gap-4">
-              <button type="button" onClick={() => router.push('/dashboard')} 
-                className="w-1/3 flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                Skip for now
-              </button>
-              <button type="submit" disabled={isSaving}
-                className="flex-1 flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50">
-                {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : 'Complete Setup'}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+                 <div className="space-y-1.5 group/input">
+                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 transition-colors group-focus-within:text-blue-600">Merchant Category</label>
+                   <div className="relative">
+                      <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-600 transition-colors" />
+                      <select 
+                        required value={categoryId} onChange={e => setCategoryId(e.target.value)}
+                        className="w-full pl-11 pr-10 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-blue-600 transition-all outline-none font-bold text-gray-900 text-sm shadow-sm appearance-none cursor-pointer"
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name_en}</option>)}
+                      </select>
+                   </div>
+                 </div>
+
+                 <div className="space-y-1.5 group/input">
+                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 transition-colors group-focus-within:text-blue-600">Official Mobile</label>
+                   <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-600 transition-colors" />
+                      <input 
+                        type="text" required value={bizPhone} onChange={e => setBizPhone(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-blue-600 transition-all outline-none font-bold text-gray-900 text-sm shadow-sm" 
+                        placeholder="Public Phone Number"
+                      />
+                   </div>
+                 </div>
+
+                 <div className="md:col-span-2 space-y-1.5 group/input">
+                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 transition-colors group-focus-within:text-blue-600">Physical Address</label>
+                   <div className="relative">
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-600 transition-colors" />
+                      <input 
+                        type="text" required value={bizAddress} onChange={e => setBizAddress(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-blue-600 transition-all outline-none font-bold text-gray-900 text-sm shadow-sm" 
+                        placeholder="Street, City (e.g. Kathmandu)"
+                      />
+                   </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        {/* SECTION 3: PAYMENTS */}
+        <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+           <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                 <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                       <CreditCard className="w-5 h-5" />
+                    </div>
+                    <div>
+                       <h3 className="text-xl font-black text-gray-900 tracking-tight">Payments</h3>
+                    </div>
+                 </div>
+                 <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-full border border-gray-100">Optional</span>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4 pt-2">
+                 {[
+                   { id: 'khalti', label: 'Khalti ID', val: khaltiId, set: setKhaltiId, ph: 'live_public_key_' },
+                   { id: 'esewa', label: 'eSewa ID', val: esewaId, set: setEsewaId, ph: 'EPAYTEST' },
+                   { id: 'fonepay-c', label: 'Fonepay Code', val: fonepayCode, set: setFonepayCode, ph: '' },
+                   { id: 'fonepay-s', label: 'Fonepay Secret', val: fonepaySecret, set: setFonepaySecret, ph: '', secret: true },
+                 ].map((box) => (
+                   <div key={box.id} className="space-y-1.5 group/input">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 transition-colors group-focus-within:text-amber-600">{box.label}</label>
+                      <input 
+                        type={box.secret ? 'password' : 'text'} 
+                        value={box.val} onChange={e => box.set(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-amber-500 transition-all outline-none font-bold text-gray-900 text-xs shadow-sm" 
+                        placeholder={box.ph}
+                      />
+                   </div>
+                 ))}
+              </div>
+           </div>
+        </div>
+
+        {/* ACTION BUTTON */}
+        <div className="pt-4 pb-12">
+           <button 
+             type="submit" 
+             disabled={isSaving}
+             className="w-full py-5 bg-gray-900 hover:bg-black text-white rounded-[1.5rem] font-black uppercase text-xs tracking-widest shadow-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+           >
+             {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+               <>
+                 Setup My Business <ArrowRight className="w-4 h-4" />
+               </>
+             )}
+           </button>
+        </div>
+      </form>
     </div>
-  )
-}
-
-function UserIcon(props: any) {
-  return (
-    <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
   )
 }

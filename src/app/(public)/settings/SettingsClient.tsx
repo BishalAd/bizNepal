@@ -40,7 +40,7 @@ export default function SettingsClient() {
       if (profile) {
         setFullName(profile.full_name || user.user_metadata?.full_name || '')
         setWhatsapp(profile.whatsapp || user.user_metadata?.phone || '')
-        setCurrentAvatarUrl(profile.avatar_url || '')
+        setCurrentAvatarUrl(profile.avatar_url || user.user_metadata?.avatar_url || '')
       }
       setLoading(false)
     }
@@ -72,18 +72,19 @@ export default function SettingsClient() {
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: user.id,
           full_name: fullName,
           whatsapp: whatsapp,
           avatar_url: finalAvatarUrl,
           updated_at: new Date().toISOString()
         })
-        .eq('id', user.id)
 
       if (updateError) throw updateError
       
       setCurrentAvatarUrl(finalAvatarUrl)
       toast.success('Profile information updated successfully!')
+      window.dispatchEvent(new CustomEvent('profile-updated'))
       router.refresh()
     } catch (error: any) {
       toast.error('Failed to update profile: ' + error.message)

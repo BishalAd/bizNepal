@@ -34,9 +34,12 @@ export async function signUp(formData: FormData) {
     return { error: error.message }
   }
 
-  // Redirect to setup profile. 
-  // The profiles table row is automatically created by a DB trigger.
-  redirect('/setup-profile')
+  // Redirect based on role
+  if (role === 'business') {
+    redirect('/setup-profile')
+  } else {
+    redirect('/')
+  }
 }
 
 export async function signIn(formData: FormData) {
